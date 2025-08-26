@@ -678,10 +678,10 @@ std::unordered_map<UUIDs, std::unordered_set<SharedLand>> LandRegistry::getLands
 }
 
 
-LandPermType LandRegistry::getPermType(UUIDs const& uuid, LandID id, bool ignoreOperator) const {
+LandPermType LandRegistry::getPermType(UUIDs const& uuid, LandID id, bool includeOperator) const {
     std::shared_lock<std::shared_mutex> lock(mMutex);
 
-    if (!ignoreOperator && isOperator(uuid)) return LandPermType::Operator;
+    if (includeOperator && isOperator(uuid)) return LandPermType::Operator;
 
     if (auto land = getLand(id); land) {
         return land->getPermType(uuid);
@@ -702,7 +702,7 @@ SharedLand LandRegistry::getLandAt(BlockPos const& pos, LandDimid dimid) const {
 
     for (auto const& id : *landsIds) {
         if (auto iter = mLandCache.find(id); iter != mLandCache.end()) {
-            if (auto const& land = iter->second; land->getAABB().hasPos(pos, !land->is3D())) {
+            if (auto const& land = iter->second; land->getAABB().hasPos(pos, land->is3D())) {
                 result.insert(land);
             }
         }

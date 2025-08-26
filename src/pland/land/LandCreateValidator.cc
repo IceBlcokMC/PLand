@@ -132,7 +132,7 @@ LandCreateValidator::ValidateResult LandCreateValidator::isLandRangeWithOtherCol
 ) {
     auto&       aabb       = newRange ? *newRange : land->getAABB();
     auto const& minSpacing = Config::cfg.land.minSpacing;
-    auto        expanded   = aabb.expanded(minSpacing, !Config::cfg.land.minSpacingIncludeY);
+    auto        expanded   = aabb.expanded(minSpacing, Config::cfg.land.minSpacingIncludeY);
     auto        lands      = registry->getLandAt(expanded.min.as(), expanded.max.as(), land->getDimensionId());
     if (lands.empty()) {
         return {};
@@ -165,8 +165,8 @@ LandCreateValidator::isSubLandPositionLegal(SharedLand const& land, LandAABB con
     }
 
     auto const& minSpacing = Config::cfg.land.subLand.minSpacing;
-    bool const  ignoreY    = !Config::cfg.land.subLand.minSpacingIncludeY;
-    auto        expanded   = subRange.expanded(minSpacing, ignoreY);
+    bool const  includeY   = Config::cfg.land.subLand.minSpacingIncludeY;
+    auto        expanded   = subRange.expanded(minSpacing, includeY);
 
     auto family  = land->getFamilyTree();       // 整个领地家族
     auto parents = land->getSelfAndAncestors(); // 相对于 land 的所有父领地
@@ -186,7 +186,7 @@ LandCreateValidator::isSubLandPositionLegal(SharedLand const& land, LandAABB con
             // 子领地与家族内其他领地冲突
             return std::unexpected(ErrorContext::landRangeWithOtherCollision(member));
         }
-        if (!LandAABB::isComplisWithMinSpacing(memberAABB, expanded, minSpacing, ignoreY)) {
+        if (!LandAABB::isComplisWithMinSpacing(memberAABB, expanded, minSpacing, includeY)) {
             // 子领地与家族内其他领地间距过小
             return std::unexpected(
                 ErrorContext::landSpacingTooSmall(member, LandAABB::getMinSpacing(memberAABB, expanded), minSpacing)

@@ -136,23 +136,23 @@ std::vector<std::pair<BlockPos, BlockPos>> LandAABB::getEdges() const {
     };
 }
 
-bool LandAABB::hasPos(const BlockPos& pos, bool ignoreY) const {
-    if (ignoreY) {
-        return pos.x >= min.x && pos.x <= max.x && pos.z >= min.z && pos.z <= max.z;
-    } else {
+bool LandAABB::hasPos(const BlockPos& pos, bool includeY) const {
+    if (includeY) {
         return pos.x >= min.x && pos.x <= max.x && pos.y >= min.y && pos.y <= max.y && pos.z >= min.z && pos.z <= max.z;
+    } else {
+        return pos.x >= min.x && pos.x <= max.x && pos.z >= min.z && pos.z <= max.z;
     }
 }
 
-LandAABB LandAABB::expanded(int spacing, bool ignoreY) const {
-    return ignoreY ?
-        LandAABB{
-            LandPos{min.x - spacing, min.y, min.z - spacing},
-            LandPos{max.x + spacing, max.y, max.z + spacing},
-        } :
+LandAABB LandAABB::expanded(int spacing, bool includeY) const {
+    return includeY ?
         LandAABB{
             LandPos{min.x - spacing, min.y - spacing, min.z - spacing},
             LandPos{max.x + spacing, max.y + spacing, max.z + spacing},
+        } :
+        LandAABB{
+            LandPos{min.x - spacing, min.y, min.z - spacing},
+            LandPos{max.x + spacing, max.y, max.z + spacing},
         };
 }
 
@@ -164,7 +164,7 @@ bool LandAABB::isCollision(const LandAABB& pos1, const LandAABB& pos2) {
         || pos1.max.z < pos2.min.z || pos1.min.z > pos2.max.z
     );
 }
-bool LandAABB::isComplisWithMinSpacing(const LandAABB& pos1, const LandAABB& pos2, int minSpacing, bool ignoreY) {
+bool LandAABB::isComplisWithMinSpacing(const LandAABB& pos1, const LandAABB& pos2, int minSpacing, bool includeY) {
     // 检查 X 轴
     int xDist = std::min(std::abs(pos1.max.x - pos2.min.x), std::abs(pos2.max.x - pos1.min.x));
     if (xDist < minSpacing) return false;
@@ -174,7 +174,7 @@ bool LandAABB::isComplisWithMinSpacing(const LandAABB& pos1, const LandAABB& pos
     if (zDist < minSpacing) return false;
 
     // 检查 Y 轴
-    if (!ignoreY) {
+    if (includeY) {
         int yDist = std::min(std::abs(pos1.max.y - pos2.min.y), std::abs(pos2.max.y - pos1.min.y));
         if (yDist < minSpacing) return false;
     }

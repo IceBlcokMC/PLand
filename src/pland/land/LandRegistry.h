@@ -138,7 +138,7 @@ public: // 领地查询API
     LDNDAPI std::unordered_map<UUIDs, std::unordered_set<SharedLand>> getLandsByOwner() const;
     LDNDAPI std::unordered_map<UUIDs, std::unordered_set<SharedLand>> getLandsByOwner(LandDimid dimid) const;
 
-    LDNDAPI LandPermType getPermType(UUIDs const& uuid, LandID id = 0, bool ignoreOperator = false) const;
+    LDNDAPI LandPermType getPermType(UUIDs const& uuid, LandID id = 0, bool includeOperator = true) const;
 
     LDNDAPI SharedLand getLandAt(BlockPos const& pos, LandDimid dimid) const;
 
