@@ -74,7 +74,6 @@
 
 #ifdef LD_DEVTOOL
 #include "DevToolApp.h"
-#include "DevToolAppManager.h"
 #endif
 
 
@@ -490,7 +489,7 @@ bool LandCommand::setup() {
     if (Config::cfg.internal.devTools) {
         cmd.overload().text("devtool").execute([](CommandOrigin const& ori, CommandOutput&) {
             if (ori.getOriginType() == CommandOriginType::DedicatedServer) {
-                if (auto tool = devtool::DevToolAppManager::getInstance().getOrCreateApp()) {
+                if (auto tool = PLand::getInstance().getDevToolApp()) {
                     tool->show();
                 }
             }

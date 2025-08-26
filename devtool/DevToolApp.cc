@@ -6,6 +6,9 @@
 #include <imgui_impl_opengl3.h>
 #include <imgui_internal.h>
 
+#include "impl/helper/HelperMenu.h"
+#include "impl/viewer/DataMenu.h"
+
 namespace devtool {
 
 DevToolApp::DevToolApp() {
@@ -89,11 +92,13 @@ void DevToolApp::checkAndUpdateScale() {
 
         auto fontPath = land::PLand::getInstance().getSelf().getDataDir() / "fonts" / "font.ttf";
         if (!std::filesystem::exists(fontPath)) {
-            this->appendError(fmt::format(
-                "由于字体文件 ( {} ) 不存在\n这可能导致部分模块字体显示异常\n\n建议下载 maple-font 字体的 "
-                "Normal-Ligature CN 版本\n将 \"MapleMonoNormal-CN-Regular.ttf\" 重命名为 font.ttf 放置在上述路径下",
-                fontPath.string()
-            ));
+            this->appendError(
+                fmt::format(
+                    "由于字体文件 ( {} ) 不存在\n这可能导致部分模块字体显示异常\n\n建议下载 maple-font 字体的 "
+                    "Normal-Ligature CN 版本\n将 \"MapleMonoNormal-CN-Regular.ttf\" 重命名为 font.ttf 放置在上述路径下",
+                    fontPath.string()
+                )
+            );
             fontPath = "C:/Windows/Fonts/msyh.ttc";
         }
 
@@ -267,5 +272,13 @@ void handleWindowClose(GLFWwindow* window) {
 }
 
 } // namespace internals
+
+
+std::unique_ptr<DevToolApp> DevToolApp::make() {
+    auto app_ = std::make_unique<DevToolApp>();
+    app_->registerMenu<DataMenu>();
+    app_->registerMenu<HelperMenu>();
+    return std::move(app_);
+}
 
 } // namespace devtool

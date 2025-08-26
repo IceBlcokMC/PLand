@@ -2,6 +2,7 @@
 #include "components/IComponent.h"
 #include <GLFW/glfw3.h>
 #include <concepts>
+#include <memory>
 #include <string>
 #include <thread>
 #include <vector>
@@ -29,6 +30,8 @@ public:
         auto ptr = std::make_unique<T>(std::forward<Args>(args)...);
         menus_.emplace_back(std::move(ptr));
     }
+
+    [[nodiscard]] static std::unique_ptr<DevToolApp> make();
 
 private:
     void render();                     // 核心渲染 (renderErrors、renderMainMenuBar、postTick)
