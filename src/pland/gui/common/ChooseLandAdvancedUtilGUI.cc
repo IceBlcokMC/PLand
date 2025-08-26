@@ -60,10 +60,10 @@ public:
 
     void nextView(Player& player) {
         if (mCurrentView == View::OnlySub) {
-            sendView(View::All, player); // 回到初始视图
+            sendView(player, View::All); // 回到初始视图
             return;
         }
-        sendView(static_cast<View>(static_cast<int>(mCurrentView) + 1), player);
+        sendView(player, static_cast<View>(static_cast<int>(mCurrentView) + 1));
     }
 
     SimpleForm::ButtonCallback makeNextViewCallback() {
@@ -85,11 +85,37 @@ public:
             for (auto& [view, form] : mViews) {
                 form.setTitle("选择领地"_trf(player));
                 form.setContent("请选择一个领地:"_trf(player));
-                form.appendButton("模糊搜索", "textures/ui/magnifyingGlass", "path", [thiz = getThis()](Player& self) {
-                    if (thiz) {
-                        thiz->sendFuzzySearch(self);
+
+                // 重置过滤器（仅在非主视图或存在模糊搜索关键字时）
+                if (view != View::All || mFuzzyKeyword.has_value()) {
+                    form.appendButton(
+                        "重置过滤器"_trf(player),
+                        "textures/ui/refresh_light",
+                        "path",
+                        [thiz = getThis()](Player& self) {
+                            if (!thiz) return;
+                            if (!thiz->mFuzzyKeyword.has_value()) {
+                                thiz->sendView(self, View::All);
+                                return; // 没有模糊搜索关键字，仅重置视图
+                            }
+                            thiz->mViews.clear();
+                            thiz->mFuzzyKeyword = std::nullopt;
+                            thiz->mCurrentView  = View::All;
+                            thiz->sendTo(self); // 重新发送表单
+                        }
+                    );
+                }
+
+                form.appendButton(
+                    "模糊搜索"_trf(player),
+                    "textures/ui/magnifyingGlass",
+                    "path",
+                    [thiz = getThis()](Player& self) {
+                        if (thiz) {
+                            thiz->sendFuzzySearch(self);
+                        }
                     }
-                });
+                );
                 form.onFormCanceled([thiz = getThis()](Player&) { delete thiz; });
 
                 switch (view) {
@@ -119,7 +145,7 @@ public:
                     break;
                 case View::OnlyMix:
                     form.appendButton(
-                        "切换: >混合领地<"_trf(player),
+                        "过滤: >混合领地<"_trf(player),
                         "textures/ui/store_sort_icon",
                         "path",
                         makeNextViewCallback()
@@ -187,18 +213,18 @@ public:
             thiz->mFuzzyKeyword = name;
             thiz->mViews.clear();
             thiz->buildForms(self);
-            thiz->sendView(thiz->mCurrentView, self);
+            thiz->sendView(self, thiz->mCurrentView);
         });
     }
 
-    void sendView(View view, Player& player) {
+    void sendView(Player& player, View view) {
         mCurrentView = view;
         mViews.at(view).sendTo(player);
     }
 
     void sendTo(Player& player) {
         buildForms(player);
-        sendView(View::All, player);
+        sendView(player, View::All);
     }
 };
 

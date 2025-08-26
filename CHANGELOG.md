@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 新增 DebugShape 绘制后端 #135 @engsr6982
 - 新增 `land.drawHandleBackend` 配置项，用于选择绘制后端 #135 @engsr6982
+- 选择领地表单新增 **重置过滤器** 按钮 @engsr6982
 
 ### 🐛 问题修复
 
