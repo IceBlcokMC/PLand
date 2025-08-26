@@ -17,33 +17,6 @@ namespace land {
 using namespace ll::form;
 
 
-void ChooseLandUtilGUI::sendTo(
-    Player&                          player,
-    ChooseCallback const&            callback,
-    bool                             showShredLand,
-    BackSimpleForm<>::ButtonCallback back
-) {
-    auto fm = BackSimpleForm<>{std::move(back)};
-    fm.setTitle(PLUGIN_NAME + ("| 选择领地"_trf(player)));
-    fm.setContent("请选择一个领地"_trf(player));
-
-    auto lands = PLand::getInstance().getLandRegistry()->getLands(player.getUuid().asString(), showShredLand);
-    for (auto& land : lands) {
-        fm.appendButton(
-            "{}\n维度: {} | ID: {}"_trf(player, land->getName(), land->getDimensionId(), land->getId()),
-            "textures/ui/icon_recipe_nature",
-            "path",
-            [callback, land = std::weak_ptr(land)](Player& pl) {
-                if (auto p = land.lock()) {
-                    callback(pl, p);
-                }
-            }
-        );
-    }
-
-    fm.sendTo(player);
-}
-
 void ChooseOnlinePlayerUtilGUI::sendTo(
     Player&                          player,
     ChoosePlayerCall const&          callback,
@@ -84,30 +57,6 @@ void EditStringUtilGUI::sendTo(
         }
         cb(pl, std::get<string>(res->at("str")));
     });
-}
-
-
-void FuzzySerarchUtilGUI::sendTo(Player& player, std::vector<SharedLand> list, CallBack callback) {
-    CustomForm fm;
-    fm.setTitle(PLUGIN_NAME + " | 模糊搜索领地"_trf(player));
-    fm.appendInput("name", "请输入领地名称"_trf(player), "string");
-    fm.sendTo(
-        player,
-        [list = std::move(list),
-         cb   = std::move(callback)](Player& player, CustomFormResult const& res, FormCancelReason) {
-            if (!res) {
-                return;
-            }
-            auto                    name = std::get<string>(res->at("name"));
-            std::vector<SharedLand> filtered;
-            for (auto const& ptr : list) {
-                if (ptr->getName().find(name) != std::string::npos) {
-                    filtered.push_back(ptr);
-                }
-            }
-            cb(player, std::move(filtered));
-        }
-    );
 }
 
 

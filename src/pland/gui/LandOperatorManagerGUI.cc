@@ -83,7 +83,6 @@ void LandOperatorManagerGUI::sendChoosePlayerFromDb(Player& player, ChoosePlayer
 
 
 void LandOperatorManagerGUI::sendChooseLandGUI(Player& player, UUIDs const& targetPlayer) {
-    // sendChooseLandGUI(player, PLand::getInstance().getLandRegistry()->getLands(targetPlayer));
     sendChooseLandAdvancedGUI(player, PLand::getInstance().getLandRegistry()->getLands(targetPlayer));
 }
 
@@ -94,37 +93,6 @@ void LandOperatorManagerGUI::sendChooseLandAdvancedGUI(Player& player, std::vect
         [](Player& self, SharedLand ptr) { LandManagerGUI::sendMainMenu(self, ptr); },
         BackSimpleForm<>::makeCallback<sendMainMenu>()
     );
-}
-
-void LandOperatorManagerGUI::sendChooseLandGUI(Player& player, std::vector<SharedLand> lands) {
-    // auto fm = BackSimpleForm<>::make<LandOperatorManagerGUI::sendMainMenu>();
-    auto fm = BackSimpleForm<BackPaginatedSimpleForm>::make<LandOperatorManagerGUI::sendMainMenu>();
-    fm.setTitle(PLUGIN_NAME + " | 领地列表"_trf(player));
-    fm.setContent("请选择您要管理的领地"_trf(player));
-
-    fm.appendButton("模糊搜索领地", "textures/ui/magnifyingGlass", "path", [lands](Player& player) {
-        FuzzySerarchUtilGUI::sendTo(
-            player,
-            lands,
-            static_cast<void (*)(Player&, std::vector<std::shared_ptr<Land>>)>(sendChooseLandGUI)
-        );
-    });
-
-    auto const& infos = ll::service::PlayerInfo::getInstance();
-    for (auto const& ptr : lands) {
-        auto info = infos.fromUuid(UUIDm::fromString(ptr->getOwner()));
-        fm.appendButton(
-            "{}\nID: {}  玩家: {}"_trf(
-                player,
-                ptr->getName(),
-                ptr->getId(),
-                info.has_value() ? info->name : ptr->getOwner()
-            ),
-            [ptr](Player& self) { LandManagerGUI::sendMainMenu(self, ptr); }
-        );
-    }
-
-    fm.sendTo(player);
 }
 
 

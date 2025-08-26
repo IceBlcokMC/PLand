@@ -1,25 +1,11 @@
 #pragma once
 #include "pland/Global.h"
-#include "pland/land/Land.h"
 #include "pland/gui/form/BackSimpleForm.h"
 
 
 class Player;
 
 namespace land {
-
-class ChooseLandUtilGUI {
-public:
-    ChooseLandUtilGUI() = delete;
-
-    using ChooseCallback = std::function<void(Player&, SharedLand choosedLand)>;
-    [[deprecated]] LDAPI static void sendTo(
-        Player&                          player,
-        ChooseCallback const&            callback,
-        bool                             showShredLand = false,
-        BackSimpleForm<>::ButtonCallback back          = {}
-    );
-};
 
 
 class ChooseOnlinePlayerUtilGUI {
@@ -44,15 +30,6 @@ public:
         string const&    defaultValu, // 默认值
         EditStringResult callback     // 回调
     );
-};
-
-
-class FuzzySerarchUtilGUI {
-public:
-    FuzzySerarchUtilGUI() = delete;
-
-    using CallBack = std::function<void(Player& slef, std::vector<SharedLand> result)>;
-    LDAPI static void sendTo(Player& player, std::vector<SharedLand> list, CallBack callback);
 };
 
 

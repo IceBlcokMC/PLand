@@ -26,7 +26,6 @@ void LandMainMenuGUI::sendTo(Player& player) {
     });
 
     fm.appendButton("管理领地"_trf(player), "textures/ui/icon_spring", "path", [](Player& pl) {
-        // ChooseLandUtilGUI::sendTo(pl, LandManagerGUI::sendMainMenu, false, BackSimpleForm<>::makeCallback<sendTo>());
         ChooseLandAdvancedUtilGUI::sendTo(
             pl,
             PLand::getInstance().getLandRegistry()->getLands(pl.getUuid().asString()),
