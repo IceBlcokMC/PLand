@@ -15,6 +15,7 @@
 #include "pland/utils/JSON.h"
 #include "pland/utils/Utils.h"
 #include <algorithm>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <ctime>
@@ -273,23 +274,22 @@ LandRegistry::LandRegistry() {
 
     lock.unlock();
     mThread = std::thread([this]() {
-        static std::time_t lastSaveTime = std::time(nullptr);
-        while (!mThreadStopFlag) {
-            std::this_thread::sleep_for(std::chrono::seconds(5)); // 5秒检查一次 & 2分钟保存一次
-            if (std::time(nullptr) - lastSaveTime < 120) continue;
-            lastSaveTime = std::time(nullptr); // 更新时间
-
-            if (!mThreadStopFlag) {
-                land::PLand::getInstance().getSelf().getLogger().debug("[Thread] Saving land data...");
-                this->save();
-                land::PLand::getInstance().getSelf().getLogger().debug("[Thread] Land data saved.");
-            } else break;
+        while (!mThreadQuit) {
+            std::unique_lock<std::mutex> lk(mThreadMutex);
+            if (mThreadCV.wait_for(lk, std::chrono::minutes(2), [this] { return mThreadQuit.load(); })) {
+                break; // 被 stop 唤醒
+            }
+            lk.unlock();
+            land::PLand::getInstance().getSelf().getLogger().debug("[Thread] Saving land data...");
+            this->save();
+            land::PLand::getInstance().getSelf().getLogger().debug("[Thread] Land data saved.");
         }
     });
 }
 
 LandRegistry::~LandRegistry() {
-    mThreadStopFlag = true;
+    mThreadQuit = true;
+    mThreadCV.notify_all(); // 唤醒线程
     if (mThread.joinable()) mThread.join();
 }
 

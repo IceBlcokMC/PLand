@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 修复移除子领地时可能的崩溃 @engsr6982
 - 修复创建子领地 `land.subLand.minSpacingIncludeY` 配置项未生效问题 @engsr6982
 
+### 🧩 权限与逻辑优化
+
+- 优化 `LandRegistry` 线程析构逻辑，降低 Mod 关闭时的等待时间 @engsr6982
+
 ## [0.12.0] - 2025-8-4
 
 ### ✨ 新增功能

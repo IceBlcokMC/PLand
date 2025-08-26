@@ -7,6 +7,7 @@
 #include "pland/land/Land.h"
 #include <atomic>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -37,11 +38,13 @@ class LandRegistry final {
     std::unordered_map<UUIDs, PlayerSettings> mPlayerSettings;                 // 玩家设置
     std::unordered_map<LandID, SharedLand>    mLandCache;                      // 领地缓存
     mutable std::shared_mutex                 mMutex;                          // 读写锁
-    std::thread                               mThread;                         // 线程
-    std::atomic<bool>                         mThreadStopFlag{false};          // 线程停止标志
     std::unique_ptr<LandIdAllocator>          mLandIdAllocator{nullptr};       // 领地ID分配器
     LandDimensionChunkMap                     mDimensionChunkMap;              // 维度区块映射
     std::unique_ptr<LandTemplatePermTable>    mLandTemplatePermTable{nullptr}; // 领地模板权限表
+    std::thread                               mThread;                         // 线程
+    std::atomic<bool>                         mThreadQuit{false};              // 线程退出标志
+    mutable std::mutex                        mThreadMutex;                    // 线程互斥锁(仅 mThreadCV 使用)
+    std::condition_variable                   mThreadCV;                       // 线程条件变量
 
     friend class DataConverter;
 
