@@ -110,12 +110,13 @@ GeoId DebugShapeHandle::draw(LandAABB const& aabb, DimensionType dimId, mce::Col
 }
 
 void DebugShapeHandle::draw(std::shared_ptr<Land> const& land, mce::Color const& color) {
+    if (impl_->mLandShapes.contains(land->getId())) {
+        return; // 已经绘制过
+    }
     auto box = std::make_unique<FixedBox>(land->getAABB());
     box->setColor(color);
     box->draw(land->getDimensionId());
-
-    auto id = box->getId();
-    impl_->mLandShapes.emplace(id, std::move(box));
+    impl_->mLandShapes.emplace(land->getId(), std::move(box));
 }
 
 void DebugShapeHandle::remove(GeoId id) {
