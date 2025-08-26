@@ -10,7 +10,7 @@ namespace land {
 
 class ChooseLandAdvancedUtilGUI {
     class Impl;
-    std::shared_ptr<Impl> impl_;
+    Impl* impl_;
 
 public:
     using ChooseCallback = std::function<void(Player&, SharedLand choosedLand)>;
