@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 修复子领地爆炸权限无效 #133 @yangyangzhong82
 - 修复拦截液体流动导致刷物品问题 @engsr6982
 - 修复移除子领地时可能的崩溃 @engsr6982
+- 修复创建子领地 `land.subLand.minSpacingIncludeY` 配置项未生效问题 @engsr6982
 
 ## [0.12.0] - 2025-8-4
 

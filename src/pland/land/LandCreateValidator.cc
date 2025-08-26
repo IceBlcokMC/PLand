@@ -94,9 +94,11 @@ LandCreateValidator::isLandRangeLegal(LandAABB const& range, LandDimid dimid, bo
             "LandCreateValidator::isLandRangeLegal: dimension {} is not found",
             dimid
         );
-        return std::unexpected(ErrorContext{
-            .code = ErrorCode::Undefined,
-        });
+        return std::unexpected(
+            ErrorContext{
+                .code = ErrorCode::Undefined,
+            }
+        );
     }
 
     if (length < squareRange.min || width < squareRange.min) {
@@ -163,7 +165,8 @@ LandCreateValidator::isSubLandPositionLegal(SharedLand const& land, LandAABB con
     }
 
     auto const& minSpacing = Config::cfg.land.subLand.minSpacing;
-    auto        expanded   = subRange.expanded(minSpacing, !Config::cfg.land.subLand.minSpacingIncludeY);
+    bool const  ignoreY    = !Config::cfg.land.subLand.minSpacingIncludeY;
+    auto        expanded   = subRange.expanded(minSpacing, ignoreY);
 
     auto family  = land->getFamilyTree();       // 整个领地家族
     auto parents = land->getSelfAndAncestors(); // 相对于 land 的所有父领地
@@ -183,7 +186,7 @@ LandCreateValidator::isSubLandPositionLegal(SharedLand const& land, LandAABB con
             // 子领地与家族内其他领地冲突
             return std::unexpected(ErrorContext::landRangeWithOtherCollision(member));
         }
-        if (!LandAABB::isComplisWithMinSpacing(memberAABB, expanded, minSpacing)) {
+        if (!LandAABB::isComplisWithMinSpacing(memberAABB, expanded, minSpacing, ignoreY)) {
             // 子领地与家族内其他领地间距过小
             return std::unexpected(
                 ErrorContext::landSpacingTooSmall(member, LandAABB::getMinSpacing(memberAABB, expanded), minSpacing)

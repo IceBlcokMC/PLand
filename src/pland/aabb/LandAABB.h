@@ -129,7 +129,8 @@ public:
     /**
      * @brief 判断两个AABB是否满足最小间距要求
      */
-    LDNDAPI static bool isComplisWithMinSpacing(LandAABB const& pos1, LandAABB const& pos2, int minSpacing);
+    LDNDAPI static bool
+    isComplisWithMinSpacing(LandAABB const& pos1, LandAABB const& pos2, int minSpacing, bool ignoreY = false);
 
     /**
      * @brief 判断一个 AABB 区域是否完整包含另一个 AABB 区域

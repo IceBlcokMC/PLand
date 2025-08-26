@@ -164,7 +164,7 @@ bool LandAABB::isCollision(const LandAABB& pos1, const LandAABB& pos2) {
         || pos1.max.z < pos2.min.z || pos1.min.z > pos2.max.z
     );
 }
-bool LandAABB::isComplisWithMinSpacing(const LandAABB& pos1, const LandAABB& pos2, int minSpacing) {
+bool LandAABB::isComplisWithMinSpacing(const LandAABB& pos1, const LandAABB& pos2, int minSpacing, bool ignoreY) {
     // 检查 X 轴
     int xDist = std::min(std::abs(pos1.max.x - pos2.min.x), std::abs(pos2.max.x - pos1.min.x));
     if (xDist < minSpacing) return false;
@@ -174,8 +174,10 @@ bool LandAABB::isComplisWithMinSpacing(const LandAABB& pos1, const LandAABB& pos
     if (zDist < minSpacing) return false;
 
     // 检查 Y 轴
-    int yDist = std::min(std::abs(pos1.max.y - pos2.min.y), std::abs(pos2.max.y - pos1.min.y));
-    if (yDist < minSpacing) return false;
+    if (!ignoreY) {
+        int yDist = std::min(std::abs(pos1.max.y - pos2.min.y), std::abs(pos2.max.y - pos1.min.y));
+        if (yDist < minSpacing) return false;
+    }
 
     return true;
 }
