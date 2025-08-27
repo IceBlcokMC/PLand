@@ -81,38 +81,38 @@ struct Config {
     } selector;
 
     struct {
-        bool PlayerDestroyBlockEvent{true};                   // 玩家破坏方块事件
-        bool PlayerPlacingBlockEvent{true};                   // 玩家放置方块事件
-        bool PlayerInteractBlockEvent{true};                  // 玩家交互方块事件(使用物品)
-        bool FireSpreadEvent{true};                           // 火势蔓延事件
-        bool PlayerAttackEvent{true};                         // 玩家攻击事件
-        bool PlayerPickUpItemEvent{true};                     // 玩家拾取物品事件
-        bool PlayerAttackBlockBeforeEvent{true};              // 玩家攻击方块事件
-        bool ArmorStandSwapItemBeforeEvent{true};             // 盔甲架交换物品事件
-        bool PlayerDropItemBeforeEvent{true};                 // 玩家丢弃物品事件
-        bool ActorRideBeforeEvent{true};                      // 实体骑乘事件
-        bool ExplosionBeforeEvent{true};                      // 爆炸事件
-        bool FarmDecayBeforeEvent{true};                      // 农田枯萎事件
-        bool MobHurtEffectBeforeEvent{true};                  // 生物受伤效果事件
-        bool PistonPushBeforeEvent{true};                     // 活塞推动事件
-        bool PlayerOperatedItemFrameBeforeEvent{true};        // 玩家操作物品展示框事件
-        bool ActorTriggerPressurePlateBeforeEvent{true};      // 实体触发压力板事件
-        bool ProjectileCreateBeforeEvent{true};               // 投掷物创建事件
-        bool RedstoneUpdateBeforeEvent{true};                 // 红石更新事件
-        bool WitherDestroyBeforeEvent{true};                  // 凋零破坏事件
-        bool MossGrowthBeforeEvent{true};                     // 苔藓生长事件
-        bool LiquidTryFlowBeforeEvent{true};                  // 液体尝试流动事件
-        bool SculkBlockGrowthBeforeEvent{true};               // 诡秘方块生长事件
-        bool SculkSpreadBeforeEvent{true};                    // 诡秘蔓延事件
-        bool PlayerEditSignBeforeEvent{true};                 // 玩家编辑告示牌事件
-        bool SpawnedMobEvent{true};                           // 生物生成事件(怪物和动物)
-        bool SculkCatalystAbsorbExperienceBeforeEvent{false}; // 幽匿催化体吸收经验事件
-        bool PlayerInteractEntityBeforeEvent{true};           // 实体交互事件
-        bool BlockFallBeforeEvent{true};                      // 方块下落事件
-        bool ActorDestroyBlockEvent{true};                    // 实体破坏方块事件
-        bool EndermanLeaveBlockEvent{true};                   // 末影人搬走方块
-        bool EndermanTakeBlockEvent{true};                    // 末影人放下方块
-        bool DragonEggBlockTeleportBeforeEvent{true};         // 龙蛋传送事件
+        bool PlayerDestroyBlockEvent{true};                   // 玩家破坏方块
+        bool PlayerPlacingBlockEvent{true};                   // 玩家放置方块
+        bool PlayerInteractBlockEvent{true};                  // 玩家交互方块
+        bool FireSpreadEvent{true};                           // 火焰蔓延
+        bool PlayerAttackEvent{true};                         // 玩家攻击
+        bool PlayerPickUpItemEvent{true};                     // 玩家拾取物品
+        bool PlayerAttackBlockBeforeEvent{true};              // 玩家攻击方块
+        bool ArmorStandSwapItemBeforeEvent{true};             // 盔甲架交换物品
+        bool PlayerDropItemBeforeEvent{true};                 // 玩家丢弃物品
+        bool ActorRideBeforeEvent{true};                      // 实体骑乘
+        bool ExplosionBeforeEvent{true};                      // 爆炸
+        bool FarmDecayBeforeEvent{true};                      // 农田退化
+        bool MobHurtEffectBeforeEvent{true};                  // 生物受伤效果
+        bool PistonPushBeforeEvent{true};                     // 活塞推动
+        bool PlayerOperatedItemFrameBeforeEvent{true};        // 玩家操作物品展示框
+        bool ActorTriggerPressurePlateBeforeEvent{true};      // 实体触发压力板
+        bool ProjectileCreateBeforeEvent{true};               // 投掷物创建
+        bool RedstoneUpdateBeforeEvent{true};                 // 红石更新
+        bool WitherDestroyBeforeEvent{true};                  // 凋零破坏
+        bool MossGrowthBeforeEvent{true};                     // 苔藓生长
+        bool LiquidTryFlowBeforeEvent{true};                  // 液体尝试流动
+        bool SculkBlockGrowthBeforeEvent{true};               // 幽匿方块生长
+        bool SculkSpreadBeforeEvent{true};                    // 幽匿蔓延
+        bool PlayerEditSignBeforeEvent{true};                 // 玩家编辑告示牌
+        bool SpawnedMobEvent{true};                           // 生物生成
+        bool SculkCatalystAbsorbExperienceBeforeEvent{false}; // 幽匿催化体吸收经验
+        bool PlayerInteractEntityBeforeEvent{true};           // 玩家交互实体
+        bool BlockFallBeforeEvent{true};                      // 方块下落
+        bool ActorDestroyBlockEvent{true};                    // 实体破坏方块
+        bool EndermanLeaveBlockEvent{true};                   // 末影人放下方块
+        bool EndermanTakeBlockEvent{true};                    // 末影人拿走方块
+        bool DragonEggBlockTeleportBeforeEvent{true};         // 龙蛋传送
     } listeners;
 
     struct {
