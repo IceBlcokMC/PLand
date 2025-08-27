@@ -27,7 +27,13 @@
     "setupDrawCommand": true, // 是否注册领地范围绘制指令
     "drawRange": 64, // 绘制查询领地范围
 
-    "drawHandleBackend": "MinecraftDebugShape", // v0.13.0: 领地绘制后端 DefaultParticle / BedrockServerClientInterfaceMod / MinecraftDebugShape
+    // v0.13.0 新增
+    // 领地绘制后端，不同的后端在性能和效果上有所不同
+    // DefaultParticle: 默认粒子效果 (基于点粒子, 性能较差)
+    // BedrockServerClientInterfaceMod: 外部模组使用自定义粒子材质包 (性能较好, 但需要安装 BedrockServerClientInterface 模组和配套材质包)
+    // MinecraftDebugShape: 基于 Minecraft 内置的 DebugShape (性能好, 无外部依赖, Minecraft 原生功能)
+    // 默认情况下使用 MinecraftDebugShape 作为后端，因为其性能较好且无外部依赖 (如果您有更好的方案, 请提交 Issue 或 Pull Request)
+    "drawHandleBackend": "MinecraftDebugShape",
 
     "subLand": {
       "enabled": true, // 是否启用子领地
