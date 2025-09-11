@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🧹 其他改动
+
+- 移除 `debug_shape` 相关封装，改为外部独立 **DebugShape.dll** 组件
+
 ## [0.13.0] - 2025-8-27
 
 ### ✨ 新增功能

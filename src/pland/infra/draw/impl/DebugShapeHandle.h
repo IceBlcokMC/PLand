@@ -25,6 +25,8 @@ public:
     LDAPI void clear() override;
 
     LDAPI void clearLand() override;
+
+    LDAPI static bool isDebugShapeLoaded();
 };
 
 } // namespace land

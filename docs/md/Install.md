@@ -39,6 +39,7 @@ lip install --upgrade github.com/engsr6982/PLand
 | iListenAttentively           | [GitHub](https://github.com/MiracleForest/iListenAttentively-Release) |   必须   | 事件库                                                          |
 | BedrockServerClientInterface | [GitHub](https://github.com/OEOTYAN/BedrockServerClientInterface)     |   可选   | `drawHandleBackend` 为 `BedrockServerClientInterfaceMod` 时需要 |
 | LegacyMoney                  | [GitHub](https://github.com/LiteLDev/LegacyMoney)                     |   可选   | `economy.kit` 为 `LegacyMoney` 时需要                           |
+| DebugShape                   | [Github](https://github.com/engsr6982/DebugShape)                     |   可选   | `drawHandleBackend: MinecraftDebugShape` 时需要                 |
 
 > 您需要手动下载对应版本的前置组件  
 > 在下载前置组件时，请确保您下载的版本与 PLand 的版本兼容  

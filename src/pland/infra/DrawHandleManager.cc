@@ -15,15 +15,33 @@ namespace land {
 
 DrawHandleManager::DrawHandleManager() {
     auto& logger = PLand::getInstance().getSelf().getLogger();
-    if (Config::cfg.land.drawHandleBackend == DrawHandleBackend::BedrockServerClientInterfaceMod
-        && !BsciDrawHandle::isBsciModuleLoaded()) {
-        logger.warn(
-            "[DrawHandleManager] The BedrockServerClientInterface module is not loaded, and the plugin uses "
-            "the built-in particle system!"
-        );
-        logger.warn("[DrawHandleManager] BedrockServerClientInterface 模块未加载，插件将使用内置粒子系统!");
-        Config::cfg.land.drawHandleBackend = DrawHandleBackend::DefaultParticle;
-        Config::trySave();
+    switch (Config::cfg.land.drawHandleBackend) {
+    case DrawHandleBackend::BedrockServerClientInterfaceMod: {
+        if (!BsciDrawHandle::isBsciModuleLoaded()) {
+            logger.warn(
+                "[DrawHandleManager] The BedrockServerClientInterface module is not loaded, and the plugin uses "
+                "the built-in particle system!"
+            );
+            logger.warn("[DrawHandleManager] BedrockServerClientInterface 模块未加载，插件将使用内置粒子系统!");
+            Config::cfg.land.drawHandleBackend = DrawHandleBackend::DefaultParticle;
+            Config::trySave();
+        }
+        break;
+    }
+    case DrawHandleBackend::MinecraftDebugShape: {
+        if (!DebugShapeHandle::isDebugShapeLoaded()) {
+            logger.warn(
+                "[DrawHandleManager] The DebugShape module is not loaded, and the plugin uses the built-in particle "
+                "system!"
+            );
+            logger.warn("[DrawHandleManager] DebugShape 模块未加载，插件将使用内置粒子系统!");
+            Config::cfg.land.drawHandleBackend = DrawHandleBackend::DefaultParticle;
+            Config::trySave();
+        }
+        break;
+    }
+    default:
+        break;
     }
 }
 

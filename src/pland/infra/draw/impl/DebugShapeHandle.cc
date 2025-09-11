@@ -4,9 +4,7 @@
 #include "pland/Global.h"
 #include "pland/aabb/LandAABB.h"
 #include "pland/infra/draw/IDrawHandle.h"
-#include "pland/infra/draw/impl/debug_shape/DebugShape.h"
 #include "pland/land/Land.h"
-#include <array>
 #include <cassert>
 #include <cstdint>
 #include <mc/deps/core/utility/AutomaticID.h>
@@ -14,84 +12,69 @@
 #include <unordered_map>
 #include <utility>
 
+#include "fake_header/DebugShape.h"
+
+#include "windows.h"
 
 namespace land {
 
+#ifndef _MSC_VER
+#error "This code only supports MSVC"
+#endif
 
-class FixedBox {
-    static constexpr auto LineNum = 12;
+inline constexpr auto DebugShapeModuleName = L"DebugShape.dll";
+inline constexpr auto DebugShapeBoundsBoxCtorSymbol =
+    "??0BoundsBox@extension@debug_shape@@QEAA@AEBVAABB@@AEBVColor@mce@@@Z";
 
-    GeoId                                                        mId{};
-    std::array<std::unique_ptr<debug_shape::DebugLine>, LineNum> mLines{};
+// MSVC placement new abi
+using DebugShapeBoundsBoxCtor =
+    void (*)(debug_shape::extension::BoundsBox* thiz, AABB const& aabb, mce::Color const& color);
 
-    static uint64_t getNextId() {
-        static uint64_t id{1};
-        return id++;
+bool isDebugShapeLoaded() { return GetModuleHandle(DebugShapeModuleName) != nullptr; }
+
+struct BoundsBoxDeleter {
+    void operator()(debug_shape::extension::BoundsBox* ptr) {
+        ptr->~BoundsBox();
+        ::operator delete(ptr);
     }
-
-    AABB fixAABB(LandPos const& min, LandPos const& max) {
-        return AABB{
-            Vec3{min.x + 0.08, min.y + 0.08, min.z + 0.08},
-            Vec3{max.x + 0.98, max.y + 0.98, max.z + 0.98}
-        };
-    }
-    std::vector<std::pair<Vec3, Vec3>> getEdgesWithOffset(LandAABB const& aabb) {
-        auto faabb = fixAABB(aabb.min, aabb.max);
-        return {
-            // bottom
-            {                              faabb.min, {faabb.min.x, faabb.min.y, faabb.max.z}},
-            {{faabb.max.x, faabb.min.y, faabb.min.z}, {faabb.max.x, faabb.min.y, faabb.max.z}},
-            {{faabb.min.x, faabb.max.y, faabb.min.z}, {faabb.min.x, faabb.max.y, faabb.max.z}},
-            {{faabb.max.x, faabb.max.y, faabb.min.z},                               faabb.max},
-            // top
-            {                              faabb.min, {faabb.max.x, faabb.min.y, faabb.min.z}},
-            {{faabb.min.x, faabb.max.y, faabb.min.z}, {faabb.max.x, faabb.max.y, faabb.min.z}},
-            {{faabb.min.x, faabb.min.y, faabb.max.z}, {faabb.max.x, faabb.min.y, faabb.max.z}},
-            {{faabb.min.x, faabb.max.y, faabb.max.z},                               faabb.max},
-            // side
-            {                              faabb.min, {faabb.min.x, faabb.max.y, faabb.min.z}},
-            {{faabb.max.x, faabb.min.y, faabb.min.z}, {faabb.max.x, faabb.max.y, faabb.min.z}},
-            {{faabb.min.x, faabb.min.y, faabb.max.z}, {faabb.min.x, faabb.max.y, faabb.max.z}},
-            {{faabb.max.x, faabb.min.y, faabb.max.z},                               faabb.max},
-        };
-    }
-
-public:
-    LD_DISALLOW_COPY(FixedBox);
-    explicit FixedBox(LandAABB const& aabb) : mId(getNextId()) {
-        // 获取偏移后的边，保证 Box 始终能精确显示范围
-        auto edges = getEdgesWithOffset(aabb);
-        assert(edges.size() == LineNum);
-        for (int i = 0; i < LineNum; ++i) {
-            mLines[i] = std::make_unique<debug_shape::DebugLine>(edges[i].first, edges[i].second);
-        }
-    }
-    ~FixedBox() { remove(); }
-
-    void setColor(mce::Color const& color) {
-        for (auto& line : mLines) {
-            line->setColor(color);
-        }
-    }
-
-    void draw(DimensionType dimId) {
-        for (auto& line : mLines) {
-            line->draw(dimId);
-        }
-    }
-
-    void remove() {
-        for (auto& line : mLines) {
-            line->remove();
-        }
-    }
-
-    GeoId getId() const { return mId; }
 };
 
+using UniqueBoundsBox = std::unique_ptr<debug_shape::extension::BoundsBox, BoundsBoxDeleter>;
+
+UniqueBoundsBox newBoundsBox(AABB const& aabb, mce::Color const& color = mce::Color::WHITE()) {
+    if (!isDebugShapeLoaded()) {
+        throw std::runtime_error("DebugShape.dll not loaded");
+    }
+    auto raw = GetProcAddress(GetModuleHandle(DebugShapeModuleName), DebugShapeBoundsBoxCtorSymbol);
+    if (!raw) {
+        throw std::runtime_error("Failed to get address of DebugShapeBoundsBoxCtor");
+    }
+
+    auto ctor = reinterpret_cast<DebugShapeBoundsBoxCtor>(raw);
+
+    void* memory = ::operator new(sizeof(debug_shape::extension::BoundsBox));
+    ctor(reinterpret_cast<debug_shape::extension::BoundsBox*>(memory), aabb, color);
+
+    return UniqueBoundsBox(reinterpret_cast<debug_shape::extension::BoundsBox*>(memory));
+}
+
+inline AABB toMinecraftAABB(LandPos const& min, LandPos const& max) {
+    return AABB{
+        Vec3{min.x + 0.08, min.y + 0.08, min.z + 0.08},
+        Vec3{max.x + 0.98, max.y + 0.98, max.z + 0.98}
+    };
+}
+inline AABB toMinecraftAABB(LandAABB const& aabb) { return toMinecraftAABB(aabb.min, aabb.max); }
+
+inline GeoId allocatedID() {
+    static uint64_t next{1};
+    return GeoId{next++};
+}
+
+
 struct DebugShapeHandle::Impl {
-    std::unordered_map<GeoId, std::unique_ptr<FixedBox>>  mShapes;     // 绘制的形状
-    std::unordered_map<LandID, std::unique_ptr<FixedBox>> mLandShapes; // 绘制的领地
+    std::unordered_map<GeoId, UniqueBoundsBox>  mShapes;     // 绘制的形状
+    std::unordered_map<LandID, UniqueBoundsBox> mLandShapes; // 绘制的领地
 };
 
 
@@ -100,11 +83,11 @@ DebugShapeHandle::DebugShapeHandle() : impl_(std::make_unique<Impl>()) {}
 DebugShapeHandle::~DebugShapeHandle() = default;
 
 GeoId DebugShapeHandle::draw(LandAABB const& aabb, DimensionType dimId, mce::Color const& color) {
-    auto box = std::make_unique<FixedBox>(aabb);
+    auto box = newBoundsBox(toMinecraftAABB(aabb), color);
     box->setColor(color);
     box->draw(dimId);
 
-    auto id = box->getId();
+    auto id = allocatedID();
     impl_->mShapes.emplace(id, std::move(box));
     return id;
 }
@@ -113,7 +96,7 @@ void DebugShapeHandle::draw(std::shared_ptr<Land> const& land, mce::Color const&
     if (impl_->mLandShapes.contains(land->getId())) {
         return; // 已经绘制过
     }
-    auto box = std::make_unique<FixedBox>(land->getAABB());
+    auto box = newBoundsBox(toMinecraftAABB(land->getAABB()), color);
     box->setColor(color);
     box->draw(land->getDimensionId());
     impl_->mLandShapes.emplace(land->getId(), std::move(box));
@@ -141,6 +124,7 @@ void DebugShapeHandle::clear() {
 }
 
 void DebugShapeHandle::clearLand() { impl_->mLandShapes.clear(); }
+bool DebugShapeHandle::isDebugShapeLoaded() { return land::isDebugShapeLoaded(); }
 
 
 } // namespace land
