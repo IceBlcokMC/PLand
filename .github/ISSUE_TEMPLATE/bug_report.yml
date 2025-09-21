@@ -3,6 +3,22 @@ description: Create a report to help us improve | 创建一个报告来帮助我
 title: "[Bug]: "
 labels: ["bug"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!  
+        感谢您抽出时间填写此 Bug 报告！  
+
+        ⚠️ Note  
+        Bug fixes are usually handled from simple to complex, and we cannot guarantee that your issue belongs to the simple category.  
+        If the problem description is unclear or lacks necessary context, troubleshooting and fixing it later will be much more difficult, or even impossible to reproduce.  
+        Therefore, please provide as much detail as possible, including **the observed behavior, steps to reproduce, and your environment information**, to help us resolve the issue faster.  
+
+        ⚠️ 注意  
+        Bug 的修复通常会按照从易到难的顺序进行，我们无法保证您的问题属于简单范畴。  
+        如果问题描述不够清晰、缺乏必要的上下文信息，后续排查和修复将会更加困难，甚至可能无法重现。  
+        因此，请尽可能提供 **完整的现象描述、复现步骤和环境信息**，以帮助我们更快地解决问题。
+
   - type: textarea
     attributes:
       label: Describe the bug | 描述错误
