@@ -1,4 +1,5 @@
 #include "DefaultDrawHandle.h"
+#include "ll/api/chrono/GameChrono.h"
 #include "ll/api/coro/CoroTask.h"
 #include "ll/api/coro/InterruptableSleep.h"
 #include "ll/api/thread/ServerThreadExecutor.h"
@@ -83,7 +84,7 @@ public:
 
         ll::coro::keepThis([quit = mQuit, sleep = mSleep, this]() -> ll::coro::CoroTask<> {
             while (!quit->load()) {
-                co_await sleep->sleepFor(30_tick);
+                co_await sleep->sleepFor(ll::chrono::ticks{30});
                 if (quit->load()) {
                     break;
                 }

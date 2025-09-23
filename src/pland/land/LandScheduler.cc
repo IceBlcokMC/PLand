@@ -1,4 +1,5 @@
 #include "pland/land/LandScheduler.h"
+#include "ll/api/chrono/GameChrono.h"
 #include "ll/api/coro/CoroTask.h"
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/ListenerBase.h"
@@ -20,6 +21,7 @@
 #include <cstdio>
 #include <stdexcept>
 #include <vector>
+
 
 namespace land {
 
@@ -87,7 +89,7 @@ LandScheduler::LandScheduler() {
 
     ll::coro::keepThis([quit = mQuit, sleep = mEventSchedulingSleep, this]() -> ll::coro::CoroTask<> {
         while (!quit->load()) {
-            co_await sleep->sleepFor(5_tick);
+            co_await sleep->sleepFor(ll::chrono::ticks{5});
             if (quit->load()) {
                 break;
             }
@@ -115,7 +117,7 @@ LandScheduler::LandScheduler() {
     if (Config::cfg.land.tip.bottomContinuedTip) {
         ll::coro::keepThis([quit = mQuit, sleep = mLandTipSchedulingSleep, this]() -> ll::coro::CoroTask<> {
             while (!quit->load()) {
-                co_await sleep->sleepFor(Config::cfg.land.tip.bottomTipFrequency * 20_tick);
+                co_await sleep->sleepFor(Config::cfg.land.tip.bottomTipFrequency * ll::chrono::ticks{20});
                 if (quit->load()) {
                     break;
                 }

@@ -1,12 +1,10 @@
 #pragma once
-#include "ll/api/chrono/GameChrono.h"
 #include "ll/api/coro/CoroTask.h"
 #include "ll/api/i18n/I18n.h"
 #include "mc/legacy/ActorUniqueID.h"
 #include "mc/platform/UUID.h"
 #include <atomic>
 #include <expected>
-#include <optional>
 #include <type_traits>
 #include <unordered_map>
 
@@ -86,7 +84,6 @@ namespace land {
 using string = std::string;
 using ll::i18n_literals::operator""_tr;
 using ll::i18n_literals::operator""_trf;    // 自定义 i18n 字符串格式化, 从玩家设置中获取语言代码
-using ll::chrono_literals::operator""_tick; // 1s = 20_tick
 } // namespace land
 
 
