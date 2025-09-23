@@ -6,7 +6,7 @@ add_repositories("miracleforest-repo https://github.com/MiracleForest/xmake-repo
 
 
 -- LeviMc(LiteLDev)
-add_requires("levilamina 1.4.1", {configs = {target_type = "server"}})
+add_requires("levilamina 1.5.1", {configs = {target_type = "server"}})
 add_requires("levibuildscript")
 
 -- MiracleForest

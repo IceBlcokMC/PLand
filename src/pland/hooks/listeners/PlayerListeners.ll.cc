@@ -249,7 +249,7 @@ void EventListener::registerLLPlayerListeners() {
             logger->debug("[InteractBlock] Item checks passed.");
 
             if (block) {
-                auto const& legacyBlock = block->getLegacyBlock();
+                auto const& legacyBlock = block->getBlockType();
                 bool        blockCancel = false;
 
                 auto log_cancel = [&](const std::string& perm_name) {
