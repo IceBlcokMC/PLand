@@ -6,9 +6,14 @@
 #include "pland/aabb/LandAABB.h"
 #include "pland/infra/DirtyCounter.h"
 #include <cstdint>
+#include <optional>
 #include <unordered_set>
 #include <vector>
 
+
+namespace mce {
+class UUID;
+};
 
 namespace land {
 
@@ -31,6 +36,10 @@ private:
     LandContext  mContext;
     DirtyCounter mDirtyCounter;
 
+    // cache
+    mutable std::optional<mce::UUID>      mCacheOwner;
+    mutable std::unordered_set<mce::UUID> mCacheMembers;
+
     friend LandRegistry;
 
     SharedLand getSelfFromRegistry() const;
@@ -40,7 +49,7 @@ public:
 
     LDAPI explicit Land();
     LDAPI explicit Land(LandContext ctx);
-    LDAPI explicit Land(LandAABB const& pos, LandDimid dimid, bool is3D, UUIDs const& owner);
+    LDAPI explicit Land(LandAABB const& pos, LandDimid dimid, bool is3D, mce::UUID const& owner);
 
     template <typename... Args>
         requires std::constructible_from<Land, Args...>
@@ -70,13 +79,14 @@ public:
 
     LDAPI void setPermTable(LandPermTable permTable);
 
-    LDNDAPI UUIDs const& getOwner() const;
+    LDNDAPI mce::UUID const& getOwner() const;
 
-    LDAPI void setOwner(UUIDs const& uuid);
+    LDAPI void setOwner(mce::UUID const& uuid);
 
-    LDNDAPI std::vector<UUIDs> const& getMembers() const;
-    LDAPI void                        addLandMember(UUIDs const& uuid);
-    LDAPI void                        removeLandMember(UUIDs const& uuid);
+    LDNDAPI std::unordered_set<mce::UUID> const& getMembers() const;
+
+    LDAPI void addLandMember(mce::UUID const& uuid);
+    LDAPI void removeLandMember(mce::UUID const& uuid);
 
     LDNDAPI std::string const& getName() const;
 
@@ -92,9 +102,9 @@ public:
 
     LDNDAPI bool is3D() const;
 
-    LDNDAPI bool isOwner(UUIDs const& uuid) const;
+    LDNDAPI bool isOwner(mce::UUID const& uuid) const;
 
-    LDNDAPI bool isMember(UUIDs const& uuid) const;
+    LDNDAPI bool isMember(mce::UUID const& uuid) const;
 
     LDNDAPI bool isConvertedLand() const;
 
@@ -190,9 +200,9 @@ public:
     /**
      * @brief 获取一个玩家在当前领地所拥有的权限类别
      */
-    LDNDAPI LandPermType getPermType(UUIDs const& uuid) const;
+    LDNDAPI LandPermType getPermType(mce::UUID const& uuid) const;
 
-    LDAPI void updateXUIDToUUID(UUIDs const& ownerUUID); // xuid -> uuid
+    LDAPI void updateXUIDToUUID(mce::UUID const& ownerUUID); // xuid -> uuid
 
     LDAPI void load(nlohmann::json& json); // 加载数据
     LDAPI nlohmann::json dump() const;     // 导出数据
