@@ -22,13 +22,13 @@ class EditStringUtilGUI {
 public:
     EditStringUtilGUI() = delete;
 
-    using EditStringResult = std::function<void(Player& self, string result)>;
+    using EditStringResult = std::function<void(Player& self, std::string result)>;
     LDAPI static void sendTo(
-        Player&          player,
-        string const&    title,       // 标题
-        string const&    text,        // 提示
-        string const&    defaultValu, // 默认值
-        EditStringResult callback     // 回调
+        Player&            player,
+        std::string const& title,       // 标题
+        std::string const& text,        // 提示
+        std::string const& defaultValu, // 默认值
+        EditStringResult   callback     // 回调
     );
 };
 

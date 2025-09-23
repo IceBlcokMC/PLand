@@ -44,7 +44,7 @@ void LandManagerGUI::sendMainMenu(Player& player, SharedLand land) {
     auto fm = BackSimpleForm<>::make();
     fm.setTitle(PLUGIN_NAME + ("| 领地管理 [{}]"_trf(player, land->getId())));
 
-    string subContent;
+    std::string subContent;
     if (land->isParentLand()) {
         subContent = "下属子领地: {}"_trf(player, land->getSubLands().size());
     } else if (land->isMixLand()) {
@@ -332,7 +332,7 @@ void LandManagerGUI::sendEditLandNameGUI(Player& player, SharedLand const& ptr) 
         "修改领地名称"_trf(player),
         "请输入新的领地名称"_trf(player),
         ptr->getName(),
-        [ptr](Player& pl, string result) {
+        [ptr](Player& pl, std::string result) {
             ptr->setName(result);
             mc_utils::sendText(pl, "领地名称已更新!"_trf(pl));
         }
@@ -344,7 +344,7 @@ void LandManagerGUI::sendEditLandDescGUI(Player& player, SharedLand const& ptr) 
         "修改领地描述"_trf(player),
         "请输入新的领地描述"_trf(player),
         ptr->getDescribe(),
-        [ptr](Player& pl, string result) {
+        [ptr](Player& pl, std::string result) {
             ptr->setDescribe(result);
             mc_utils::sendText(pl, "领地描述已更新!"_trf(pl));
         }

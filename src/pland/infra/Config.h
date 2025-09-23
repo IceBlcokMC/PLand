@@ -37,12 +37,12 @@ struct Config {
         DrawHandleBackend drawHandleBackend{DrawHandleBackend::MinecraftDebugShape}; // 领地绘制后端
 
         struct {
-            bool   enabled{false};                              // 是否启用
-            int    maxNested{5};                                // 最大嵌套层数(默认5，最大16)
-            int    minSpacing{8};                               // 子领地之间的最小间距
-            int    minSpacingIncludeY{true};                    // 子领地之间的最小间距是否包含Y轴
-            int    maxSubLand{6};                               // 每个领地的最大子领地数量
-            string calculate{"(square * 8 + height * 20) * 0"}; // 价格公式
+            bool        enabled{false};                              // 是否启用
+            int         maxNested{5};                                // 最大嵌套层数(默认5，最大16)
+            int         minSpacing{8};                               // 子领地之间的最小间距
+            int         minSpacingIncludeY{true};                    // 子领地之间的最小间距是否包含Y轴
+            int         maxSubLand{6};                               // 每个领地的最大子领地数量
+            std::string calculate{"(square * 8 + height * 20) * 0"}; // 价格公式
         } subLand;
 
         struct {
@@ -54,13 +54,13 @@ struct Config {
         // 购买配置
         struct {
             struct {
-                bool   enabled{true};
-                string calculate{"square * 8 + height * 20"}; // 计算公式
+                bool        enabled{true};
+                std::string calculate{"square * 8 + height * 20"}; // 计算公式
             } threeDimensionl;
 
             struct {
-                bool   enabled{true};
-                string calculate{"square * 25"}; // 计算公式
+                bool        enabled{true};
+                std::string calculate{"square * 25"}; // 计算公式
             } twoDimensionl;
 
             struct {
@@ -76,7 +76,7 @@ struct Config {
     } land;
 
     struct {
-        string      tool{"minecraft:stick"}; // 工具
+        std::string tool{"minecraft:stick"}; // 工具
         std::string alias{"木棍"};           // 别名
     } selector;
 

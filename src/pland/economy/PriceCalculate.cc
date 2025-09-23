@@ -41,7 +41,7 @@ PriceCalculate::Variable PriceCalculate::Variable::make(int height, int width, i
 }
 
 
-double PriceCalculate::eval(string const& code, Variable const& variables) {
+double PriceCalculate::eval(std::string const& code, Variable const& variables) {
     exprtk::symbol_table<double> symbols;
 
     for (auto const& [key, value] : variables.get()) {

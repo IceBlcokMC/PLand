@@ -46,8 +46,8 @@ class iLandConverter : public DataConverter {
 public:
     // relationship.json
     struct RawRelationShip {
-        int                                             version;
-        std::unordered_map<string, std::vector<string>> Owner; // key: xuid value: landid[]
+        int                                                       version;
+        std::unordered_map<std::string, std::vector<std::string>> Owner; // key: xuid value: landid[]
     };
 
     // data.json
@@ -60,18 +60,18 @@ public:
             } range;
 
             struct {
-                string              nickname;
-                std::vector<int>    teleport;
-                bool                signtother;
-                bool                ev_farmland_decay;
-                string              describe;
-                bool                signbuttom;
-                bool                ev_explode;
-                bool                signtome;
-                bool                ev_piston_push;
-                bool                ev_fire_spread;
-                std::vector<string> share;
-                bool                ev_redstone_update;
+                std::string              nickname;
+                std::vector<int>         teleport;
+                bool                     signtother;
+                bool                     ev_farmland_decay;
+                std::string              describe;
+                bool                     signbuttom;
+                bool                     ev_explode;
+                bool                     signtome;
+                bool                     ev_piston_push;
+                bool                     ev_fire_spread;
+                std::vector<std::string> share;
+                bool                     ev_redstone_update;
             } settings;
 
             struct {
@@ -132,21 +132,21 @@ public:
         };
 
     public:
-        int                               version;
-        std::unordered_map<string, iLand> Lands; // key: landid value: iLand
+        int                                    version;
+        std::unordered_map<std::string, iLand> Lands; // key: landid value: iLand
     };
 
 public:
-    string mRelationShipPath;
-    string mDataPath;
+    std::string mRelationShipPath;
+    std::string mDataPath;
 
     RawRelationShip mRelationShip;
     RawData         mData;
 
 public:
-    explicit iLandConverter(const string& relationShipPath, const string& dataPath, bool clear_db = false);
+    explicit iLandConverter(const std::string& relationShipPath, const std::string& dataPath, bool clear_db = false);
 
-    SharedLand convert(RawData::iLand const& raw, string const& xuid, std::optional<UUIDs> uuids);
+    SharedLand convert(RawData::iLand const& raw, std::string const& xuid, std::optional<UUIDs> uuids);
 
     bool execute() override;
 };

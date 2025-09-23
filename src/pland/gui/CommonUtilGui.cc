@@ -43,11 +43,11 @@ void ChooseOnlinePlayerUtilGUI::sendTo(
 
 
 void EditStringUtilGUI::sendTo(
-    Player&          player,
-    string const&    title,        // 标题
-    string const&    text,         // 提示
-    string const&    defaultValue, // 默认值
-    EditStringResult callback      // 回调
+    Player&            player,
+    std::string const& title,        // 标题
+    std::string const& text,         // 提示
+    std::string const& defaultValue, // 默认值
+    EditStringResult   callback      // 回调
 ) {
     CustomForm fm(PLUGIN_NAME + title);
     fm.appendInput("str", text, "string", defaultValue);
@@ -55,7 +55,7 @@ void EditStringUtilGUI::sendTo(
         if (!res.has_value()) {
             return;
         }
-        cb(pl, std::get<string>(res->at("str")));
+        cb(pl, std::get<std::string>(res->at("str")));
     });
 }
 

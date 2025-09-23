@@ -206,7 +206,7 @@ public:
                 delete thiz;
                 return;
             }
-            auto name = std::get<string>(res->at("name"));
+            auto name = std::get<std::string>(res->at("name"));
             if (name.empty()) {
                 return thiz->sendFuzzySearch(self); // 重新发送
             }

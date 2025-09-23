@@ -81,7 +81,6 @@ template <LL_I18N_STRING_LITERAL_TYPE Fmt>
 
 
 namespace land {
-using string = std::string;
 using ll::i18n_literals::operator""_tr;
 using ll::i18n_literals::operator""_trf;    // 自定义 i18n 字符串格式化, 从玩家设置中获取语言代码
 } // namespace land

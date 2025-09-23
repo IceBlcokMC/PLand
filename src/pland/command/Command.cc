@@ -314,9 +314,9 @@ static auto const Draw = [](CommandOrigin const& ori, CommandOutput& out, DrawPa
 
 
 struct ImportParam {
-    bool   clearDb;
-    string relationship_file;
-    string data_file;
+    bool        clearDb;
+    std::string relationship_file;
+    std::string data_file;
 };
 static auto const Import = [](CommandOrigin const& ori, CommandOutput& out, ImportParam const& param) {
     CHECK_TYPE(ori, out, CommandOriginType::DedicatedServer);

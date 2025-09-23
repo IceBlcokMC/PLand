@@ -14,7 +14,7 @@ void EditLandPermTableUtilGUI::sendTo(Player& player, const LandPermTable& table
 
     auto json = JSON::structTojson(table);
     for (auto& [k, v] : json.items()) {
-        fm.appendToggle(k, (string)i18n.get(k, localeCode), v);
+        fm.appendToggle(k, (std::string)i18n.get(k, localeCode), v);
     }
 
     fm.sendTo(

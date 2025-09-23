@@ -89,11 +89,13 @@ void NewLandGUI::sendConfirmPrecinctsYRange(Player& player, std::string const& e
     if (subSelector = selector->as<SubLandSelector>(); subSelector) {
         if (parentLand = subSelector->getParentLand(); parentLand) {
             auto& aabb = parentLand->getAABB();
-            fm.appendLabel("当前为子领地模式，子领地的Y轴范围不能超过父领地。\n父领地Y轴范围: {} ~ {}"_trf(
-                player,
-                aabb.min.y,
-                aabb.max.y
-            ));
+            fm.appendLabel(
+                "当前为子领地模式，子领地的Y轴范围不能超过父领地。\n父领地Y轴范围: {} ~ {}"_trf(
+                    player,
+                    aabb.min.y,
+                    aabb.max.y
+                )
+            );
         }
     }
 
@@ -107,8 +109,8 @@ void NewLandGUI::sendConfirmPrecinctsYRange(Player& player, std::string const& e
             return;
         }
 
-        string start = std::get<string>(res->at("start"));
-        string end   = std::get<string>(res->at("end"));
+        std::string start = std::get<std::string>(res->at("start"));
+        std::string end   = std::get<std::string>(res->at("end"));
 
         if (!isNumber(start) || !isNumber(end) || isOutOfRange(start) || isOutOfRange(end)) {
             sendConfirmPrecinctsYRange(pl, "请输入正确的Y轴范围"_trf(pl));
