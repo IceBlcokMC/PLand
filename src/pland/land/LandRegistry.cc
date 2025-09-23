@@ -60,7 +60,7 @@ void LandRegistry::_loadPlayerSettings() {
     }
 }
 
-void LandRegistry::_connectDatabaseAndCheckVersion() {
+void LandRegistry::_openDatabaseAndEnsureVersion() {
     auto&       self    = land::PLand::getInstance().getSelf();
     auto&       logger  = self.getLogger();
     auto const& dataDir = self.getDataDir();
@@ -128,7 +128,7 @@ void LandRegistry::_connectDatabaseAndCheckVersion() {
     }
 }
 
-void LandRegistry::_checkVersionAndTryAdaptBreakingChanges(nlohmann::json& landData) {
+void LandRegistry::_migrateLegacyKeysIfNeeded(nlohmann::json& landData) {
     constexpr int LANDDATA_NEW_POS_KEY_VERSION = 15; // 在此版本后，LandAABB 使用了新的键名
 
     if (landData["version"].get<int>() < LANDDATA_NEW_POS_KEY_VERSION) {
@@ -162,7 +162,7 @@ void LandRegistry::_loadLands() {
         if (!isLandData(key)) continue;
 
         auto json = JSON::parse(value);
-        _checkVersionAndTryAdaptBreakingChanges(json);
+        _migrateLegacyKeysIfNeeded(json);
 
         auto land = Land::make();
         land->load(json);
@@ -253,7 +253,7 @@ LandRegistry::LandRegistry() {
     auto& logger = land::PLand::getInstance().getSelf().getLogger();
 
     logger.trace("打开数据库...");
-    _connectDatabaseAndCheckVersion();
+    _openDatabaseAndEnsureVersion();
 
     auto lock = std::unique_lock<std::shared_mutex>(mMutex);
     logger.trace("加载操作员...");

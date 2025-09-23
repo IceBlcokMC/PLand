@@ -54,8 +54,8 @@ private: //! private 方法非线程安全
     void _loadLands();
     void _loadLandTemplatePermTable();
 
-    void _connectDatabaseAndCheckVersion();
-    void _checkVersionAndTryAdaptBreakingChanges(nlohmann::json& landData);
+    void _openDatabaseAndEnsureVersion();
+    void _migrateLegacyKeysIfNeeded(nlohmann::json& landData);
 
     void _buildDimensionChunkMap();
 
