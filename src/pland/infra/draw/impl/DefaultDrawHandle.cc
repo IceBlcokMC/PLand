@@ -37,7 +37,7 @@ class ParticleSpawner {
     }
 
 public:
-    LD_DISALLOW_COPY(ParticleSpawner);
+    LD_DISABLE_COPY(ParticleSpawner);
     ParticleSpawner(ParticleSpawner&&) noexcept            = default;
     ParticleSpawner& operator=(ParticleSpawner&&) noexcept = default;
 

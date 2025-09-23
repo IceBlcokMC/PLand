@@ -7,7 +7,7 @@ namespace land::internals {
 
 class IEconomyInterface {
 public:
-    LD_DISALLOW_COPY_AND_MOVE(IEconomyInterface);
+    LD_DISABLE_COPY_AND_MOVE(IEconomyInterface);
 
     LDAPI virtual ~IEconomyInterface() = default;
 

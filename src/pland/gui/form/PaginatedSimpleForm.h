@@ -65,7 +65,7 @@ private:
         std::string                mImageType;
         SimpleForm::ButtonCallback mCallback;
 
-        LD_DISALLOW_COPY(ButtonData);
+        LD_DISABLE_COPY(ButtonData);
         ButtonData(ButtonData&&) noexcept            = default;
         ButtonData& operator=(ButtonData&&) noexcept = default;
         LDAPI explicit ButtonData(std::string text, SimpleForm::ButtonCallback callback = {});
@@ -92,7 +92,7 @@ private:
         friend PaginatedSimpleForm;
 
     public:
-        LD_DISALLOW_COPY(Page);
+        LD_DISABLE_COPY(Page);
         Page(Page&&) noexcept            = default;
         Page& operator=(Page&&) noexcept = default;
         Page(std::unique_ptr<SimpleForm> form, std::map<int, ButtonData const&> indexMap);

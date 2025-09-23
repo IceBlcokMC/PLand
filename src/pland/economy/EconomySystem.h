@@ -23,7 +23,7 @@ class EconomySystem final {
 
 
 public:
-    LD_DISALLOW_COPY_AND_MOVE(EconomySystem);
+    LD_DISABLE_COPY_AND_MOVE(EconomySystem);
 
     LDNDAPI static EconomySystem& getInstance();
 

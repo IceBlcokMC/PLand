@@ -36,7 +36,7 @@ private:
     SharedLand getSelfFromRegistry() const;
 
 public:
-    LD_DISALLOW_COPY(Land);
+    LD_DISABLE_COPY(Land);
 
     LDAPI explicit Land();
     LDAPI explicit Land(LandContext ctx);

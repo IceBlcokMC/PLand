@@ -30,7 +30,7 @@ private:
 
 
 public:
-    LD_DISALLOW_COPY_AND_MOVE(LandScheduler);
+    LD_DISABLE_COPY_AND_MOVE(LandScheduler);
     LDAPI explicit LandScheduler();
     LDAPI ~LandScheduler();
 

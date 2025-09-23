@@ -22,7 +22,7 @@ class Player;
 
 #define LDNDAPI [[nodiscard]] LDAPI
 
-#define LD_DISALLOW_COPY(CLASS)                                                                                        \
+#define LD_DISABLE_COPY(CLASS)                                                                                         \
     CLASS(CLASS const&)            = delete;                                                                           \
     CLASS& operator=(CLASS const&) = delete;
 
@@ -30,7 +30,7 @@ class Player;
     CLASS(CLASS&&)            = delete;                                                                                \
     CLASS& operator=(CLASS&&) = delete;
 
-#define LD_DISALLOW_COPY_AND_MOVE(CLASS) LD_DISALLOW_COPY(CLASS) LD_DISALLOW_MOVE(CLASS)
+#define LD_DISABLE_COPY_AND_MOVE(CLASS) LD_DISABLE_COPY(CLASS) LD_DISALLOW_MOVE(CLASS)
 
 #define STATIC_ASSERT_AGGREGATE(TYPE) static_assert(std::is_aggregate_v<TYPE>, #TYPE " must be an aggregate type")
 
@@ -52,8 +52,8 @@ enum class LandPermType : int {
 };
 
 extern std::unordered_map<std::string, std::string> GlobalPlayerLocaleCodeCached;
-LDNDAPI extern std::string                          GetPlayerLocaleCodeFromSettings(Player& player
-                         ); // PLand::getInstance().getLandRegistry()->getPlayerLocaleCode
+LDNDAPI extern std::string
+GetPlayerLocaleCodeFromSettings(Player& player); // PLand::getInstance().getLandRegistry()->getPlayerLocaleCode
 
 
 inline int constexpr GlobalSubLandMaxNestedLevel = 16; // 子领地最大嵌套层数

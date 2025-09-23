@@ -16,7 +16,7 @@ class DrawHandleManager final {
     std::unique_ptr<IDrawHandle> createHandle() const;
 
 public:
-    LD_DISALLOW_COPY_AND_MOVE(DrawHandleManager);
+    LD_DISABLE_COPY_AND_MOVE(DrawHandleManager);
     explicit DrawHandleManager();
     ~DrawHandleManager();
 

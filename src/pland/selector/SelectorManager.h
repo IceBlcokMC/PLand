@@ -23,7 +23,7 @@ class SelectorManager final {
     LDAPI bool startSelectionImpl(std::unique_ptr<ISelector> selector);
 
 public:
-    LD_DISALLOW_COPY_AND_MOVE(SelectorManager);
+    LD_DISABLE_COPY_AND_MOVE(SelectorManager);
 
     explicit SelectorManager();
     ~SelectorManager();

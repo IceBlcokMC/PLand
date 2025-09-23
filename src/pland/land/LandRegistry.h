@@ -66,7 +66,7 @@ private: //! private 方法非线程安全
     Result<void, StorageLayerError::Error> _addLand(SharedLand land);
 
 public:
-    LD_DISALLOW_COPY_AND_MOVE(LandRegistry);
+    LD_DISABLE_COPY_AND_MOVE(LandRegistry);
     explicit LandRegistry();
     ~LandRegistry();
 

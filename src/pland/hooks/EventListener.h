@@ -33,7 +33,7 @@ class EventListener {
 
 
 public:
-    LD_DISALLOW_COPY(EventListener);
+    LD_DISABLE_COPY(EventListener);
 
     LDAPI explicit EventListener();
     LDAPI ~EventListener();

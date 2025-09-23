@@ -24,7 +24,7 @@ struct GeoId {
 
 class IDrawHandle {
 public:
-    LD_DISALLOW_COPY_AND_MOVE(IDrawHandle);
+    LD_DISABLE_COPY_AND_MOVE(IDrawHandle);
 
     LDAPI explicit IDrawHandle() = default;
     LDAPI virtual ~IDrawHandle() = default;
