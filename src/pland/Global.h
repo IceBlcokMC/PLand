@@ -6,7 +6,6 @@
 #include "mc/platform/UUID.h"
 #include <atomic>
 #include <expected>
-#include <filesystem>
 #include <optional>
 #include <type_traits>
 #include <unordered_map>
@@ -88,7 +87,6 @@ using string = std::string;
 using ll::i18n_literals::operator""_tr;
 using ll::i18n_literals::operator""_trf;    // 自定义 i18n 字符串格式化, 从玩家设置中获取语言代码
 using ll::chrono_literals::operator""_tick; // 1s = 20_tick
-namespace fs = std::filesystem;
 } // namespace land
 
 

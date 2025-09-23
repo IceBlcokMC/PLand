@@ -26,7 +26,7 @@ public:
     explicit DataConverter(bool clearDb = false);
     virtual ~DataConverter() = default;
 
-    std::unique_ptr<nlohmann::json> loadJson(fs::path const& file) const;
+    std::unique_ptr<nlohmann::json> loadJson(std::filesystem::path const& file) const;
 
     void writeToDb(SharedLand const& data);
 

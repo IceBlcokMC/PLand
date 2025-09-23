@@ -66,13 +66,17 @@ void LandRegistry::_connectDatabaseAndCheckVersion() {
     auto const& dataDir = self.getDataDir();
     auto const  dbDir   = dataDir / DbDirName;
 
-    bool const isNewCreatedDB = !fs::exists(dbDir); // 是否是新建的数据库
+    bool const isNewCreatedDB = !std::filesystem::exists(dbDir); // 是否是新建的数据库
 
     auto backup = [&]() {
         auto const backupDir =
             dataDir
             / ("backup_db_" + std::to_string(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
-        fs::copy(dbDir, backupDir, fs::copy_options::recursive | fs::copy_options::overwrite_existing);
+        std::filesystem::copy(
+            dbDir,
+            backupDir,
+            std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing
+        );
     };
 
     if (!mDB) {
