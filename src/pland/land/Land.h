@@ -42,6 +42,8 @@ private:
 
     friend LandRegistry;
 
+    void _initCache();
+
     SharedLand getSelfFromRegistry() const;
 
 public:

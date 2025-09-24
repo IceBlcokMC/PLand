@@ -24,9 +24,15 @@ Land::Land(LandAABB const& pos, LandDimid dimid, bool is3D, mce::UUID const& own
     mContext.mLandOwner     = owner.asString();
     mContext.mLandPermTable = PLand::getInstance().getLandRegistry()->getLandTemplatePermTable().get();
 
-    // init cache
+    _initCache();
+}
+
+void Land::_initCache() {
+    mCacheOwner = std::nullopt;
+    mCacheMembers.clear();
+
     if (!mContext.mOwnerDataIsXUID) {
-        mCacheOwner = mce::UUID{owner};
+        mCacheOwner = mce::UUID{mContext.mLandOwner};
     }
 
     mCacheMembers.reserve(mContext.mLandMembers.size());
@@ -299,7 +305,10 @@ void Land::updateXUIDToUUID(mce::UUID const& ownerUUID) {
     }
 }
 
-void           Land::load(nlohmann::json& json) { JSON::jsonToStruct(json, mContext); }
+void Land::load(nlohmann::json& json) {
+    JSON::jsonToStruct(json, mContext);
+    _initCache();
+}
 nlohmann::json Land::dump() const { return JSON::structTojson(mContext); }
 void           Land::save(bool force) {
     if (isDirty() || force) {
