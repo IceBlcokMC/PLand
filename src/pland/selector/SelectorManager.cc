@@ -115,7 +115,7 @@ ISelector* SelectorManager::getSelector(mce::UUID const& uuid) const {
 ISelector* SelectorManager::getSelector(Player& player) const { return getSelector(player.getUuid()); }
 
 bool SelectorManager::startSelectionImpl(std::unique_ptr<ISelector> selector) {
-    auto uuid = selector->getPlayer()->getUuid();
+    auto& uuid = selector->getPlayer()->getUuid();
     if (hasSelector(uuid)) {
         return false;
     }
