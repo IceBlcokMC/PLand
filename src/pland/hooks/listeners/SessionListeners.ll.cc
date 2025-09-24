@@ -10,6 +10,8 @@
 #include "pland/PLand.h"
 #include "pland/infra/DrawHandleManager.h"
 #include "pland/infra/draw/IDrawHandle.h"
+#include "pland/land/Land.h"
+#include "pland/land/LandContext.h"
 #include "pland/land/LandRegistry.h"
 #include "pland/land/LandScheduler.h"
 #include "pland/selector/SelectorManager.h"
@@ -26,14 +28,21 @@ void EventListener::registerLLSessionListeners() {
     mListenerPtrs.push_back(bus->emplaceListener<ll::event::PlayerJoinEvent>([db,
                                                                               logger](ll::event::PlayerJoinEvent& ev) {
         if (ev.self().isSimulatedPlayer()) return;
-        if (!db->hasPlayerSettings(ev.self().getUuid().asString())) {
-            db->setPlayerSettings(ev.self().getUuid().asString(), PlayerSettings{}); // 新玩家
+        if (!db->hasPlayerSettings(ev.self().getUuid())) {
+            db->setPlayerSettings(ev.self().getUuid(), PlayerSettings{}); // 新玩家
         }
 
-        auto lands = db->getLands(ev.self().getXuid()); // xuid 查询
+        auto xuid  = ev.self().getXuid();
+        auto lands = db->getLandsWhereRaw([&xuid](LandContext const& land) {
+            if (land.mOwnerDataIsXUID && land.mLandOwner == xuid) {
+                return true;
+            }
+            return false;
+        });
+
         if (!lands.empty()) {
             logger->info("Update land owner data from xuid to uuid for player {}", ev.self().getRealName());
-            auto uuid = ev.self().getUuid().asString();
+            auto& uuid = ev.self().getUuid();
             for (auto& land : lands) {
                 land->updateXUIDToUUID(uuid);
             }
@@ -45,10 +54,8 @@ void EventListener::registerLLSessionListeners() {
             if (player.isSimulatedPlayer()) return;
             logger->debug("Player {} disconnect, remove all resources");
 
-            auto& uuid    = player.getUuid();
-            auto  uuidStr = uuid.asString();
-
-            GlobalPlayerLocaleCodeCached.erase(uuidStr);
+            auto& uuid = player.getUuid();
+            GlobalPlayerLocaleCodeCached.erase(uuid);
             land::PLand::getInstance().getSelectorManager()->stopSelection(uuid);
             PLand::getInstance().getDrawHandleManager()->removeHandle(player);
         })

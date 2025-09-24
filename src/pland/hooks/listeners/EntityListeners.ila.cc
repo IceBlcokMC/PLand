@@ -92,7 +92,7 @@ void EventListener::registerILAEntityListeners() {
             }
             if (passenger.isPlayer()) {
                 auto player = passenger.getWeakEntity().tryUnwrap<Player>();
-                if (player.has_value() && PreCheckLandExistsAndPermission(land, player->getUuid().asString())) {
+                if (player.has_value() && PreCheckLandExistsAndPermission(land, player->getUuid())) {
                     return;
                 }
             }
@@ -112,7 +112,7 @@ void EventListener::registerILAEntityListeners() {
             if (!land) return;
 
             auto& player = static_cast<Player&>(hurtSource.value());
-            if (PreCheckLandExistsAndPermission(land, player.getUuid().asString())) return;
+            if (PreCheckLandExistsAndPermission(land, player.getUuid())) return;
 
             auto const& hurtActorTypeName = hurtActor.getTypeName();
             auto const& tab               = land->getPermTable();
@@ -141,7 +141,7 @@ void EventListener::registerILAEntityListeners() {
                 auto& entity = ev.self();
                 if (entity.isPlayer()) {
                     auto pl = entity.getWeakEntity().tryUnwrap<Player>();
-                    if (pl.has_value() && PreCheckLandExistsAndPermission(land, pl->getUuid().asString())) return;
+                    if (pl.has_value() && PreCheckLandExistsAndPermission(land, pl->getUuid())) return;
                 }
                 ev.cancel();
             }
@@ -161,7 +161,7 @@ void EventListener::registerILAEntityListeners() {
                 if (self.getOwnerEntityType() == ActorType::Player) {
                     if (mob->isPlayer()) {
                         auto pl = mob->getWeakEntity().tryUnwrap<Player>();
-                        if (pl.has_value() && PreCheckLandExistsAndPermission(land, pl->getUuid().asString())) return;
+                        if (pl.has_value() && PreCheckLandExistsAndPermission(land, pl->getUuid())) return;
                     }
                 }
                 if (land) {

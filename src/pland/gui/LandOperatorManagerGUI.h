@@ -16,10 +16,10 @@ public:
 
     LDAPI static void sendMainMenu(Player& player);
 
-    using ChoosePlayerCallback = std::function<void(Player& self, UUIDs const& target)>;
+    using ChoosePlayerCallback = std::function<void(Player& self, mce::UUID const& target)>;
     LDAPI static void sendChoosePlayerFromDb(Player& player, ChoosePlayerCallback callback);
 
-    LDAPI static void sendChooseLandGUI(Player& player, UUIDs const& targetPlayer);
+    LDAPI static void sendChooseLandGUI(Player& player, mce::UUID const& targetPlayer);
     LDAPI static void sendChooseLandAdvancedGUI(Player& player, std::vector<SharedLand> lands);
 };
 

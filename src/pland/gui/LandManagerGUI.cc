@@ -91,7 +91,7 @@ void LandManagerGUI::sendMainMenu(Player& player, SharedLand land) {
     });
 
     // 开启了领地传送功能，或者玩家是领地管理员
-    if (Config::cfg.land.landTp || PLand::getInstance().getLandRegistry()->isOperator(player.getUuid().asString())) {
+    if (Config::cfg.land.landTp || PLand::getInstance().getLandRegistry()->isOperator(player.getUuid())) {
         fm.appendButton("传送到领地"_trf(player), "textures/ui/icon_recipe_nature", "path", [land](Player& pl) {
             LandTeleportGUI::impl(pl, land);
         });
@@ -365,12 +365,12 @@ void LandManagerGUI::sendTransferLandGUI(Player& player, SharedLand const& ptr) 
                     return;
                 }
 
-                if (auto res = LandCreateValidator::isPlayerLandCountLimitExceeded(target.getUuid().asString()); !res) {
+                if (auto res = LandCreateValidator::isPlayerLandCountLimitExceeded(target.getUuid()); !res) {
                     LandCreateValidator::sendErrorMessage(self, res.error());
                     return;
                 }
 
-                LandOwnerChangeBeforeEvent ev(self, target.getUuid().asString(), ptr->getId());
+                LandOwnerChangeBeforeEvent ev(self, target.getUuid(), ptr->getId());
                 ll::event::EventBus::getInstance().publish(ev);
                 if (ev.isCancelled()) {
                     return;
@@ -405,7 +405,7 @@ void LandManagerGUI::sendTransferLandGUI(Player& player, SharedLand const& ptr) 
                             return;
                         }
 
-                        ptr->setOwner(target->getUuid().asString());
+                        ptr->setOwner(target->getUuid());
 
                         mc_utils::sendText(self, "领地已转让给 {}"_trf(self, target->getRealName()));
                         mc_utils::sendText(
@@ -413,7 +413,7 @@ void LandManagerGUI::sendTransferLandGUI(Player& player, SharedLand const& ptr) 
                             "您已成功接手来自 \"{}\" 的领地 \"{}\""_trf(self, self.getRealName(), ptr->getName())
                         );
 
-                        LandOwnerChangeAfterEvent ev(self, target->getUuid().asString(), ptr->getId());
+                        LandOwnerChangeAfterEvent ev(self, target->getUuid(), ptr->getId());
                         ll::event::EventBus::getInstance().publish(ev);
                     }
                 );
@@ -452,9 +452,9 @@ void LandManagerGUI::_sendTransferLandToOfflinePlayerGUI(Player& player, SharedL
             return;
         }
 
-        auto targetUuid = playerInfo->uuid.asString();
+        auto& targetUuid = playerInfo->uuid;
 
-        if (self.getUuid().asString() == targetUuid) {
+        if (self.getUuid() == targetUuid) {
             mc_utils::sendText(self, "不能将领地转让给自己, 左手倒右手哦!"_trf(self));
             sendTransferLandGUI(self, ptr);
             return;
@@ -550,12 +550,8 @@ void LandManagerGUI::sendChangeMemberGUI(Player& player, SharedLand ptr) {
 
     auto& infos = ll::service::PlayerInfo::getInstance();
     for (auto& member : ptr->getMembers()) {
-        auto i = infos.fromUuid(UUIDm::fromString(member));
-        if (!i) {
-            land::PLand::getInstance().getSelf().getLogger().warn("Failed to get player info of {}", member);
-        }
-
-        fm.appendButton(i.has_value() ? i->name : member, [member, ptr](Player& self) {
+        auto i = infos.fromUuid(member);
+        fm.appendButton(i.has_value() ? i->name : member.asString(), [member, ptr](Player& self) {
             _sendRemoveMemberGUI(self, ptr, member);
         });
     }
@@ -567,12 +563,12 @@ void LandManagerGUI::_sendAddMemberGUI(Player& player, SharedLand ptr) {
         player,
         [ptr](Player& self, Player& target) {
             if (self.getUuid() == target.getUuid()
-                && !PLand::getInstance().getLandRegistry()->isOperator(self.getUuid().asString())) {
+                && !PLand::getInstance().getLandRegistry()->isOperator(self.getUuid())) {
                 mc_utils::sendText(self, "不能添加自己为领地成员哦!"_trf(self));
                 return;
             }
 
-            LandMemberChangeBeforeEvent ev(self, target.getUuid().asString(), ptr->getId(), true);
+            LandMemberChangeBeforeEvent ev(self, target.getUuid(), ptr->getId(), true);
             ll::event::EventBus::getInstance().publish(ev);
             if (ev.isCancelled()) {
                 return;
@@ -601,15 +597,15 @@ void LandManagerGUI::_sendAddMemberGUI(Player& player, SharedLand ptr) {
                         return;
                     }
 
-                    if (ptr->isMember(target->getUuid().asString())) {
+                    if (ptr->isMember(target->getUuid())) {
                         mc_utils::sendText(self, "该玩家已经是领地成员, 请不要重复添加哦!"_trf(self));
                         return;
                     }
 
-                    ptr->addLandMember(target->getUuid().asString());
+                    ptr->addLandMember(target->getUuid());
                     mc_utils::sendText(self, "添加成功!"_trf(self));
 
-                    LandMemberChangeAfterEvent ev(self, target->getUuid().asString(), ptr->getId(), true);
+                    LandMemberChangeAfterEvent ev(self, target->getUuid(), ptr->getId(), true);
                     ll::event::EventBus::getInstance().publish(ev);
                 }
             );
@@ -639,10 +635,9 @@ void LandManagerGUI::_sendAddOfflineMemberGUI(Player& player, SharedLand ptr) {
             return;
         }
 
-        auto targetUuid = playerInfo->uuid.asString();
+        auto& targetUuid = playerInfo->uuid;
 
-        if (self.getUuid().asString() == targetUuid
-            && !PLand::getInstance().getLandRegistry()->isOperator(self.getUuid().asString())) {
+        if (self.getUuid() == targetUuid && !PLand::getInstance().getLandRegistry()->isOperator(self.getUuid())) {
             mc_utils::sendText(self, "不能添加自己为领地成员哦!"_trf(self));
             sendChangeMemberGUI(self, ptr);
             return;
@@ -686,21 +681,18 @@ void LandManagerGUI::_sendAddOfflineMemberGUI(Player& player, SharedLand ptr) {
     });
 }
 
-void LandManagerGUI::_sendRemoveMemberGUI(Player& player, SharedLand ptr, UUIDs member) {
+void LandManagerGUI::_sendRemoveMemberGUI(Player& player, SharedLand ptr, mce::UUID member) {
     LandMemberChangeBeforeEvent ev(player, member, ptr->getId(), false);
     ll::event::EventBus::getInstance().publish(ev);
     if (ev.isCancelled()) {
         return;
     }
 
-    auto info = ll::service::PlayerInfo::getInstance().fromUuid(UUIDm::fromString(member));
-    if (!info) {
-        land::PLand::getInstance().getSelf().getLogger().warn("Failed to get player info of {}", member);
-    }
+    auto info = ll::service::PlayerInfo::getInstance().fromUuid(member);
 
     ModalForm fm(
         PLUGIN_NAME + " | 移除成员"_trf(player),
-        "您确定要移除成员 \"{}\" 吗?"_trf(player, info.has_value() ? info->name : member),
+        "您确定要移除成员 \"{}\" 吗?"_trf(player, info.has_value() ? info->name : member.asString()),
         "确认"_trf(player),
         "返回"_trf(player)
     );

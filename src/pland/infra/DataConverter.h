@@ -146,7 +146,7 @@ public:
 public:
     explicit iLandConverter(const std::string& relationShipPath, const std::string& dataPath, bool clear_db = false);
 
-    SharedLand convert(RawData::iLand const& raw, std::string const& xuid, std::optional<UUIDs> uuids);
+    SharedLand convert(RawData::iLand const& raw, std::string const& xuid, std::optional<mce::UUID> uuids);
 
     bool execute() override;
 };

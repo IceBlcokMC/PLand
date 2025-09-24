@@ -18,10 +18,10 @@ public:
 };
 
 class LandCacheViewerWindow : public IWindow {
-    std::unordered_map<land::UUIDs, std::unordered_set<land::SharedLand>> lands_;     // 领地缓存
-    std::unordered_map<land::UUIDs, std::string>                          realNames_; // 玩家名缓存
-    std::unordered_map<land::UUIDs, bool>                                 isShow_;    // 是否显示该玩家的领地
-    std::unordered_map<land::LandID, std::unique_ptr<LandEditor>>         editors_;   // 领地数据编辑器
+    std::unordered_map<mce::UUID, std::unordered_set<land::SharedLand>> lands_;     // 领地缓存
+    std::unordered_map<mce::UUID, std::string>                          realNames_; // 玩家名缓存
+    std::unordered_map<mce::UUID, bool>                                 isShow_;    // 是否显示该玩家的领地
+    std::unordered_map<land::LandID, std::unique_ptr<LandEditor>>       editors_;   // 领地数据编辑器
 
     bool showAllPlayerLand_{true}; // 是否显示所有玩家的领地
     bool showOrdinaryLand_{true};  // 是否显示普通领地

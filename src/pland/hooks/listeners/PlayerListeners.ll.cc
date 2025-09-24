@@ -42,43 +42,43 @@ static std::unordered_map<std::string_view, bool LandPermTable::*> BlockFunction
 
 // A map to convert permission names (from config) to member pointers.
 static const std::unordered_map<std::string, bool LandPermTable::*> StringToPermPtrMap = {
-    {    "allowPlace", &LandPermTable::allowPlace},
-    {"useFlintAndSteel", &LandPermTable::useFlintAndSteel},
-    {   "useBoneMeal", &LandPermTable::useBoneMeal},
+    {          "allowPlace",           &LandPermTable::allowPlace},
+    {    "useFlintAndSteel",     &LandPermTable::useFlintAndSteel},
+    {         "useBoneMeal",          &LandPermTable::useBoneMeal},
     {"allowAttackDragonEgg", &LandPermTable::allowAttackDragonEgg},
-    {        "useBed", &LandPermTable::useBed},
-    {"allowOpenChest", &LandPermTable::allowOpenChest},
-    {   "useCampfire", &LandPermTable::useCampfire},
-    {  "useComposter", &LandPermTable::useComposter},
-    {  "useNoteBlock", &LandPermTable::useNoteBlock},
-    {    "useJukebox", &LandPermTable::useJukebox},
-    {       "useBell", &LandPermTable::useBell},
-    {"useDaylightDetector", &LandPermTable::useDaylightDetector},
-    {    "useLectern", &LandPermTable::useLectern},
-    {   "useCauldron", &LandPermTable::useCauldron},
-    {"useRespawnAnchor", &LandPermTable::useRespawnAnchor},
-    { "editFlowerPot", &LandPermTable::editFlowerPot},
-    {  "allowDestroy", &LandPermTable::allowDestroy},
-    {"useCartographyTable", &LandPermTable::useCartographyTable},
-    { "useSmithingTable", &LandPermTable::useSmithingTable},
-    { "useBrewingStand", &LandPermTable::useBrewingStand},
-    {      "useAnvil", &LandPermTable::useAnvil},
-    { "useGrindstone", &LandPermTable::useGrindstone},
-    {"useEnchantingTable", &LandPermTable::useEnchantingTable},
-    {     "useBarrel", &LandPermTable::useBarrel},
-    {     "useBeacon", &LandPermTable::useBeacon},
-    {     "useHopper", &LandPermTable::useHopper},
-    {    "useDropper", &LandPermTable::useDropper},
-    {  "useDispenser", &LandPermTable::useDispenser},
-    {       "useLoom", &LandPermTable::useLoom},
-    { "useStonecutter", &LandPermTable::useStonecutter},
-    {    "useCrafter", &LandPermTable::useCrafter},
+    {              "useBed",               &LandPermTable::useBed},
+    {      "allowOpenChest",       &LandPermTable::allowOpenChest},
+    {         "useCampfire",          &LandPermTable::useCampfire},
+    {        "useComposter",         &LandPermTable::useComposter},
+    {        "useNoteBlock",         &LandPermTable::useNoteBlock},
+    {          "useJukebox",           &LandPermTable::useJukebox},
+    {             "useBell",              &LandPermTable::useBell},
+    { "useDaylightDetector",  &LandPermTable::useDaylightDetector},
+    {          "useLectern",           &LandPermTable::useLectern},
+    {         "useCauldron",          &LandPermTable::useCauldron},
+    {    "useRespawnAnchor",     &LandPermTable::useRespawnAnchor},
+    {       "editFlowerPot",        &LandPermTable::editFlowerPot},
+    {        "allowDestroy",         &LandPermTable::allowDestroy},
+    { "useCartographyTable",  &LandPermTable::useCartographyTable},
+    {    "useSmithingTable",     &LandPermTable::useSmithingTable},
+    {     "useBrewingStand",      &LandPermTable::useBrewingStand},
+    {            "useAnvil",             &LandPermTable::useAnvil},
+    {       "useGrindstone",        &LandPermTable::useGrindstone},
+    {  "useEnchantingTable",   &LandPermTable::useEnchantingTable},
+    {           "useBarrel",            &LandPermTable::useBarrel},
+    {           "useBeacon",            &LandPermTable::useBeacon},
+    {           "useHopper",            &LandPermTable::useHopper},
+    {          "useDropper",           &LandPermTable::useDropper},
+    {        "useDispenser",         &LandPermTable::useDispenser},
+    {             "useLoom",              &LandPermTable::useLoom},
+    {      "useStonecutter",       &LandPermTable::useStonecutter},
+    {          "useCrafter",           &LandPermTable::useCrafter},
     {"useChiseledBookshelf", &LandPermTable::useChiseledBookshelf},
-    {       "useCake", &LandPermTable::useCake},
-    { "useComparator", &LandPermTable::useComparator},
-    {   "useRepeater", &LandPermTable::useRepeater},
-    {    "useBeeNest", &LandPermTable::useBeeNest},
-    {      "useVault", &LandPermTable::useVault}
+    {             "useCake",              &LandPermTable::useCake},
+    {       "useComparator",        &LandPermTable::useComparator},
+    {         "useRepeater",          &LandPermTable::useRepeater},
+    {          "useBeeNest",           &LandPermTable::useBeeNest},
+    {            "useVault",             &LandPermTable::useVault}
 };
 
 // Helper to load permissions from config
@@ -95,7 +95,12 @@ void loadPermissionMapsFromConfig() {
             if (it != StringToPermPtrMap.end()) {
                 targetMap[itemName] = it->second;
             } else {
-                logger->warn("Permission '{}' for item '{}' in '{}' map not found. Ignoring.", permName, itemName, mapName);
+                logger->warn(
+                    "Permission '{}' for item '{}' in '{}' map not found. Ignoring.",
+                    permName,
+                    itemName,
+                    mapName
+                );
             }
         }
     };
@@ -124,7 +129,7 @@ void EventListener::registerLLPlayerListeners() {
                     blockPos.toString()
                 );
                 auto land = db->getLandAt(blockPos, player.getDimensionId());
-                if (PreCheckLandExistsAndPermission(land, player.getUuid().asString())) {
+                if (PreCheckLandExistsAndPermission(land, player.getUuid())) {
                     logger->debug("[DestroyBlock] No land or player has permission. Allowed.");
                     return;
                 }
@@ -151,7 +156,7 @@ void EventListener::registerLLPlayerListeners() {
                     blockPos.toString()
                 );
                 auto land = db->getLandAt(blockPos, player.getDimensionId());
-                if (PreCheckLandExistsAndPermission(land, player.getUuid().asString())) {
+                if (PreCheckLandExistsAndPermission(land, player.getUuid())) {
                     logger->debug("[PlaceBlock] No land or player has permission. Allowed.");
                     return;
                 }
@@ -186,7 +191,7 @@ void EventListener::registerLLPlayerListeners() {
                 blockTypeName
             );
             auto land = db->getLandAt(pos, player.getDimensionId());
-            if (PreCheckLandExistsAndPermission(land, player.getUuid().asString())) {
+            if (PreCheckLandExistsAndPermission(land, player.getUuid())) {
                 logger->debug("[InteractBlock] No land or player has permission. Allowed.");
                 return;
             }
@@ -317,7 +322,7 @@ void EventListener::registerLLPlayerListeners() {
                 pos.toString()
             );
             auto land = db->getLandAt(pos, player.getDimensionId());
-            if (PreCheckLandExistsAndPermission(land, player.getUuid().asString())) {
+            if (PreCheckLandExistsAndPermission(land, player.getUuid())) {
                 logger->debug("[AttackEntity] No land or player has permission. Allowed.");
                 return;
             }
@@ -366,7 +371,7 @@ void EventListener::registerLLPlayerListeners() {
                 pos.toString()
             );
             auto land = db->getLandAt(pos, player.getDimensionId());
-            if (PreCheckLandExistsAndPermission(land, player.getUuid().asString())) {
+            if (PreCheckLandExistsAndPermission(land, player.getUuid())) {
                 logger->debug("[PickUpItem] No land or player has permission. Allowed.");
                 return;
             }

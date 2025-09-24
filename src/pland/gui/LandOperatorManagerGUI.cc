@@ -17,7 +17,7 @@ namespace land {
 
 
 void LandOperatorManagerGUI::sendMainMenu(Player& player) {
-    if (!PLand::getInstance().getLandRegistry()->isOperator(player.getUuid().asString())) {
+    if (!PLand::getInstance().getLandRegistry()->isOperator(player.getUuid())) {
         mc_utils::sendText<mc_utils::LogLevel::Error>(player, "无权限访问此表单"_trf(player));
         return;
     }
@@ -36,7 +36,7 @@ void LandOperatorManagerGUI::sendMainMenu(Player& player) {
         LandManagerGUI::sendMainMenu(self, lands);
     });
     fm.appendButton("管理玩家领地"_trf(player), "textures/ui/FriendsIcon", "path", [](Player& self) {
-        sendChoosePlayerFromDb(self, static_cast<void (*)(Player&, UUIDs const&)>(sendChooseLandGUI));
+        sendChoosePlayerFromDb(self, static_cast<void (*)(Player&, mce::UUID const&)>(sendChooseLandGUI));
     });
     fm.appendButton("管理指定领地"_trf(player), "textures/ui/magnifyingGlass", "path", [](Player& self) {
         // sendChooseLandGUI(self, PLand::getInstance().getLandRegistry()->getLands());
@@ -65,15 +65,16 @@ void LandOperatorManagerGUI::sendChoosePlayerFromDb(Player& player, ChoosePlayer
     auto const& infos = ll::service::PlayerInfo::getInstance();
     auto const  lands = PLand::getInstance().getLandRegistry()->getLands();
 
-    std::unordered_set<UUIDs> filtered; // 防止重复
+    std::unordered_set<mce::UUID> filtered; // 防止重复
     for (auto const& ptr : lands) {
-        if (filtered.contains(ptr->getOwner())) {
+        auto& owner = ptr->getOwner();
+        if (filtered.contains(owner)) {
             continue;
         }
-        filtered.insert(ptr->getOwner());
-        auto info = infos.fromUuid(UUIDm::fromString(ptr->getOwner()));
+        filtered.insert(owner);
+        auto info = infos.fromUuid(owner);
 
-        fm.appendButton(info.has_value() ? info->name : ptr->getOwner(), [ptr, callback](Player& self) {
+        fm.appendButton(info.has_value() ? info->name : owner.asString(), [ptr, callback](Player& self) {
             callback(self, ptr->getOwner());
         });
     }
@@ -82,7 +83,7 @@ void LandOperatorManagerGUI::sendChoosePlayerFromDb(Player& player, ChoosePlayer
 }
 
 
-void LandOperatorManagerGUI::sendChooseLandGUI(Player& player, UUIDs const& targetPlayer) {
+void LandOperatorManagerGUI::sendChooseLandGUI(Player& player, mce::UUID const& targetPlayer) {
     sendChooseLandAdvancedGUI(player, PLand::getInstance().getLandRegistry()->getLands(targetPlayer));
 }
 

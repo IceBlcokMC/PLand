@@ -28,13 +28,13 @@ void LandMainMenuGUI::sendTo(Player& player) {
     fm.appendButton("管理领地"_trf(player), "textures/ui/icon_spring", "path", [](Player& pl) {
         ChooseLandAdvancedUtilGUI::sendTo(
             pl,
-            PLand::getInstance().getLandRegistry()->getLands(pl.getUuid().asString()),
+            PLand::getInstance().getLandRegistry()->getLands(pl.getUuid()),
             LandManagerGUI::sendMainMenu,
             BackSimpleForm<>::makeCallback<sendTo>()
         );
     });
 
-    if (Config::cfg.land.landTp || PLand::getInstance().getLandRegistry()->isOperator(player.getUuid().asString())) {
+    if (Config::cfg.land.landTp || PLand::getInstance().getLandRegistry()->isOperator(player.getUuid())) {
         fm.appendButton("领地传送"_trf(player), "textures/ui/icon_recipe_nature", "path", [](Player& pl) {
             LandTeleportGUI::sendTo(pl);
         });

@@ -33,18 +33,18 @@ struct PlayerSettings {
 class LandTemplatePermTable;
 
 class LandRegistry final {
-    std::unique_ptr<ll::data::KeyValueDB>     mDB;                             // 领地数据库
-    std::vector<UUIDs>                        mLandOperators;                  // 领地操作员
-    std::unordered_map<UUIDs, PlayerSettings> mPlayerSettings;                 // 玩家设置
-    std::unordered_map<LandID, SharedLand>    mLandCache;                      // 领地缓存
-    mutable std::shared_mutex                 mMutex;                          // 读写锁
-    std::unique_ptr<LandIdAllocator>          mLandIdAllocator{nullptr};       // 领地ID分配器
-    LandDimensionChunkMap                     mDimensionChunkMap;              // 维度区块映射
-    std::unique_ptr<LandTemplatePermTable>    mLandTemplatePermTable{nullptr}; // 领地模板权限表
-    std::thread                               mThread;                         // 线程
-    std::atomic<bool>                         mThreadQuit{false};              // 线程退出标志
-    mutable std::mutex                        mThreadMutex;                    // 线程互斥锁(仅 mThreadCV 使用)
-    std::condition_variable                   mThreadCV;                       // 线程条件变量
+    std::unique_ptr<ll::data::KeyValueDB>         mDB;                             // 领地数据库
+    std::vector<mce::UUID>                        mLandOperators;                  // 领地操作员
+    std::unordered_map<mce::UUID, PlayerSettings> mPlayerSettings;                 // 玩家设置
+    std::unordered_map<LandID, SharedLand>        mLandCache;                      // 领地缓存
+    mutable std::shared_mutex                     mMutex;                          // 读写锁
+    std::unique_ptr<LandIdAllocator>              mLandIdAllocator{nullptr};       // 领地ID分配器
+    LandDimensionChunkMap                         mDimensionChunkMap;              // 维度区块映射
+    std::unique_ptr<LandTemplatePermTable>        mLandTemplatePermTable{nullptr}; // 领地模板权限表
+    std::thread                                   mThread;                         // 线程
+    std::atomic<bool>                             mThreadQuit{false};              // 线程退出标志
+    mutable std::mutex                            mThreadMutex;                    // 线程互斥锁(仅 mThreadCV 使用)
+    std::condition_variable                       mThreadCV;                       // 线程条件变量
 
     friend class DataConverter;
 
@@ -74,19 +74,19 @@ public:
     LDAPI bool save(Land const& land) const;
 
 public:
-    LDNDAPI bool isOperator(UUIDs const& uuid) const;
+    LDNDAPI bool isOperator(mce::UUID const& uuid) const;
 
-    LDNDAPI bool addOperator(UUIDs const& uuid);
+    LDNDAPI bool addOperator(mce::UUID const& uuid);
 
-    LDNDAPI bool removeOperator(UUIDs const& uuid);
+    LDNDAPI bool removeOperator(mce::UUID const& uuid);
 
-    LDNDAPI std::vector<UUIDs> const& getOperators() const;
+    LDNDAPI std::vector<mce::UUID> const& getOperators() const;
 
-    LDNDAPI bool hasPlayerSettings(UUIDs const& uuid) const;
+    LDNDAPI bool hasPlayerSettings(mce::UUID const& uuid) const;
 
-    LDNDAPI PlayerSettings* getPlayerSettings(UUIDs const& uuid);
+    LDNDAPI PlayerSettings* getPlayerSettings(mce::UUID const& uuid);
 
-    LDAPI bool setPlayerSettings(UUIDs const& uuid, PlayerSettings settings);
+    LDAPI bool setPlayerSettings(mce::UUID const& uuid, PlayerSettings settings);
 
     LDNDAPI LandTemplatePermTable& getLandTemplatePermTable() const;
 
@@ -136,18 +136,24 @@ public: // 领地查询API
     LDNDAPI std::vector<SharedLand> getLands() const;
     LDNDAPI std::vector<SharedLand> getLands(std::vector<LandID> const& ids) const;
     LDNDAPI std::vector<SharedLand> getLands(LandDimid dimid) const;
-    LDNDAPI std::vector<SharedLand> getLands(UUIDs const& uuid, bool includeShared = false) const;
-    LDNDAPI std::vector<SharedLand> getLands(UUIDs const& uuid, LandDimid dimid) const;
-    LDNDAPI std::unordered_map<UUIDs, std::unordered_set<SharedLand>> getLandsByOwner() const;
-    LDNDAPI std::unordered_map<UUIDs, std::unordered_set<SharedLand>> getLandsByOwner(LandDimid dimid) const;
+    LDNDAPI std::vector<SharedLand> getLands(mce::UUID const& uuid, bool includeShared = false) const;
+    LDNDAPI std::vector<SharedLand> getLands(mce::UUID const& uuid, LandDimid dimid) const;
+    LDNDAPI std::unordered_map<mce::UUID, std::unordered_set<SharedLand>> getLandsByOwner() const;
+    LDNDAPI std::unordered_map<mce::UUID, std::unordered_set<SharedLand>> getLandsByOwner(LandDimid dimid) const;
 
-    LDNDAPI LandPermType getPermType(UUIDs const& uuid, LandID id = 0, bool includeOperator = true) const;
+    LDNDAPI LandPermType getPermType(mce::UUID const& uuid, LandID id = 0, bool includeOperator = true) const;
 
     LDNDAPI SharedLand getLandAt(BlockPos const& pos, LandDimid dimid) const;
 
     LDNDAPI std::unordered_set<SharedLand> getLandAt(BlockPos const& center, int radius, LandDimid dimid) const;
 
     LDNDAPI std::unordered_set<SharedLand> getLandAt(BlockPos const& pos1, BlockPos const& pos2, LandDimid dimid) const;
+
+    using FilterCallback = std::function<bool(SharedLand const&)>;
+    LDNDAPI std::vector<SharedLand> getLandsWhere(FilterCallback const& callback) const;
+
+    using ContextFilter = std::function<bool(LandContext const&)>;
+    LDNDAPI std::vector<SharedLand> getLandsWhereRaw(ContextFilter const& filter) const;
 
 public:
     LDAPI static ChunkID             EncodeChunkID(int x, int z);

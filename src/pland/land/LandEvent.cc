@@ -32,22 +32,22 @@ Player&    PlayerDeleteLandAfterEvent::getPlayer() const { return mPlayer; }
 LandID     PlayerDeleteLandAfterEvent::getLandID() const { return mLandID; }
 
 
-Player&      LandMemberChangeBeforeEvent::getPlayer() const { return mPlayer; }
-UUIDs const& LandMemberChangeBeforeEvent::getTargetPlayer() const { return mTargetPlayer; }
-LandID       LandMemberChangeBeforeEvent::getLandID() const { return mLandID; }
-bool         LandMemberChangeBeforeEvent::isAdd() const { return mIsAdd; }
-Player&      LandMemberChangeAfterEvent::getPlayer() const { return mPlayer; }
-UUIDs const& LandMemberChangeAfterEvent::getTargetPlayer() const { return mTargetPlayer; }
-LandID       LandMemberChangeAfterEvent::getLandID() const { return mLandID; }
-bool         LandMemberChangeAfterEvent::isAdd() const { return mIsAdd; }
+Player&          LandMemberChangeBeforeEvent::getPlayer() const { return mPlayer; }
+mce::UUID const& LandMemberChangeBeforeEvent::getTargetPlayer() const { return mTargetPlayer; }
+LandID           LandMemberChangeBeforeEvent::getLandID() const { return mLandID; }
+bool             LandMemberChangeBeforeEvent::isAdd() const { return mIsAdd; }
+Player&          LandMemberChangeAfterEvent::getPlayer() const { return mPlayer; }
+mce::UUID const& LandMemberChangeAfterEvent::getTargetPlayer() const { return mTargetPlayer; }
+LandID           LandMemberChangeAfterEvent::getLandID() const { return mLandID; }
+bool             LandMemberChangeAfterEvent::isAdd() const { return mIsAdd; }
 
 
-Player&      LandOwnerChangeBeforeEvent::getPlayer() const { return mPlayer; }
-UUIDs const& LandOwnerChangeBeforeEvent::getNewOwner() const { return mNewOwner; }
-LandID       LandOwnerChangeBeforeEvent::getLandID() const { return mLandID; }
-Player&      LandOwnerChangeAfterEvent::getPlayer() const { return mPlayer; }
-UUIDs const& LandOwnerChangeAfterEvent::getNewOwner() const { return mNewOwner; }
-LandID       LandOwnerChangeAfterEvent::getLandID() const { return mLandID; }
+Player&          LandOwnerChangeBeforeEvent::getPlayer() const { return mPlayer; }
+mce::UUID const& LandOwnerChangeBeforeEvent::getNewOwner() const { return mNewOwner; }
+LandID           LandOwnerChangeBeforeEvent::getLandID() const { return mLandID; }
+Player&          LandOwnerChangeAfterEvent::getPlayer() const { return mPlayer; }
+mce::UUID const& LandOwnerChangeAfterEvent::getNewOwner() const { return mNewOwner; }
+LandID           LandOwnerChangeAfterEvent::getLandID() const { return mLandID; }
 
 
 Player&           LandRangeChangeBeforeEvent::getPlayer() const { return mPlayer; }

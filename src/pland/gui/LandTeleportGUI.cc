@@ -16,7 +16,7 @@ namespace land {
 void LandTeleportGUI::sendTo(Player& player) {
     ChooseLandAdvancedUtilGUI::sendTo(
         player,
-        PLand::getInstance().getLandRegistry()->getLands(player.getUuid().asString(), true),
+        PLand::getInstance().getLandRegistry()->getLands(player.getUuid(), true),
         impl,
         BackSimpleForm<>::makeCallback<sendTo>()
     );

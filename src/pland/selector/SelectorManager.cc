@@ -103,10 +103,10 @@ SelectorManager::~SelectorManager() {
 }
 
 
-bool SelectorManager::hasSelector(UUIDm const& uuid) const { return mSelectors.contains(uuid); }
+bool SelectorManager::hasSelector(mce::UUID const& uuid) const { return mSelectors.contains(uuid); }
 bool SelectorManager::hasSelector(Player& player) const { return mSelectors.contains(player.getUuid()); }
 
-ISelector* SelectorManager::getSelector(UUIDm const& uuid) const {
+ISelector* SelectorManager::getSelector(mce::UUID const& uuid) const {
     if (auto it = mSelectors.find(uuid); it != mSelectors.end()) {
         return it->second.get();
     }
@@ -115,14 +115,14 @@ ISelector* SelectorManager::getSelector(UUIDm const& uuid) const {
 ISelector* SelectorManager::getSelector(Player& player) const { return getSelector(player.getUuid()); }
 
 bool SelectorManager::startSelectionImpl(std::unique_ptr<ISelector> selector) {
-    auto uuid = selector->getPlayer()->getUuid();
+    auto& uuid = selector->getPlayer()->getUuid();
     if (hasSelector(uuid)) {
         return false;
     }
     return mSelectors.insert({uuid, std::move(selector)}).second;
 }
 
-void SelectorManager::stopSelection(UUIDm const& uuid) {
+void SelectorManager::stopSelection(mce::UUID const& uuid) {
     if (auto it = mSelectors.find(uuid); it != mSelectors.end()) {
         mSelectors.erase(it);
     }

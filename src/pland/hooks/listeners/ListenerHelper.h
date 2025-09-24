@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "mc/platform/UUID.h"
 #include "mc/world/level/block/BlockProperty.h"
 
 #include "pland/PLand.h"
@@ -20,8 +21,9 @@
 namespace land {
 
 // 共享的权限检查辅助函数
-inline bool PreCheckLandExistsAndPermission(SharedLand const& ptr, UUIDs const& uuid = "") {
-    if (!ptr ||                                                       // 无领地
+inline bool PreCheckLandExistsAndPermission(SharedLand const& ptr, mce::UUID const& uuid = mce::UUID::EMPTY()) {
+    if (
+        !ptr ||                                                       // 无领地
         (PLand::getInstance().getLandRegistry()->isOperator(uuid)) || // 管理员
         (ptr->getPermType(uuid) != LandPermType::Guest)               // 主人/成员
     ) {

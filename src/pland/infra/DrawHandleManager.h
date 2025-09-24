@@ -11,7 +11,7 @@ class IDrawHandle;
 
 
 class DrawHandleManager final {
-    std::unordered_map<UUIDm, std::unique_ptr<IDrawHandle>> mDrawHandles;
+    std::unordered_map<mce::UUID, std::unique_ptr<IDrawHandle>> mDrawHandles;
 
     std::unique_ptr<IDrawHandle> createHandle() const;
 

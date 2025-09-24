@@ -76,7 +76,7 @@ public:
     /**
      * @brief 玩家领地数量是否超过限制
      */
-    LDNDAPI static ValidateResult isPlayerLandCountLimitExceeded(UUIDs const& uuids);
+    LDNDAPI static ValidateResult isPlayerLandCountLimitExceeded(mce::UUID const& uuids);
 
     /**
      * @brief 领地是否在禁止范围内
