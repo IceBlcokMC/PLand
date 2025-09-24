@@ -7,11 +7,11 @@
 
 namespace land {
 
-std::unordered_map<std::string, std::string> GlobalPlayerLocaleCodeCached;
+std::unordered_map<mce::UUID, std::string> GlobalPlayerLocaleCodeCached;
 
 std::string GetPlayerLocaleCodeFromSettings(Player& player) {
-    auto uuid = player.getUuid().asString();
-    auto iter = GlobalPlayerLocaleCodeCached.find(uuid);
+    auto& uuid = player.getUuid();
+    auto  iter = GlobalPlayerLocaleCodeCached.find(uuid);
     if (iter != GlobalPlayerLocaleCodeCached.end()) {
         return iter->second; // 命中缓存
     }

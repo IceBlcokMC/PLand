@@ -119,7 +119,7 @@ iLandConverter::iLandConverter(const std::string& relationShipPath, const std::s
   mRelationShipPath{relationShipPath},
   mDataPath{dataPath} {}
 
-SharedLand iLandConverter::convert(RawData::iLand const& raw, std::string const& xuid, std::optional<UUIDs> uuids) {
+SharedLand iLandConverter::convert(RawData::iLand const& raw, std::string const& xuid, std::optional<mce::UUID> uuids) {
     auto ctx = LandContext{};
     // pos
     {
@@ -136,7 +136,7 @@ SharedLand iLandConverter::convert(RawData::iLand const& raw, std::string const&
     {
         ctx.mIsConvertedLand = true;
         ctx.mOwnerDataIsXUID = !uuids.has_value();
-        ctx.mLandOwner       = uuids.value_or(xuid);
+        ctx.mLandOwner       = uuids.has_value() ? uuids->asString() : xuid;
         // ctx.mLandMembers = raw.settings.share; // TODO
         ctx.mLandName     = raw.settings.nickname;
         ctx.mLandDescribe = raw.settings.describe;
@@ -257,7 +257,7 @@ bool iLandConverter::execute() {
 
             // 转换数据
             SharedLand landData;
-            if (info.has_value()) landData = convert(iter->second, xuid, info->uuid.asString());
+            if (info.has_value()) landData = convert(iter->second, xuid, info->uuid);
             else landData = convert(iter->second, xuid, std::nullopt);
             if (!landData) {
                 logger.warn(

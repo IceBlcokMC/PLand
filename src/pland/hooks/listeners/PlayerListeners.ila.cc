@@ -32,7 +32,7 @@ void EventListener::registerILAPlayerListeners() {
                 logger->debug("[交互实体] name: {}", ev.self().getRealName());
                 auto& entity = ev.target();
                 auto  land   = db->getLandAt(entity.getPosition(), ev.self().getDimensionId());
-                if (PreCheckLandExistsAndPermission(land, ev.self().getUuid().asString())) return;
+                if (PreCheckLandExistsAndPermission(land, ev.self().getUuid())) return;
                 if (land->getPermTable().allowInteractEntity) return;
                 ev.cancel();
             }
@@ -47,7 +47,7 @@ void EventListener::registerILAPlayerListeners() {
             auto& pos  = ev.pos();
             logger->debug("[AttackBlock] {}", pos.toString());
             auto land = db->getLandAt(pos, self.getDimensionId());
-            if (PreCheckLandExistsAndPermission(land, self.getUuid().asString())) return;
+            if (PreCheckLandExistsAndPermission(land, self.getUuid())) return;
             auto const& blockTypeName = self.getDimensionBlockSourceConst().getBlock(pos).getTypeName();
             CANCEL_AND_RETURN_IF(!land->getPermTable().allowAttackDragonEgg && blockTypeName == "minecraft:dragon_egg");
         });
@@ -59,7 +59,7 @@ void EventListener::registerILAPlayerListeners() {
                 Player& player = ev.player();
                 logger->debug("[ArmorStandSwapItem]: executed");
                 auto land = db->getLandAt(ev.self().getPosition(), player.getDimensionId());
-                if (PreCheckLandExistsAndPermission(land, player.getUuid().asString())) {
+                if (PreCheckLandExistsAndPermission(land, player.getUuid())) {
                     return;
                 }
                 if (land->getPermTable().useArmorStand) return;
@@ -74,7 +74,7 @@ void EventListener::registerILAPlayerListeners() {
                 Player& player = ev.self();
                 logger->debug("[PlayerDropItem]: executed");
                 auto land = db->getLandAt(player.getPosition(), player.getDimensionId());
-                if (PreCheckLandExistsAndPermission(land, player.getUuid().asString())) {
+                if (PreCheckLandExistsAndPermission(land, player.getUuid())) {
                     return;
                 }
                 if (land->getPermTable().allowDropItem) return;
@@ -88,7 +88,7 @@ void EventListener::registerILAPlayerListeners() {
             [db, logger](ila::mc::PlayerOperatedItemFrameBeforeEvent& ev) {
                 logger->debug("[PlayerUseItemFrame] pos: {}", ev.blockPos().toString());
                 auto land = db->getLandAt(ev.blockPos(), ev.self().getDimensionId());
-                if (PreCheckLandExistsAndPermission(land, ev.self().getUuid().asString())) return;
+                if (PreCheckLandExistsAndPermission(land, ev.self().getUuid())) return;
                 if (land->getPermTable().useItemFrame) return;
                 ev.cancel();
             }
@@ -102,7 +102,7 @@ void EventListener::registerILAPlayerListeners() {
                 auto& pos    = ev.pos();
                 logger->debug("[PlayerEditSign] {} -> {}", player.getRealName(), pos.toString());
                 auto land = db->getLandAt(pos, player.getDimensionId());
-                if (PreCheckLandExistsAndPermission(land, player.getUuid().asString())) {
+                if (PreCheckLandExistsAndPermission(land, player.getUuid())) {
                     return;
                 }
                 if (land && !land->getPermTable().editSign) {

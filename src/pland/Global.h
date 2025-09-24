@@ -32,11 +32,9 @@ class Player;
 namespace land {
 
 // 全局类型定义
-using LandID    = int64_t;     // 领地ID
-using ChunkID   = uint64_t;    // 区块ID
-using LandDimid = int;         // 领地所在维度
-using UUIDm     = mce::UUID;   // class
-using UUIDs     = std::string; // string
+using LandID    = int64_t;  // 领地ID
+using ChunkID   = uint64_t; // 区块ID
+using LandDimid = int;      // 领地所在维度
 
 enum class LandPermType : int {
     Operator = 0, // 领地操作员（管理）
@@ -45,7 +43,7 @@ enum class LandPermType : int {
     Guest,        // 访客
 };
 
-extern std::unordered_map<std::string, std::string> GlobalPlayerLocaleCodeCached;
+extern std::unordered_map<mce::UUID, std::string> GlobalPlayerLocaleCodeCached;
 LDNDAPI extern std::string
 GetPlayerLocaleCodeFromSettings(Player& player); // PLand::getInstance().getLandRegistry()->getPlayerLocaleCode
 

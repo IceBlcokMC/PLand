@@ -14,7 +14,7 @@ namespace land {
 
 
 LandCreateValidator::ValidateResult LandCreateValidator::validateCreateOrdinaryLand(Player& player, SharedLand land) {
-    if (auto res = isPlayerLandCountLimitExceeded(player.getUuid().asString()); !res) {
+    if (auto res = isPlayerLandCountLimitExceeded(player.getUuid()); !res) {
         return res;
     }
     if (auto res = isLandRangeLegal(land->getAABB(), land->getDimensionId(), land->is3D()); !res) {
@@ -44,7 +44,7 @@ LandCreateValidator::ValidateResult LandCreateValidator::validateChangeLandRange
 
 LandCreateValidator::ValidateResult
 LandCreateValidator::validateCreateSubLand(Player& player, SharedLand land, LandAABB const& subRange) {
-    if (auto res = isPlayerLandCountLimitExceeded(player.getUuid().asString()); !res) {
+    if (auto res = isPlayerLandCountLimitExceeded(player.getUuid()); !res) {
         return res;
     }
     if (auto res = isLandRangeLegal(subRange, land->getDimensionId(), true); !res) {
@@ -57,7 +57,7 @@ LandCreateValidator::validateCreateSubLand(Player& player, SharedLand land, Land
 }
 
 
-LandCreateValidator::ValidateResult LandCreateValidator::isPlayerLandCountLimitExceeded(UUIDs const& uuids) {
+LandCreateValidator::ValidateResult LandCreateValidator::isPlayerLandCountLimitExceeded(mce::UUID const& uuids) {
     auto  registry = PLand::getInstance().getLandRegistry();
     auto  count    = static_cast<int>(registry->getLands(uuids).size());
     auto& maxCount = Config::cfg.land.maxLand;

@@ -14,11 +14,11 @@ namespace land {
  * @note 由 PLand 管理 (RAII)
  */
 class SelectorManager final {
-    std::unordered_map<UUIDm, std::unique_ptr<ISelector>> mSelectors{};
-    std::unordered_map<UUIDm, std::time_t>                mStabilization{};
-    ll::event::ListenerPtr                                mListener{nullptr};
-    std::shared_ptr<std::atomic<bool>>                    mCoroStop{nullptr};
-    std::shared_ptr<ll::coro::InterruptableSleep>         mInterruptableSleep{nullptr};
+    std::unordered_map<mce::UUID, std::unique_ptr<ISelector>> mSelectors{};
+    std::unordered_map<mce::UUID, std::time_t>                mStabilization{};
+    ll::event::ListenerPtr                                    mListener{nullptr};
+    std::shared_ptr<std::atomic<bool>>                        mCoroStop{nullptr};
+    std::shared_ptr<ll::coro::InterruptableSleep>             mInterruptableSleep{nullptr};
 
     LDAPI bool startSelectionImpl(std::unique_ptr<ISelector> selector);
 
@@ -29,11 +29,11 @@ public:
     ~SelectorManager();
 
     // 玩家是否正在选区 & 是否有选区任务
-    LDNDAPI bool hasSelector(UUIDm const& uuid) const;
+    LDNDAPI bool hasSelector(mce::UUID const& uuid) const;
     LDNDAPI bool hasSelector(Player& player) const;
 
     // 获取选区任务
-    LDNDAPI ISelector* getSelector(UUIDm const& uuid) const;
+    LDNDAPI ISelector* getSelector(mce::UUID const& uuid) const;
     LDNDAPI ISelector* getSelector(Player& player) const;
 
     // 开始选区
@@ -44,10 +44,10 @@ public:
     }
 
     // 停止选区
-    LDAPI void stopSelection(UUIDm const& uuid);
+    LDAPI void stopSelection(mce::UUID const& uuid);
     LDAPI void stopSelection(Player& player);
 
-    using ForEachFunc = std::function<bool(UUIDm const&, ISelector*)>;
+    using ForEachFunc = std::function<bool(mce::UUID const&, ISelector*)>;
     LDAPI void forEach(ForEachFunc const& func) const;
 };
 

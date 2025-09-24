@@ -12,7 +12,7 @@ namespace land {
 void PlayerSettingGUI::sendTo(Player& player) {
     using namespace ll::form;
 
-    auto setting = PLand::getInstance().getLandRegistry()->getPlayerSettings(player.getUuid().asString());
+    auto setting = PLand::getInstance().getLandRegistry()->getPlayerSettings(player.getUuid());
 
     CustomForm fm(PLUGIN_NAME + ("| 玩家设置"_trf(player)));
 

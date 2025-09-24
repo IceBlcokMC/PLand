@@ -124,8 +124,8 @@ static auto const Operator = [](CommandOrigin const& ori, CommandOutput& out, Op
         if (!pl) {
             continue;
         }
-        auto uid  = pl->getUuid().asString();
-        auto name = pl->getRealName();
+        auto& uid  = pl->getUuid();
+        auto  name = pl->getRealName();
         if (param.type == OperatorType::Op) {
             if (db.isOperator(uid)) {
                 mc_utils::sendText(out, "{} 已经是管理员，请不要重复添加"_tr(name));
@@ -144,8 +144,8 @@ static auto const Operator = [](CommandOrigin const& ori, CommandOutput& out, Op
 
 static auto const ListOperator = [](CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::DedicatedServer);
-    auto& pls = PLand::getInstance().getLandRegistry()->getOperators();
-    if (pls.empty()) {
+    auto& operators = PLand::getInstance().getLandRegistry()->getOperators();
+    if (operators.empty()) {
         mc_utils::sendText(out, "当前没有管理员"_tr());
         return;
     }
@@ -153,12 +153,12 @@ static auto const ListOperator = [](CommandOrigin const& ori, CommandOutput& out
     std::ostringstream oss;
     oss << "管理员: "_tr();
     auto& infoDb = ll::service::PlayerInfo::getInstance();
-    for (auto& pl : pls) {
-        auto info = infoDb.fromUuid(mce::UUID::fromString(pl));
+    for (auto& oper : operators) {
+        auto info = infoDb.fromUuid(oper);
         if (info) {
             oss << info->name;
         } else {
-            oss << pl;
+            oss << oper.asString();
         }
         oss << " | ";
     }
@@ -193,8 +193,8 @@ static auto const New = [](CommandOrigin const& ori, CommandOutput& out, NewPara
             return;
         }
 
-        auto uuidStr = player.getUuid().asString();
-        if (!land->isOwner(uuidStr)) {
+        auto& uuid = player.getUuid();
+        if (!land->isOwner(uuid)) {
             mc_utils::sendText(out, "当前位置不是你的领地"_trf(player));
             return;
         }
@@ -352,7 +352,7 @@ static auto const SetLandTeleportPos = [](CommandOrigin const& ori, CommandOutpu
         return;
     }
 
-    auto uuid = player.getUuid().asString();
+    auto& uuid = player.getUuid();
     if (!land->isOwner(uuid) && !db.isOperator(uuid)) {
         mc_utils::sendText<mc_utils::LogLevel::Error>(out, "您不是领地主人，无法设置传送点"_trf(player));
         return;
@@ -392,7 +392,7 @@ static auto const SetLanguage = [](CommandOrigin const& ori, CommandOutput& out)
 
         auto lang = std::get<std::string>(res->at("lang"));
 
-        auto  uuid     = pl.getUuid().asString();
+        auto& uuid     = pl.getUuid();
         auto& db       = *PLand::getInstance().getLandRegistry();
         auto  settings = db.getPlayerSettings(uuid);
         if (!settings) {
@@ -416,8 +416,8 @@ static auto const This = [](CommandOrigin const& ori, CommandOutput& out) {
         return;
     }
 
-    auto uuidStr = player.getUuid().asString();
-    if (!land->isOwner(uuidStr) && !PLand::getInstance().getLandRegistry()->isOperator(uuidStr)) {
+    auto& uuid = player.getUuid();
+    if (!land->isOwner(uuid) && !PLand::getInstance().getLandRegistry()->isOperator(uuid)) {
         mc_utils::sendText<mc_utils::LogLevel::Info>(player, "当前位置不是你的领地"_trf(player));
         return;
     }
@@ -503,7 +503,7 @@ bool LandCommand::setup() {
         }
 
         auto& logger = land::PLand::getInstance().getSelf().getLogger();
-        land::PLand::getInstance().getSelectorManager()->forEach([&logger](UUIDm const& uuid, ISelector* selector) {
+        land::PLand::getInstance().getSelectorManager()->forEach([&logger](mce::UUID const& uuid, ISelector* selector) {
             logger.debug("Selector: {} - {}", uuid.asString(), selector->dumpDebugInfo());
             return true;
         });
