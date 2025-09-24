@@ -79,9 +79,20 @@ public:
 
     LDAPI void setPermTable(LandPermTable permTable);
 
+    /**
+     * 获取领地主人的 UUID。
+     *
+     * ⚠️ 注意：
+     * - 如果底层存储的 Owner 仍是 XUID（旧数据），此函数会返回 `mce::UUID::EMPTY()`。
+     * - 在玩家上线并完成 XUID → UUID 转换之前，`getOwner()` 可能不代表真实的主人(EMPTY)。
+     * - 如果需要访问原始存储值（可能是 XUID 或 UUID 字符串），请使用 `getRawOwner()`。
+     */
     LDNDAPI mce::UUID const& getOwner() const;
 
     LDAPI void setOwner(mce::UUID const& uuid);
+
+    [[deprecated("Use getOwner() instead, this returns raw storage string (may be XUID or UUID).")]]
+    LDNDAPI std::string const& getRawOwner() const;
 
     LDNDAPI std::unordered_set<mce::UUID> const& getMembers() const;
 

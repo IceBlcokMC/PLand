@@ -25,7 +25,9 @@ Land::Land(LandAABB const& pos, LandDimid dimid, bool is3D, mce::UUID const& own
     mContext.mLandPermTable = PLand::getInstance().getLandRegistry()->getLandTemplatePermTable().get();
 
     // init cache
-    mCacheOwner = mce::UUID{owner};
+    if (!mContext.mOwnerDataIsXUID) {
+        mCacheOwner = mce::UUID{owner};
+    }
 
     mCacheMembers.reserve(mContext.mLandMembers.size());
     for (auto const& member : mContext.mLandMembers) {
@@ -73,6 +75,9 @@ void                 Land::setPermTable(LandPermTable permTable) {
 
 mce::UUID const& Land::getOwner() const {
     if (!mCacheOwner) {
+        if (mContext.mOwnerDataIsXUID) {
+            return mce::UUID::EMPTY();
+        }
         mCacheOwner = mce::UUID(mContext.mLandOwner);
     }
     return *mCacheOwner;
@@ -82,6 +87,7 @@ void Land::setOwner(mce::UUID const& uuid) {
     mContext.mLandOwner = uuid.asString();
     mDirtyCounter.increment();
 }
+std::string const& Land::getRawOwner() const { return mContext.mLandOwner; }
 
 std::unordered_set<mce::UUID> const& Land::getMembers() const { return mCacheMembers; }
 void                                 Land::addLandMember(mce::UUID const& uuid) {
