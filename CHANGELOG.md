@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🐛 问题修复
+
+- 修复领地外无权限玩家可击杀领地内实体 #140 @engsr6982
+
+### 🧩 逻辑优化
+
+- 移除部分不合理的 using 语句，提高可读性 @engsr6982
+
 ### 🧹 其他改动
 
 - 移除 `debug_shape` 相关封装，改为外部独立 **DebugShape.dll** 组件

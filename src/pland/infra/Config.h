@@ -18,7 +18,7 @@ struct ForbiddenRange {
 };
 
 struct Config {
-    int              version{24};
+    int              version{25};
     ll::io::LogLevel logLevel{ll::io::LogLevel::Info};
 
     EconomyConfig economy;
@@ -93,6 +93,7 @@ struct Config {
         bool ActorRideBeforeEvent{true};                      // 实体骑乘
         bool ExplosionBeforeEvent{true};                      // 爆炸
         bool FarmDecayBeforeEvent{true};                      // 农田退化
+        bool ActorHurtEvent{true};                            // 实体受伤
         bool MobHurtEffectBeforeEvent{true};                  // 生物受伤效果
         bool PistonPushBeforeEvent{true};                     // 活塞推动
         bool PlayerOperatedItemFrameBeforeEvent{true};        // 玩家操作物品展示框
