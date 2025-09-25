@@ -99,7 +99,7 @@ struct LandPermTable {
 
 
 // ! 注意：如果 LandContext 有更改，则必须递增 LandContextVersion，否则导致加载异常
-constexpr int LandContextVersion = 23;
+constexpr int LandContextVersion = 25;
 struct LandContext {
     int                      version{LandContextVersion};           // 版本号
     LandAABB                 mPos{};                                // 领地对角坐标
