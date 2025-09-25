@@ -250,6 +250,7 @@ void LandEditor::renderMenuElement() {
             try {
                 auto json = nlohmann::json::parse(editor_.GetText());
                 land->load(json);
+                land->save(true); // 由于 load 方法不会标记数据已更改，主动强制保存
             } catch (...) {
                 land->load(backup);
                 land::PLand::getInstance().getSelf().getLogger().error("Failed to parse json");
