@@ -29,6 +29,7 @@
 #include "pland/infra/Config.h"
 #include "pland/land/LandRegistry.h"
 #include "pland/utils/McUtils.h"
+
 #include <string_view>
 #include <unordered_map>
 
@@ -122,24 +123,29 @@ void EventListener::registerLLPlayerListeners() {
             [db, logger](ll::event::PlayerDestroyBlockEvent& ev) {
                 auto& player   = ev.self();
                 auto& blockPos = ev.pos();
-                logger->debug(
-                    "[DestroyBlock] Player: {}({}), Pos: {}",
+
+                EVENT_TRACE(
+                    "PlayerDestroyBlockEvent",
+                    EVENT_TRACE_LOG,
+                    "player={}, pos={}",
                     player.getRealName(),
-                    player.getUuid().asString(),
                     blockPos.toString()
                 );
+
                 auto land = db->getLandAt(blockPos, player.getDimensionId());
                 if (PreCheckLandExistsAndPermission(land, player.getUuid())) {
-                    logger->debug("[DestroyBlock] No land or player has permission. Allowed.");
+                    EVENT_TRACE("PlayerDestroyBlockEvent", EVENT_TRACE_PASS, "land not found or permission allowed");
                     return;
                 }
+
                 auto& tab = land->getPermTable();
                 if (tab.allowDestroy) {
-                    logger->debug("[DestroyBlock] Permission 'allowDestroy' is true. Allowed.");
+                    EVENT_TRACE("PlayerDestroyBlockEvent", EVENT_TRACE_PASS, "allowDestroy allowed");
                     return;
                 }
-                logger->debug("[DestroyBlock] Permission 'allowDestroy' is false. Cancelled.");
+
                 ev.cancel();
+                EVENT_TRACE("PlayerDestroyBlockEvent", EVENT_TRACE_CANCEL, "allowDestroy denied");
             }
         );
     });
@@ -147,166 +153,201 @@ void EventListener::registerLLPlayerListeners() {
     RegisterListenerIf(Config::cfg.listeners.PlayerPlacingBlockEvent, [&]() {
         return bus->emplaceListener<ll::event::PlayerPlacingBlockEvent>(
             [db, logger](ll::event::PlayerPlacingBlockEvent& ev) {
-                auto&       player   = ev.self();
-                auto const& blockPos = mc_utils::face2Pos(ev.pos(), ev.face());
-                logger->debug(
-                    "[PlaceBlock] Player: {}({}), Pos: {}",
+                auto& player   = ev.self();
+                auto  blockPos = mc_utils::face2Pos(ev.pos(), ev.face());
+
+                EVENT_TRACE(
+                    "PlayerPlacingBlockEvent",
+                    EVENT_TRACE_LOG,
+                    "player={}, pos={}",
                     player.getRealName(),
-                    player.getUuid().asString(),
                     blockPos.toString()
                 );
+
                 auto land = db->getLandAt(blockPos, player.getDimensionId());
                 if (PreCheckLandExistsAndPermission(land, player.getUuid())) {
-                    logger->debug("[PlaceBlock] No land or player has permission. Allowed.");
+                    EVENT_TRACE("PlayerPlacingBlockEvent", EVENT_TRACE_PASS, "land not found or permission allowed");
                     return;
                 }
+
                 auto& tab = land->getPermTable();
                 if (tab.allowPlace) {
-                    logger->debug("[PlaceBlock] Permission 'allowPlace' is true. Allowed.");
+                    EVENT_TRACE("PlayerPlacingBlockEvent", EVENT_TRACE_PASS, "allowPlace allowed");
                     return;
                 }
-                logger->debug("[PlaceBlock] Permission 'allowPlace' is false. Cancelled.");
+
                 ev.cancel();
+                EVENT_TRACE("PlayerPlacingBlockEvent", EVENT_TRACE_CANCEL, "allowPlace denied");
             }
         );
     });
 
     RegisterListenerIf(Config::cfg.listeners.PlayerInteractBlockEvent, [&]() {
-        return bus->emplaceListener<ll::event::PlayerInteractBlockEvent>([db, logger](
-                                                                             ll::event::PlayerInteractBlockEvent& ev
-                                                                         ) {
-            auto&       player             = ev.self();
-            auto&       pos                = ev.blockPos();
-            auto&       itemStack          = ev.item();
-            auto        block              = ev.block().has_value() ? &ev.block().get() : nullptr;
-            const Item* actualItem         = itemStack.getItem();
-            auto const  itemTypeNameForMap = itemStack.getTypeName();
-            auto const& blockTypeName      = block ? block->getTypeName() : "";
-            logger->debug(
-                "[InteractBlock] Player: {}({}), Pos: {}, Item: {}, Block: {}",
-                player.getRealName(),
-                player.getUuid().asString(),
-                pos.toString(),
-                itemTypeNameForMap,
-                blockTypeName
-            );
-            auto land = db->getLandAt(pos, player.getDimensionId());
-            if (PreCheckLandExistsAndPermission(land, player.getUuid())) {
-                logger->debug("[InteractBlock] No land or player has permission. Allowed.");
-                return;
-            }
-            auto const& tab        = land->getPermTable();
-            bool        itemCancel = false;
-            if (actualItem) {
-                void** itemVftable = *reinterpret_cast<void** const*>(actualItem);
-                if (itemVftable == BucketItem::$vftable()) {
-                    if (!tab.useBucket) {
-                        logger->debug("[InteractBlock] Item check: BucketItem, 'useBucket' is false. Cancelled.");
-                        itemCancel = true;
-                    }
-                } else if (itemVftable == HatchetItem::$vftable()) {
-                    if (!tab.allowAxePeeled) {
-                        logger->debug("[InteractBlock] Item check: HatchetItem, 'allowAxePeeled' is false. Cancelled.");
-                        itemCancel = true;
-                    }
-                } else if (itemVftable == HoeItem::$vftable()) {
-                    if (!tab.useHoe) {
-                        logger->debug("[InteractBlock] Item check: HoeItem, 'useHoe' is false. Cancelled.");
-                        itemCancel = true;
-                    }
-                } else if (itemVftable == ShovelItem::$vftable()) {
-                    if (!tab.useShovel) {
-                        logger->debug("[InteractBlock] Item check: ShovelItem, 'useShovel' is false. Cancelled.");
-                        itemCancel = true;
-                    }
-                } else if (actualItem->hasTag(HashedString("minecraft:boat"))
-                           || actualItem->hasTag(HashedString("minecraft:boats"))) {
-                    if (!tab.placeBoat) {
-                        logger->debug("[InteractBlock] Item check: Boat, 'placeBoat' is false. Cancelled.");
-                        itemCancel = true;
-                    }
-                } else if (actualItem->hasTag(HashedString("minecraft:is_minecart"))) {
-                    if (!tab.placeMinecart) {
-                        logger->debug("[InteractBlock] Item check: Minecart, 'placeMinecart' is false. Cancelled.");
-                        itemCancel = true;
-                    }
-                } else {
-                    auto it = ItemSpecificPermissionMap.find(itemTypeNameForMap);
-                    if (it != ItemSpecificPermissionMap.end() && !(tab.*(it->second))) {
-                        logger->debug(
-                            "[InteractBlock] Item check: '{}', specific permission is false. Cancelled.",
-                            itemTypeNameForMap
+        return bus->emplaceListener<ll::event::PlayerInteractBlockEvent>(
+            [db, logger](ll::event::PlayerInteractBlockEvent& ev) {
+                auto&      player       = ev.self();
+                auto&      pos          = ev.blockPos();
+                auto&      itemStack    = ev.item();
+                auto const itemTypeName = itemStack.getTypeName();
+
+                EVENT_TRACE(
+                    "PlayerInteractBlockEvent",
+                    EVENT_TRACE_LOG,
+                    "player={}, pos={}, item={}",
+                    player.getRealName(),
+                    pos.toString(),
+                    itemTypeName
+                );
+
+                auto land = db->getLandAt(pos, player.getDimensionId());
+                if (PreCheckLandExistsAndPermission(land, player.getUuid())) {
+                    EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_PASS, "land not found or permission allowed");
+                    return;
+                }
+
+                auto const& tab = land->getPermTable();
+
+                if (auto item = itemStack.getItem()) {
+                    void** vftable = *reinterpret_cast<void** const*>(item);
+                    if (vftable == BucketItem::$vftable()) {
+                        CANCEL_AND_RETURN_IF(
+                            !tab.useBucket,
+                            EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "useBucket denied")
                         );
-                        itemCancel = true;
+                    } else if (vftable == HatchetItem::$vftable()) {
+                        CANCEL_AND_RETURN_IF(
+                            !tab.allowAxePeeled,
+                            EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "allowAxePeeled denied")
+                        );
+                    } else if (vftable == HoeItem::$vftable()) {
+                        CANCEL_AND_RETURN_IF(
+                            !tab.useHoe,
+                            EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "useHoe denied")
+                        );
+                    } else if (vftable == ShovelItem::$vftable()) {
+                        CANCEL_AND_RETURN_IF(
+                            !tab.useShovel,
+                            EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "useShovel denied")
+                        );
+                    } else if (item->hasTag(HashedString("minecraft:boat"))
+                               || item->hasTag(HashedString("minecraft:boats"))) {
+                        CANCEL_AND_RETURN_IF(
+                            !tab.placeBoat,
+                            EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "placeBoat denied")
+                        );
+                    } else if (item->hasTag(HashedString("minecraft:is_minecart"))) {
+                        CANCEL_AND_RETURN_IF(
+                            !tab.placeMinecart,
+                            EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "placeMinecart denied")
+                        );
                     }
                 }
-            } else {
-                auto it = ItemSpecificPermissionMap.find(itemTypeNameForMap);
-                if (it != ItemSpecificPermissionMap.end() && !(tab.*(it->second))) {
-                    logger->debug(
-                        "[InteractBlock] Item check (no item*): '{}', specific permission is false. Cancelled.",
-                        itemTypeNameForMap
+                if (auto it = ItemSpecificPermissionMap.find(itemTypeName);
+                    it != ItemSpecificPermissionMap.end() && !(tab.*(it->second))) {
+                    EVENT_TRACE(
+                        "PlayerInteractBlockEvent",
+                        EVENT_TRACE_CANCEL,
+                        "Item check: '{}', specific permission is false.",
+                        itemTypeName
                     );
-                    itemCancel = true;
+                    ev.cancel();
+                    return;
+                }
+
+
+                if (auto block = ev.block()) {
+                    auto const& typeName    = block->getTypeName();
+                    auto const& legacyBlock = block->getBlockType();
+
+                    if (auto iter = BlockSpecificPermissionMap.find(typeName);
+                        iter != BlockSpecificPermissionMap.end() && !(tab.*(iter->second))) {
+                        EVENT_TRACE(
+                            "PlayerInteractBlockEvent",
+                            EVENT_TRACE_CANCEL,
+                            "Block check: '{}', specific permission is false.",
+                            typeName
+                        );
+                        ev.cancel();
+                        return;
+                    }
+
+                    if (auto iter = BlockFunctionalPermissionMap.find(typeName);
+                        iter != BlockFunctionalPermissionMap.end() && !(tab.*(iter->second))) {
+                        EVENT_TRACE(
+                            "PlayerInteractBlockEvent",
+                            EVENT_TRACE_CANCEL,
+                            "Block check: '{}', functional permission is false.",
+                            typeName
+                        );
+                        ev.cancel();
+                        return;
+                    }
+
+                    void** vftable = *reinterpret_cast<void** const*>(&legacyBlock);
+                    if (legacyBlock.isButtonBlock()) {
+                        CANCEL_AND_RETURN_IF(
+                            !tab.useButton,
+                            EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "useButton denied")
+                        );
+                    } else if (legacyBlock.isDoorBlock()) {
+                        CANCEL_AND_RETURN_IF(
+                            !tab.useDoor,
+                            EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "useDoor denied")
+                        );
+                    } else if (legacyBlock.isFenceGateBlock()) {
+                        CANCEL_AND_RETURN_IF(
+                            !tab.useFenceGate,
+                            EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "useFenceGate denied")
+                        );
+                    } else if (legacyBlock.isFenceBlock()) {
+                        CANCEL_AND_RETURN_IF(
+                            !tab.allowInteractEntity,
+                            EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "allowInteractEntity denied")
+                        );
+                    } else if (legacyBlock.mIsTrapdoor) {
+                        CANCEL_AND_RETURN_IF(
+                            !tab.useTrapdoor,
+                            EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "useTrapdoor denied")
+                        );
+                    } else if (vftable == SignBlock::$vftable() || vftable == HangingSignBlock::$vftable()) {
+                        CANCEL_AND_RETURN_IF(
+                            !tab.editSign,
+                            EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "editSign denied")
+                        );
+                    } else if (vftable == ShulkerBoxBlock::$vftable()) {
+                        CANCEL_AND_RETURN_IF(
+                            !tab.useShulkerBox,
+                            EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "useShulkerBox denied")
+                        );
+                    } else if (legacyBlock.isCraftingBlock()) {
+                        CANCEL_AND_RETURN_IF(
+                            !tab.useCraftingTable,
+                            EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "useCraftingTable denied")
+                        );
+                    } else if (legacyBlock.isLeverBlock()) {
+                        CANCEL_AND_RETURN_IF(
+                            !tab.useLever,
+                            EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "useLever denied")
+                        );
+                    } else if (vftable == BlastFurnaceBlock::$vftable()) {
+                        CANCEL_AND_RETURN_IF(
+                            !tab.useBlastFurnace,
+                            EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "useBlastFurnace denied")
+                        );
+                    } else if (vftable == FurnaceBlock::$vftable()) {
+                        CANCEL_AND_RETURN_IF(
+                            !tab.useFurnace,
+                            EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "useFurnace denied")
+                        );
+                    } else if (vftable == SmokerBlock::$vftable()) {
+                        CANCEL_AND_RETURN_IF(
+                            !tab.useSmoker,
+                            EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "useSmoker denied")
+                        );
+                    }
                 }
             }
-            CANCEL_AND_RETURN_IF(itemCancel);
-            logger->debug("[InteractBlock] Item checks passed.");
-
-            if (block) {
-                auto const& legacyBlock = block->getBlockType();
-                bool        blockCancel = false;
-
-                auto log_cancel = [&](const std::string& perm_name) {
-                    logger->debug(
-                        "[InteractBlock] Block check: '{}', permission '{}' is false. Cancelled.",
-                        blockTypeName,
-                        perm_name
-                    );
-                    blockCancel = true;
-                };
-
-                auto blockIter = BlockSpecificPermissionMap.find(blockTypeName);
-                if (blockIter != BlockSpecificPermissionMap.end() && !(tab.*(blockIter->second))) {
-                    log_cancel("BlockSpecificPermission");
-                    CANCEL_AND_RETURN_IF(blockCancel);
-                }
-                auto blockFuncIter = BlockFunctionalPermissionMap.find(blockTypeName);
-                if (blockFuncIter != BlockFunctionalPermissionMap.end() && !(tab.*(blockFuncIter->second))) {
-                    log_cancel("BlockFunctionalPermission");
-                    CANCEL_AND_RETURN_IF(blockCancel);
-                }
-
-                void** blockVftable = *reinterpret_cast<void** const*>(&legacyBlock);
-                if (legacyBlock.isButtonBlock()) {
-                    if (!tab.useButton) log_cancel("useButton");
-                } else if (legacyBlock.isDoorBlock()) {
-                    if (!tab.useDoor) log_cancel("useDoor");
-                } else if (legacyBlock.isFenceGateBlock()) {
-                    if (!tab.useFenceGate) log_cancel("useFenceGate");
-                } else if (legacyBlock.isFenceBlock()) {
-                    if (!tab.allowInteractEntity) log_cancel("allowInteractEntity");
-                } else if (legacyBlock.mIsTrapdoor) {
-                    if (!tab.useTrapdoor) log_cancel("useTrapdoor");
-                } else if (blockVftable == SignBlock::$vftable() || blockVftable == HangingSignBlock::$vftable()) {
-                    if (!tab.editSign) log_cancel("editSign");
-                } else if (blockVftable == ShulkerBoxBlock::$vftable()) {
-                    if (!tab.useShulkerBox) log_cancel("useShulkerBox");
-                } else if (legacyBlock.isCraftingBlock()) {
-                    if (!tab.useCraftingTable) log_cancel("useCraftingTable");
-                } else if (legacyBlock.isLeverBlock()) {
-                    if (!tab.useLever) log_cancel("useLever");
-                } else if (blockVftable == BlastFurnaceBlock::$vftable()) {
-                    if (!tab.useBlastFurnace) log_cancel("useBlastFurnace");
-                } else if (blockVftable == FurnaceBlock::$vftable()) {
-                    if (!tab.useFurnace) log_cancel("useFurnace");
-                } else if (blockVftable == SmokerBlock::$vftable()) {
-                    if (!tab.useSmoker) log_cancel("useSmoker");
-                }
-                CANCEL_AND_RETURN_IF(blockCancel);
-                logger->debug("[InteractBlock] Block checks passed.");
-            }
-        });
+        );
     });
 
     RegisterListenerIf(Config::cfg.listeners.PlayerAttackEvent, [&]() {
@@ -314,46 +355,51 @@ void EventListener::registerLLPlayerListeners() {
             auto& player = ev.self();
             auto& mob    = ev.target();
             auto& pos    = mob.getPosition();
-            logger->debug(
-                "[AttackEntity] Player: {}({}), Target: {}, Pos: {}",
+
+            EVENT_TRACE(
+                "PlayerAttackEvent",
+                EVENT_TRACE_LOG,
+                "player={}, target={}, pos={}",
                 player.getRealName(),
-                player.getUuid().asString(),
                 mob.getTypeName(),
                 pos.toString()
             );
+
             auto land = db->getLandAt(pos, player.getDimensionId());
             if (PreCheckLandExistsAndPermission(land, player.getUuid())) {
-                logger->debug("[AttackEntity] No land or player has permission. Allowed.");
+                EVENT_TRACE("PlayerAttackEvent", EVENT_TRACE_PASS, "land not found or permission allowed");
                 return;
             }
-            auto const& mobTypeName = mob.getTypeName();
-            auto const& tab         = land->getPermTable();
 
-            auto check_perm = [&](bool has_perm, const std::string& perm_name) {
-                if (!has_perm) {
-                    logger->debug(
-                        "[AttackEntity] Permission '{}' is false for mob '{}'. Cancelled.",
-                        perm_name,
-                        mobTypeName
-                    );
-                    ev.cancel();
-                    return true;
-                }
-                return false;
-            };
+            auto const& typeName = mob.getTypeName();
+            auto const& tab      = land->getPermTable();
 
-            if (Config::cfg.protection.mob.hostileMobTypeNames.contains(mobTypeName)) {
-                if (check_perm(tab.allowMonsterDamage, "allowMonsterDamage")) return;
-            } else if (Config::cfg.protection.mob.specialMobTypeNames.contains(mobTypeName)) {
-                if (check_perm(tab.allowSpecialDamage, "allowSpecialDamage")) return;
-            } else if (mobTypeName == "minecraft:player") {
-                if (check_perm(tab.allowPlayerDamage, "allowPlayerDamage")) return;
-            } else if (Config::cfg.protection.mob.passiveMobTypeNames.contains(mobTypeName)) {
-                if (check_perm(tab.allowPassiveDamage, "allowPassiveDamage")) return;
-            } else if (Config::cfg.protection.mob.customSpecialMobTypeNames.count(mobTypeName)) {
-                if (check_perm(tab.allowCustomSpecialDamage, "allowCustomSpecialDamage")) return;
+            if (Config::cfg.protection.mob.hostileMobTypeNames.contains(typeName)) {
+                CANCEL_AND_RETURN_IF(
+                    !tab.allowMonsterDamage,
+                    EVENT_TRACE("PlayerAttackEvent", EVENT_TRACE_CANCEL, "allowMonsterDamage denied")
+                );
+            } else if (Config::cfg.protection.mob.specialMobTypeNames.contains(typeName)) {
+                CANCEL_AND_RETURN_IF(
+                    !tab.allowSpecialDamage,
+                    EVENT_TRACE("PlayerAttackEvent", EVENT_TRACE_CANCEL, "allowSpecialDamage denied")
+                );
+            } else if (typeName == "minecraft:player") {
+                CANCEL_AND_RETURN_IF(
+                    !tab.allowPlayerDamage,
+                    EVENT_TRACE("PlayerAttackEvent", EVENT_TRACE_CANCEL, "allowPlayerDamage denied")
+                );
+            } else if (Config::cfg.protection.mob.passiveMobTypeNames.contains(typeName)) {
+                CANCEL_AND_RETURN_IF(
+                    !tab.allowPassiveDamage,
+                    EVENT_TRACE("PlayerAttackEvent", EVENT_TRACE_CANCEL, "allowPassiveDamage denied")
+                );
+            } else if (Config::cfg.protection.mob.customSpecialMobTypeNames.count(typeName)) {
+                CANCEL_AND_RETURN_IF(
+                    !tab.allowCustomSpecialDamage,
+                    EVENT_TRACE("PlayerAttackEvent", EVENT_TRACE_CANCEL, "allowCustomSpecialDamage denied")
+                );
             }
-            logger->debug("[AttackEntity] All permission checks passed. Allowed.");
         });
     });
 
@@ -363,24 +409,29 @@ void EventListener::registerLLPlayerListeners() {
             auto& player = ev.self();
             auto& item   = ev.itemActor();
             auto& pos    = item.getPosition();
-            logger->debug(
-                "[PickUpItem] Player: {}({}), Item: {}, Pos: {}",
+
+            EVENT_TRACE(
+                "PlayerPickUpItemEvent",
+                EVENT_TRACE_LOG,
+                "player={}, item={}, pos={}",
                 player.getRealName(),
-                player.getUuid().asString(),
                 item.getTypeName(),
                 pos.toString()
             );
+
             auto land = db->getLandAt(pos, player.getDimensionId());
             if (PreCheckLandExistsAndPermission(land, player.getUuid())) {
-                logger->debug("[PickUpItem] No land or player has permission. Allowed.");
+                EVENT_TRACE("PlayerPickUpItemEvent", EVENT_TRACE_PASS, "land not found or permission allowed");
                 return;
             }
+
             if (land->getPermTable().allowPickupItem) {
-                logger->debug("[PickUpItem] Permission 'allowPickupItem' is true. Allowed.");
+                EVENT_TRACE("PlayerPickUpItemEvent", EVENT_TRACE_PASS, "allowPickupItem allowed");
                 return;
             }
-            logger->debug("[PickUpItem] Permission 'allowPickupItem' is false. Cancelled.");
+
             ev.cancel();
+            EVENT_TRACE("PlayerPickUpItemEvent", EVENT_TRACE_CANCEL, "allowPickupItem denied");
         });
     });
 }

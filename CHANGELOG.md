@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🧩 逻辑优化
 
 - 移除部分不合理的 using 语句，提高可读性 @engsr6982
+- 优化部分事件监听器，统一事件调试输出 @engsr6982
 
 ### 🧹 其他改动
 

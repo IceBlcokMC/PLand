@@ -34,10 +34,7 @@ void EventListener::registerLLSessionListeners() {
 
         auto xuid  = ev.self().getXuid();
         auto lands = db->getLandsWhereRaw([&xuid](LandContext const& land) {
-            if (land.mOwnerDataIsXUID && land.mLandOwner == xuid) {
-                return true;
-            }
-            return false;
+            return land.mOwnerDataIsXUID && land.mLandOwner == xuid;
         });
 
         if (!lands.empty()) {
@@ -48,6 +45,7 @@ void EventListener::registerLLSessionListeners() {
             }
         }
     }));
+
     mListenerPtrs.push_back(
         bus->emplaceListener<ll::event::PlayerDisconnectEvent>([logger](ll::event::PlayerDisconnectEvent& ev) {
             auto& player = ev.self();

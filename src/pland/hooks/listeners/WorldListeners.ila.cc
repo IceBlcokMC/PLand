@@ -34,14 +34,16 @@ void EventListener::registerILAWorldListeners() {
 
     RegisterListenerIf(Config::cfg.listeners.ExplosionBeforeEvent, [&]() {
         return bus->emplaceListener<ila::mc::ExplosionBeforeEvent>([db, logger](ila::mc::ExplosionBeforeEvent& ev) {
-            logger->debug("[Explode] Pos: {}", ev.explosion().mPos->toString());
             auto       explosionPos = BlockPos{ev.explosion().mPos};
             auto       dimid        = ev.blockSource().getDimensionId();
             SharedLand centerLand   = db->getLandAt(explosionPos, dimid);
 
+            EVENT_TRACE("ExplosionEvent", EVENT_TRACE_LOG, "pos={}", explosionPos.toString());
+
             if (centerLand) {
                 // 规则一：爆炸中心所在领地的权限具有决定性。
                 if (!centerLand->getPermTable().allowExplode) {
+                    EVENT_TRACE("ExplosionEvent", EVENT_TRACE_CANCEL, "center land does not allow explode");
                     ev.cancel();
                     return;
                 }
@@ -52,6 +54,7 @@ void EventListener::registerILAWorldListeners() {
                 for (auto const& touchedLand : touchedLands) {
                     if (touchedLand->getRootLand() != centerRoot) {
                         if (!touchedLand->getPermTable().allowExplode) {
+                            EVENT_TRACE("ExplosionEvent", EVENT_TRACE_CANCEL, "touched land does not allow explode");
                             ev.cancel();
                             return;
                         }
@@ -63,6 +66,7 @@ void EventListener::registerILAWorldListeners() {
                 auto touchedLands = db->getLandAt(explosionPos, (int)(ev.explosion().mRadius + 1.0), dimid);
                 for (auto const& touchedLand : touchedLands) {
                     if (!touchedLand->getPermTable().allowExplode) {
+                        EVENT_TRACE("ExplosionEvent", EVENT_TRACE_CANCEL, "external land does not allow explode");
                         ev.cancel();
                         return;
                     }
@@ -74,15 +78,23 @@ void EventListener::registerILAWorldListeners() {
 
     RegisterListenerIf(Config::cfg.listeners.FarmDecayBeforeEvent, [&]() {
         return bus->emplaceListener<ila::mc::FarmDecayBeforeEvent>([db, logger](ila::mc::FarmDecayBeforeEvent& ev) {
-            logger->debug("[FarmDecay] Pos: {}", ev.pos().toString());
-            auto land = db->getLandAt(ev.pos(), ev.blockSource().getDimensionId());
-            if (PreCheckLandExistsAndPermission(land) || (land && land->getPermTable().allowFarmDecay)) return;
+            auto& pos = ev.pos();
+
+            EVENT_TRACE("FarmDecayEvent", EVENT_TRACE_LOG, "pos={}", pos.toString());
+
+            auto land = db->getLandAt(pos, ev.blockSource().getDimensionId());
+            if (PreCheckLandExistsAndPermission(land) || land->getPermTable().allowFarmDecay) {
+                EVENT_TRACE("FarmDecayEvent", EVENT_TRACE_PASS, "land not found or permission allowed");
+                return;
+            }
+
             ev.cancel();
+            EVENT_TRACE("FarmDecayEvent", EVENT_TRACE_CANCEL, "permission denied");
         });
     });
 
     RegisterListenerIf(Config::cfg.listeners.PistonPushBeforeEvent, [&]() {
-        return bus->emplaceListener<ila::mc::PistonPushBeforeEvent>([db, logger](ila::mc::PistonPushBeforeEvent& ev) {
+        return bus->emplaceListener<ila::mc::PistonPushBeforeEvent>([db](ila::mc::PistonPushBeforeEvent& ev) {
             auto const& piston     = ev.pistonPos();
             auto const& push       = ev.pushPos();
             auto const  dimid      = ev.blockSource().getDimensionId();
@@ -105,31 +117,28 @@ void EventListener::registerILAWorldListeners() {
     });
 
     RegisterListenerIf(Config::cfg.listeners.RedstoneUpdateBeforeEvent, [&]() {
-        return bus->emplaceListener<ila::mc::RedstoneUpdateBeforeEvent>(
-            [db, logger](ila::mc::RedstoneUpdateBeforeEvent& ev) {
-                auto land = db->getLandAt(ev.pos(), ev.blockSource().getDimensionId());
-                if (PreCheckLandExistsAndPermission(land) || (land && land->getPermTable().allowRedstoneUpdate)) return;
-                ev.cancel();
-            }
-        );
+        return bus->emplaceListener<ila::mc::RedstoneUpdateBeforeEvent>([db](ila::mc::RedstoneUpdateBeforeEvent& ev) {
+            auto land = db->getLandAt(ev.pos(), ev.blockSource().getDimensionId());
+            if (PreCheckLandExistsAndPermission(land) || (land && land->getPermTable().allowRedstoneUpdate)) return;
+            ev.cancel();
+        });
     });
 
     RegisterListenerIf(Config::cfg.listeners.BlockFallBeforeEvent, [&]() {
-        return bus->emplaceListener<ila::mc::BlockFallBeforeEvent>([db, logger](ila::mc::BlockFallBeforeEvent& ev) {
+        return bus->emplaceListener<ila::mc::BlockFallBeforeEvent>([db](ila::mc::BlockFallBeforeEvent& ev) {
             auto land = db->getLandAt(ev.pos(), ev.blockSource().getDimensionId());
             if (land) {
                 auto const& tab = land->getPermTable();
                 CANCEL_AND_RETURN_IF(!tab.allowBlockFall);
                 if (land->getAABB().isAboveLand(ev.pos()) && !tab.allowBlockFall) {
-                    CANCEL_EVENT_AND_RETURN
+                    ev.cancel();
                 }
             }
         });
     });
 
     RegisterListenerIf(Config::cfg.listeners.WitherDestroyBeforeEvent, [&]() {
-        return bus->emplaceListener<ila::mc::WitherDestroyBeforeEvent>([db,
-                                                                        logger](ila::mc::WitherDestroyBeforeEvent& ev) {
+        return bus->emplaceListener<ila::mc::WitherDestroyBeforeEvent>([db](ila::mc::WitherDestroyBeforeEvent& ev) {
             auto& aabb  = ev.box();
             auto  lands = db->getLandAt(aabb.min, aabb.max, ev.blockSource().getDimensionId());
             for (auto const& p : lands) {
@@ -142,7 +151,7 @@ void EventListener::registerILAWorldListeners() {
     });
 
     RegisterListenerIf(Config::cfg.listeners.MossGrowthBeforeEvent, [&]() {
-        return bus->emplaceListener<ila::mc::MossGrowthBeforeEvent>([db, logger](ila::mc::MossGrowthBeforeEvent& ev) {
+        return bus->emplaceListener<ila::mc::MossGrowthBeforeEvent>([db](ila::mc::MossGrowthBeforeEvent& ev) {
             auto const& pos  = ev.pos();
             auto        land = db->getLandAt(pos, ev.blockSource().getDimensionId());
             if (!land || land->getPermTable().useBoneMeal) return;
@@ -155,8 +164,7 @@ void EventListener::registerILAWorldListeners() {
     });
 
     RegisterListenerIf(Config::cfg.listeners.LiquidTryFlowBeforeEvent, [&]() {
-        return bus->emplaceListener<ila::mc::LiquidTryFlowBeforeEvent>([db,
-                                                                        logger](ila::mc::LiquidTryFlowBeforeEvent& ev) {
+        return bus->emplaceListener<ila::mc::LiquidTryFlowBeforeEvent>([db](ila::mc::LiquidTryFlowBeforeEvent& ev) {
             auto& sou    = ev.flowFromPos();
             auto& to     = ev.pos();
             auto  landTo = db->getLandAt(to, ev.blockSource().getDimensionId());
@@ -169,7 +177,7 @@ void EventListener::registerILAWorldListeners() {
 
     RegisterListenerIf(Config::cfg.listeners.DragonEggBlockTeleportBeforeEvent, [&]() {
         return bus->emplaceListener<ila::mc::DragonEggBlockTeleportBeforeEvent>(
-            [db, logger](ila::mc::DragonEggBlockTeleportBeforeEvent& ev) {
+            [db](ila::mc::DragonEggBlockTeleportBeforeEvent& ev) {
                 auto land = db->getLandAt(ev.pos(), ev.blockSource().getDimensionId());
                 if (land && !land->getPermTable().allowAttackDragonEgg) {
                     ev.cancel();
@@ -180,7 +188,7 @@ void EventListener::registerILAWorldListeners() {
 
     RegisterListenerIf(Config::cfg.listeners.SculkBlockGrowthBeforeEvent, [&]() {
         return bus->emplaceListener<ila::mc::SculkBlockGrowthBeforeEvent>(
-            [db, logger](ila::mc::SculkBlockGrowthBeforeEvent& ev) {
+            [db](ila::mc::SculkBlockGrowthBeforeEvent& ev) {
                 auto land = db->getLandAt(ev.pos(), ev.blockSource().getDimensionId());
                 if (land && !land->getPermTable().allowSculkBlockGrowth) {
                     ev.cancel();
@@ -190,7 +198,7 @@ void EventListener::registerILAWorldListeners() {
     });
 
     RegisterListenerIf(Config::cfg.listeners.SculkSpreadBeforeEvent, [&]() {
-        return bus->emplaceListener<ila::mc::SculkSpreadBeforeEvent>([db, logger](ila::mc::SculkSpreadBeforeEvent& ev) {
+        return bus->emplaceListener<ila::mc::SculkSpreadBeforeEvent>([db](ila::mc::SculkSpreadBeforeEvent& ev) {
             auto sou = db->getLandAt(ev.selfPos(), ev.blockSource().getDimensionId());
             auto tar = db->getLandAt(ev.targetPos(), ev.blockSource().getDimensionId());
             if (!sou && tar) {
@@ -201,7 +209,7 @@ void EventListener::registerILAWorldListeners() {
 
     RegisterListenerIf(Config::cfg.listeners.SculkCatalystAbsorbExperienceBeforeEvent, [&]() {
         return bus->emplaceListener<ila::mc::SculkCatalystAbsorbExperienceBeforeEvent>(
-            [db, logger](ila::mc::SculkCatalystAbsorbExperienceBeforeEvent& ev) {
+            [db](ila::mc::SculkCatalystAbsorbExperienceBeforeEvent& ev) {
                 auto& actor  = ev.actor();
                 auto& region = actor.getDimensionBlockSource();
                 auto  pos    = actor.getBlockPosCurrentlyStandingOn(&actor);
