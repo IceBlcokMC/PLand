@@ -138,11 +138,18 @@ void EventListener::registerILAWorldListeners() {
     });
 
     RegisterListenerIf(Config::cfg.listeners.WitherDestroyBeforeEvent, [&]() {
-        return bus->emplaceListener<ila::mc::WitherDestroyBeforeEvent>([db](ila::mc::WitherDestroyBeforeEvent& ev) {
-            auto& aabb  = ev.box();
-            auto  lands = db->getLandAt(aabb.min, aabb.max, ev.blockSource().getDimensionId());
+        return bus->emplaceListener<ila::mc::WitherDestroyBeforeEvent>([db,
+                                                                        logger](ila::mc::WitherDestroyBeforeEvent& ev) {
+            auto& aabb = ev.box();
+
+            EVENT_TRACE("WitherDestroyEvent", EVENT_TRACE_LOG, "aabb={}", aabb.toString());
+
+            static constexpr float Offset = 1.0f; // 由于闭区间判定以及浮点数精度，需要额外偏移1个单位
+
+            auto lands = db->getLandAt(aabb.min - Offset, aabb.max + Offset, ev.blockSource().getDimensionId());
             for (auto const& p : lands) {
                 if (!p->getPermTable().allowWitherDestroy) {
+                    EVENT_TRACE("WitherDestroyEvent", EVENT_TRACE_CANCEL, "allowWitherDestroy denied");
                     ev.cancel();
                     break;
                 }

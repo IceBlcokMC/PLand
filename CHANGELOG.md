@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#140] 领地外无权限玩家可击杀领地内实体  
   依赖 LeviLamina ≥ 1.5.2，低版本仍可能复现。 @engsr6982
 - [#139] 修复领地禁止创建弹射物时使用三叉戟导致吞物品 @engsr6982
+- [#138] 修复凋灵在领地边缘冲撞可破坏方块 @engsr6982
 
 ### 🧩 逻辑优化
 
