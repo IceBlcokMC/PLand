@@ -8,6 +8,7 @@
 #include "ll/api/event/player/PlayerInteractBlockEvent.h"
 #include "ll/api/event/player/PlayerPickUpItemEvent.h"
 #include "ll/api/event/player/PlayerPlaceBlockEvent.h"
+#include "ll/api/event/player/PlayerUseItemEvent.h"
 
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/world/item/BucketItem.h"
@@ -432,6 +433,37 @@ void EventListener::registerLLPlayerListeners() {
 
             ev.cancel();
             EVENT_TRACE("PlayerPickUpItemEvent", EVENT_TRACE_CANCEL, "allowPickupItem denied");
+        });
+    });
+
+    RegisterListenerIf(Config::cfg.listeners.PlayerUseItemEvent, [&]() {
+        return bus->emplaceListener<ll::event::PlayerUseItemEvent>([db, logger](ll::event::PlayerUseItemEvent& ev) {
+            auto& player = ev.self();
+            auto& item   = ev.item();
+
+            auto  typeName = item.getTypeName();
+            auto& pos      = player.getPosition();
+
+            EVENT_TRACE(
+                "PlayerUseItemEvent",
+                EVENT_TRACE_LOG,
+                "player={}, item={}, pos={}",
+                player.getRealName(),
+                typeName,
+                pos.toString()
+            );
+
+            auto land = db->getLandAt(pos, player.getDimensionId());
+            if (PreCheckLandExistsAndPermission(land, player.getUuid())) {
+                EVENT_TRACE("PlayerUseItemEvent", EVENT_TRACE_PASS, "land not found or permission allowed");
+                return;
+            }
+
+            // patch https://github.com/engsr6982/PLand/issues/139
+            CANCEL_AND_RETURN_IF(
+                !land->getPermTable().allowProjectileCreate && typeName == "minecraft:trident",
+                EVENT_TRACE("PlayerUseItemEvent", EVENT_TRACE_CANCEL, "allowProjectileCreate denied")
+            );
         });
     });
 }
