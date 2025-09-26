@@ -70,7 +70,7 @@
     "useBeeNest": " 使用蜂巢/蜂箱",
     "useRespawnAnchor": "使用重生锚",
     "useItemFrame": "使用物品展示框",
-    "useFishingHook": "使用钓鱼竿",
+    "allowFishingRodAndHook": "使用钓鱼竿",
     "useBucket": "使用桶(各种桶)",
     "usePressurePlate": "使用压力板(踩踏)",
     "useArmorStand": "使用盔甲架(编辑)",

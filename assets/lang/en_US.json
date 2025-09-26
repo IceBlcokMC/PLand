@@ -70,7 +70,7 @@
     "useBeeNest": "Use beehive/bee nest",
     "useRespawnAnchor": "Use respawn anchor",
     "useItemFrame": "Use item frame",
-    "useFishingHook": "Use fishing rod",
+    "allowFishingRodAndHook": "Use fishing rod",
     "useBucket": "Use bucket (various buckets)",
     "usePressurePlate": "Use pressure plate (stepping)",
     "useArmorStand": "Use armor stand (editing)",
