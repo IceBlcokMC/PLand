@@ -51,7 +51,7 @@ void EventListener::registerILAPlayerListeners() {
                 }
 
                 ev.cancel();
-                EVENT_TRACE("ActorDestroyBlockEvent", EVENT_TRACE_CANCEL, "permission denied");
+                EVENT_TRACE("PlayerInteractEntityEvent", EVENT_TRACE_CANCEL, "permission denied");
             }
         );
     });
