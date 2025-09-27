@@ -6,26 +6,29 @@
 namespace land {
 
 
-class BackPaginatedSimpleForm {
+namespace internal {
+
+
+class PaginatedFormWrapperImpl {
 
     std::shared_ptr<PaginatedSimpleForm> impl;
 
 public:
-    BackPaginatedSimpleForm() : impl(PaginatedSimpleForm::make()) {}
+    PaginatedFormWrapperImpl() : impl(PaginatedSimpleForm::make()) {}
 
-    BackPaginatedSimpleForm& setTitle(std::string title) {
+    PaginatedFormWrapperImpl& setTitle(std::string title) {
         impl->setTitle(std::move(title));
         return *this;
     }
 
-    BackPaginatedSimpleForm& setContent(std::string content) {
+    PaginatedFormWrapperImpl& setContent(std::string content) {
         impl->setContent(std::move(content));
         return *this;
     }
 
     // concept: HasAppendButtonMethods
     template <typename... Args>
-    BackPaginatedSimpleForm& appendButton(Args&&... args) {
+    PaginatedFormWrapperImpl& appendButton(Args&&... args) {
         impl->appendButton(std::forward<Args>(args)...);
         return *this;
     }
@@ -37,21 +40,26 @@ public:
     }
 
     template <typename... Args>
-    BackPaginatedSimpleForm& onFormCanceled(Args&&... args) {
+    PaginatedFormWrapperImpl& onFormCanceled(Args&&... args) {
         impl->onFormCanceled(std::forward<Args>(args)...);
         return *this;
     }
 };
 
-static_assert(HasSendToMethod<BackPaginatedSimpleForm>, "BackPaginatedSimpleForm must satisfy HasSendToMethod");
+static_assert(HasSendToMethod<PaginatedFormWrapperImpl>, "PaginatedFormWrapperImpl must satisfy HasSendToMethod");
 static_assert(
-    HasAppendButtonMethods<BackPaginatedSimpleForm>,
-    "BackPaginatedSimpleForm must satisfy HasAppendButtonMethods"
+    HasAppendButtonMethods<PaginatedFormWrapperImpl>,
+    "PaginatedFormWrapperImpl must satisfy HasAppendButtonMethods"
 );
 static_assert(
-    DisallowEnableSharedFromThis<BackPaginatedSimpleForm>,
-    "BackPaginatedSimpleForm must not satisfy std::enable_shared_from_this<T>"
+    DisallowEnableSharedFromThis<PaginatedFormWrapperImpl>,
+    "PaginatedFormWrapperImpl must not satisfy std::enable_shared_from_this<T>"
 );
+
+} // namespace internal
+
+
+using BackPaginatedSimpleForm = BackSimpleForm<internal::PaginatedFormWrapperImpl>;
 
 
 } // namespace land

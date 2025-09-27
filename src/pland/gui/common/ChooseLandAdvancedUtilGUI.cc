@@ -14,12 +14,12 @@ using ll::form::CustomFormResult;
 
 
 class ChooseLandAdvancedUtilGUI::Impl final {
-    std::vector<SharedLand>                                 mLands{};                    // 领地数据
-    ChooseCallback                                          mCallback{};                 // 回调
-    BackSimpleForm<>::ButtonCallback                        mBackCallback{};             // 返回按钮回调
-    std::optional<std::string>                              mFuzzyKeyword{std::nullopt}; // 模糊搜索关键字
-    View                                                    mCurrentView{View::All};     // 当前视图
-    std::map<View, BackSimpleForm<BackPaginatedSimpleForm>> mViews{};                    // 视图
+    std::vector<SharedLand>                 mLands{};                    // 领地数据
+    ChooseCallback                          mCallback{};                 // 回调
+    BackSimpleForm<>::ButtonCallback        mBackCallback{};             // 返回按钮回调
+    std::optional<std::string>              mFuzzyKeyword{std::nullopt}; // 模糊搜索关键字
+    View                                    mCurrentView{View::All};     // 当前视图
+    std::map<View, BackPaginatedSimpleForm> mViews{};                    // 视图
 
 public:
     explicit Impl(std::vector<SharedLand> lands, ChooseCallback callback, BackSimpleForm<>::ButtonCallback back = {})
@@ -76,11 +76,11 @@ public:
 
     void buildForms(Player& player) {
         if (mViews.empty()) {
-            mViews.emplace(View::All, BackSimpleForm<BackPaginatedSimpleForm>::make(makeBackCallback()));
-            mViews.emplace(View::OnlyOrdinary, BackSimpleForm<BackPaginatedSimpleForm>::make(makeBackCallback()));
-            mViews.emplace(View::OnlyParent, BackSimpleForm<BackPaginatedSimpleForm>::make(makeBackCallback()));
-            mViews.emplace(View::OnlyMix, BackSimpleForm<BackPaginatedSimpleForm>::make(makeBackCallback()));
-            mViews.emplace(View::OnlySub, BackSimpleForm<BackPaginatedSimpleForm>::make(makeBackCallback()));
+            mViews.emplace(View::All, BackPaginatedSimpleForm::make(makeBackCallback()));
+            mViews.emplace(View::OnlyOrdinary, BackPaginatedSimpleForm::make(makeBackCallback()));
+            mViews.emplace(View::OnlyParent, BackPaginatedSimpleForm::make(makeBackCallback()));
+            mViews.emplace(View::OnlyMix, BackPaginatedSimpleForm::make(makeBackCallback()));
+            mViews.emplace(View::OnlySub, BackPaginatedSimpleForm::make(makeBackCallback()));
 
             for (auto& [view, form] : mViews) {
                 form.setTitle("选择领地"_trf(player));
