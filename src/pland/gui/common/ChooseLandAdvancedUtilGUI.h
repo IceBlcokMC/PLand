@@ -2,6 +2,7 @@
 #include "pland/Global.h"
 #include "pland/gui/form/BackSimpleForm.h"
 #include "pland/land/Land.h"
+#include <concepts>
 #include <memory>
 
 
@@ -32,6 +33,7 @@ public:
     LDAPI void sendTo(Player& player);
 
     template <typename... Args>
+        requires std::constructible_from<ChooseLandAdvancedUtilGUI, Args...>
     static void sendTo(Player& player, Args&&... args) {
         ChooseLandAdvancedUtilGUI{std::forward<Args>(args)...}.sendTo(player);
     }
