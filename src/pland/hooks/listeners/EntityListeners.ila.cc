@@ -9,10 +9,12 @@
 #include "ila/event/minecraft/world/actor/ActorDestroyBlockEvent.h"
 #include "ila/event/minecraft/world/actor/ActorRideEvent.h"
 #include "ila/event/minecraft/world/actor/ActorTriggerPressurePlateEvent.h"
-#include "ila/event/minecraft/world/actor/EndermanLeaveBlockEvent.h"
-#include "ila/event/minecraft/world/actor/EndermanTakeBlockEvent.h"
 #include "ila/event/minecraft/world/actor/MobHurtEffectEvent.h"
+#include "ila/event/minecraft/world/actor/MobPlaceBlockEvent.h"
+#include "ila/event/minecraft/world/actor/MobTakeBlockEvent.h"
 #include "ila/event/minecraft/world/actor/ProjectileCreateEvent.h"
+
+
 
 #include "mc/deps/ecs/WeakEntityRef.h"
 #include "mc/platform/UUID.h"
@@ -56,14 +58,14 @@ void EventListener::registerILAEntityListeners() {
         });
     });
 
-    RegisterListenerIf(Config::cfg.listeners.EndermanLeaveBlockEvent, [&]() {
-        return bus->emplaceListener<ila::mc::EndermanLeaveBlockBeforeEvent>(
-            [db, logger](ila::mc::EndermanLeaveBlockBeforeEvent& ev) {
+    RegisterListenerIf(Config::cfg.listeners.MobTakeBlockBeforeEvent, [&]() {
+        return bus->emplaceListener<ila::mc::MobTakeBlockBeforeEvent>(
+            [db, logger](ila::mc::MobTakeBlockBeforeEvent& ev) {
                 auto& actor    = ev.self();
                 auto& blockPos = ev.pos();
 
                 EVENT_TRACE(
-                    "EndermanLeaveBlockEvent",
+                    "MobTakeBlockBeforeEvent",
                     EVENT_TRACE_LOG,
                     "actor={}, pos={}",
                     actor.getTypeName(),
@@ -72,29 +74,29 @@ void EventListener::registerILAEntityListeners() {
 
                 auto land = db->getLandAt(blockPos, actor.getDimensionId());
                 if (PreCheckLandExistsAndPermission(land)) {
-                    EVENT_TRACE("EndermanLeaveBlockEvent", EVENT_TRACE_PASS, "land not found or permission allowed");
+                    EVENT_TRACE("MobTakeBlockBeforeEvent", EVENT_TRACE_PASS, "land not found or permission allowed");
                     return;
                 }
 
                 if (land->getPermTable().allowActorDestroy) {
-                    EVENT_TRACE("EndermanLeaveBlockEvent", EVENT_TRACE_PASS, "allowActorDestroy allowed");
+                    EVENT_TRACE("MobTakeBlockBeforeEvent", EVENT_TRACE_PASS, "allowActorDestroy allowed");
                     return;
                 }
 
                 ev.cancel();
-                EVENT_TRACE("EndermanLeaveBlockEvent", EVENT_TRACE_CANCEL, "permission denied");
+                EVENT_TRACE("MobTakeBlockBeforeEvent", EVENT_TRACE_CANCEL, "permission denied");
             }
         );
     });
 
-    RegisterListenerIf(Config::cfg.listeners.EndermanTakeBlockEvent, [&]() {
-        return bus->emplaceListener<ila::mc::EndermanTakeBlockBeforeEvent>(
-            [db, logger](ila::mc::EndermanTakeBlockBeforeEvent& ev) {
+    RegisterListenerIf(Config::cfg.listeners.MobPlaceBlockBeforeEvent, [&]() {
+        return bus->emplaceListener<ila::mc::MobPlaceBlockBeforeEvent>(
+            [db, logger](ila::mc::MobPlaceBlockBeforeEvent& ev) {
                 auto& actor    = ev.self();
                 auto& blockPos = ev.pos();
 
                 EVENT_TRACE(
-                    "EndermanTakeBlockEvent",
+                    "MobPlaceBlockBeforeEvent",
                     EVENT_TRACE_LOG,
                     "actor={}, pos={}",
                     actor.getTypeName(),
@@ -103,17 +105,17 @@ void EventListener::registerILAEntityListeners() {
 
                 auto land = db->getLandAt(blockPos, actor.getDimensionId());
                 if (PreCheckLandExistsAndPermission(land)) {
-                    EVENT_TRACE("EndermanTakeBlockEvent", EVENT_TRACE_PASS, "land not found or permission allowed");
+                    EVENT_TRACE("MobPlaceBlockBeforeEvent", EVENT_TRACE_PASS, "land not found or permission allowed");
                     return;
                 }
 
                 if (land->getPermTable().allowActorDestroy) {
-                    EVENT_TRACE("EndermanTakeBlockEvent", EVENT_TRACE_PASS, "allowActorDestroy allowed");
+                    EVENT_TRACE("MobPlaceBlockBeforeEvent", EVENT_TRACE_PASS, "allowActorDestroy allowed");
                     return;
                 }
 
                 ev.cancel();
-                EVENT_TRACE("EndermanTakeBlockEvent", EVENT_TRACE_CANCEL, "permission denied");
+                EVENT_TRACE("MobPlaceBlockBeforeEvent", EVENT_TRACE_CANCEL, "permission denied");
             }
         );
     });

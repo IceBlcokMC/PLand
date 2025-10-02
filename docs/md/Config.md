@@ -138,8 +138,8 @@
     "PlayerInteractEntityBeforeEvent": true, // 玩家交互实体
     "BlockFallBeforeEvent": true, // 方块下落
     "ActorDestroyBlockEvent": true, // 实体破坏方块
-    "EndermanLeaveBlockEvent": true, // 末影人放下方块
-    "EndermanTakeBlockEvent": true, // 末影人拿走方块
+    "MobPlaceBlockBeforeEvent": true, // 末影人放下方块
+    "MobTakeBlockBeforeEvent": true, // 末影人拿走方块
     "DragonEggBlockTeleportBeforeEvent": true // 龙蛋传送
   },
   "protection": {

@@ -111,8 +111,8 @@ struct Config {
         bool PlayerInteractEntityBeforeEvent{true};           // 玩家交互实体
         bool BlockFallBeforeEvent{true};                      // 方块下落
         bool ActorDestroyBlockEvent{true};                    // 实体破坏方块
-        bool EndermanLeaveBlockEvent{true};                   // 末影人放下方块
-        bool EndermanTakeBlockEvent{true};                    // 末影人拿走方块
+        bool MobPlaceBlockBeforeEvent{true};                  // 末影人放下方块
+        bool MobTakeBlockBeforeEvent{true};                   // 末影人拿走方块
         bool DragonEggBlockTeleportBeforeEvent{true};         // 龙蛋传送
         bool PlayerUseItemEvent{true};                        // 玩家使用物品
     } listeners;
