@@ -32,11 +32,17 @@ void EventListener::registerHooks() {
     if (Config::cfg.hooks.registerMobHurtHook) {
         registerMobHurtHook();
     }
+    if (Config::cfg.hooks.registerFishingHookHitHook) {
+        registerOnFishingHookHitHook();
+    }
 }
 
 void EventListener::unregisterHooks() {
     if (Config::cfg.hooks.registerMobHurtHook) {
         unregisterMobHurtHook();
+    }
+    if (Config::cfg.hooks.registerFishingHookHitHook) {
+        unregisterOnFishingHookHitHook();
     }
 }
 
