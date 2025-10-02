@@ -5,25 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.14.0] - 2025-10-2
 
 ### 🐛 问题修复
 
-- [#140] 领地外无权限玩家可击杀领地内实体  
-  依赖 LeviLamina ≥ 1.5.2，低版本仍可能复现。 @engsr6982
+- [#140] 领地外无权限玩家可击杀领地内实体   @engsr6982
 - [#139] 修复领地禁止创建弹射物时使用三叉戟导致吞物品 @engsr6982
 - [#138] 修复凋灵在领地边缘冲撞可破坏方块 @engsr6982
+- 修复生物受伤权限部分生物伤害无效的问题 @yangyangzhong82
+- [#69] 当实体破坏权限关闭时，海龟不再能在领地内产卵 @yangyangzhong82
+- [#56] 修复玩家使用钓鱼竿仍然能将领地内生物拉出 @yangyangzhong82
 
 ### 🧩 逻辑优化
 
 - 移除部分不合理的 using 语句，提高可读性 @engsr6982
 - 优化部分事件监听器，统一事件调试输出 @engsr6982
+- 插件加载时增加 Levilamina 版本检测，版本不一致时会发出日志警告用户 @yangyangzhong82
 
 ### 🧹 其他改动
 
-- 移除 `debug_shape` 相关封装，改为外部独立 **DebugShape.dll** 组件
-- 适配 Levilamina v1.5.1 @yangyangzhong82
-
+- 移除 `debug_shape` 相关封装，改为外部独立 **DebugShape.dll** 组件 @engsr6982
+- 适配 Levilamina v1.5.2 @yangyangzhong82
+- 适配 iListenAttentively v0.8.0 @yangyangzhong82
 ## [0.13.0] - 2025-8-27
 
 ### ✨ 新增功能

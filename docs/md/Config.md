@@ -142,6 +142,11 @@
     "MobTakeBlockBeforeEvent": true, // 末影人拿走方块
     "DragonEggBlockTeleportBeforeEvent": true // 龙蛋传送
   },
+  "hooks":{
+    "registerMobHurtHook": true,// 注册生物受伤Hook
+    "registerFishingHookHitHook": true,// 注册钓鱼竿Hook
+    "registerLayEggGoalHook": true //注册海龟产卵Hook
+  },
   "protection": {
     "mob": {
       "hostileMobTypeNames": [
