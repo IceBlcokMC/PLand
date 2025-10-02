@@ -4,4 +4,7 @@ void unregisterMobHurtHook();
 
 void registerOnFishingHookHitHook();
 void unregisterOnFishingHookHitHook();
+
+void registeronLayEggGoalHook();
+void unregisteronLayEggGoalHook();
 }

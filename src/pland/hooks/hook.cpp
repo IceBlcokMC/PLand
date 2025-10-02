@@ -1,5 +1,6 @@
 
 #include "hook.h"
+#include "mc/world/level/BlockSource.h"
 #include "pland/Global.h"
 #include "pland/PLand.h"
 #include "pland/hooks/listeners/ListenerHelper.h"
@@ -14,6 +15,7 @@
 #include "mc/world/actor/ActorType.h"
 #include "mc/world/actor/FishingHook.h"
 #include "mc/world/actor/Mob.h"
+#include "mc/world/actor/ai/goal/LayEggGoal.h"
 #include "mc/world/actor/player/Player.h" // 添加 Player 头文件
 #include "mc/world/level/Level.h"
 
@@ -125,6 +127,29 @@ LL_TYPE_INSTANCE_HOOK(
     }
     origin(inEntity, inSpeed);
 }
+
+LL_TYPE_INSTANCE_HOOK(
+    onLayEggGoalHook,
+    ll::memory::HookPriority::Highest,
+    ::LayEggGoal,
+    &::LayEggGoal::$isValidTarget,
+    bool,
+    ::BlockSource&    region,
+    ::BlockPos const& pos
+){
+    // 获取领地注册表实例
+    auto* db   = PLand::getInstance().getLandRegistry();
+    auto  land = db->getLandAt(pos, region.getDimensionId());
+
+    // 如果在领地内且不允许实体破坏，则阻止产蛋
+    if (land && !land->getPermTable().allowActorDestroy) {
+        return false;
+    }
+    return origin(region, pos);
+}
+
+void registeronLayEggGoalHook() { onLayEggGoalHook::hook(); }
+void unregisteronLayEggGoalHook() { onLayEggGoalHook::unhook(); }
 
 void registerMobHurtHook() { MobHurtHook::hook(); }
 void unregisterMobHurtHook() { MobHurtHook::unhook(); }

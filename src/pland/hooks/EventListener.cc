@@ -35,6 +35,9 @@ void EventListener::registerHooks() {
     if (Config::cfg.hooks.registerFishingHookHitHook) {
         registerOnFishingHookHitHook();
     }
+    if (Config::cfg.hooks.registerLayEggGoalHook) {
+        registeronLayEggGoalHook();
+    }
 }
 
 void EventListener::unregisterHooks() {
@@ -43,6 +46,9 @@ void EventListener::unregisterHooks() {
     }
     if (Config::cfg.hooks.registerFishingHookHitHook) {
         unregisterOnFishingHookHitHook();
+    }
+    if (Config::cfg.hooks.registerLayEggGoalHook) {
+        unregisteronLayEggGoalHook();
     }
 }
 

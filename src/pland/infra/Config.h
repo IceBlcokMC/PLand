@@ -119,6 +119,7 @@ struct Config {
     struct {
         bool registerMobHurtHook{true};                       // 注册生物受伤Hook
         bool registerFishingHookHitHook{true};                // 注册钓鱼竿Hook
+        bool registerLayEggGoalHook{false};                   // 注册产卵AI目标Hook
     } hooks;
 
     struct {
