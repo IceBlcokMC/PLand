@@ -10,7 +10,7 @@
     "allowDestroy": "允许破坏",
     "allowWitherDestroy": "允许凋零破坏",
     "allowPlace": "允许放置(方块、头颅、旗帜、等)",
-    "allowPlayerDamage": "允许玩家受到伤害",
+    "allowPlayerDamage": "允许攻击玩家",
     "allowMonsterDamage": "允许攻击敌对生物",
     "allowPassiveDamage": "允许攻击友好、中立生物",
     "allowSpecialDamage": "允许攻击特殊实体(船、矿车、画等)",

@@ -113,7 +113,7 @@ LL_TYPE_INSTANCE_HOOK(
     if (land) {
         // 检查 inEntity 是否为玩家
         if (inEntity.isPlayer()) {
-            auto& player = static_cast<Player&>(inEntity); 
+            auto& player = static_cast<Player&>(inEntity);
             if (!PreCheckLandExistsAndPermission(land, player.getUuid())) {
                 // 领地不存在或玩家没有权限，则拦截
                 return;
@@ -136,7 +136,7 @@ LL_TYPE_INSTANCE_HOOK(
     bool,
     ::BlockSource&    region,
     ::BlockPos const& pos
-){
+) {
     // 获取领地注册表实例
     auto* db   = PLand::getInstance().getLandRegistry();
     auto  land = db->getLandAt(pos, region.getDimensionId());

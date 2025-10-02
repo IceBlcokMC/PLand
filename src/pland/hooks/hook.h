@@ -7,4 +7,4 @@ void unregisterOnFishingHookHitHook();
 
 void registeronLayEggGoalHook();
 void unregisteronLayEggGoalHook();
-}
+} // namespace land
