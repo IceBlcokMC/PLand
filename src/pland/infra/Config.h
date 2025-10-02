@@ -18,7 +18,7 @@ struct ForbiddenRange {
 };
 
 struct Config {
-    int              version{26};
+    int              version{27};
     ll::io::LogLevel logLevel{ll::io::LogLevel::Info};
 
     EconomyConfig economy;
@@ -116,6 +116,9 @@ struct Config {
         bool DragonEggBlockTeleportBeforeEvent{true};         // 龙蛋传送
         bool PlayerUseItemEvent{true};                        // 玩家使用物品
     } listeners;
+    struct {
+        bool registerMobHurtHook{true};                       // 注册生物受伤Hook
+    } hooks;
 
     struct {
         struct {

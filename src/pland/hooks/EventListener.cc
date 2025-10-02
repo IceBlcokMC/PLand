@@ -1,6 +1,8 @@
 
 #include "pland/hooks/EventListener.h"
 #include "ll/api/event/EventBus.h"
+#include "pland/infra/Config.h"
+#include "pland/hooks/hook.h"
 #include <functional>
 
 namespace land {
@@ -23,6 +25,18 @@ EventListener::~EventListener() {
     auto& bus = ll::event::EventBus::getInstance();
     for (auto& ptr : mListenerPtrs) {
         bus.removeListener(ptr);
+    }
+}
+
+void EventListener::registerHooks() {
+    if (Config::cfg.hooks.registerMobHurtHook) {
+        registerMobHurtHook();
+    }
+}
+
+void EventListener::unregisterHooks() {
+    if (Config::cfg.hooks.registerMobHurtHook) {
+        unregisterMobHurtHook();
     }
 }
 

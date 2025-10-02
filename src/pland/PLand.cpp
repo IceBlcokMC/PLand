@@ -107,13 +107,12 @@ bool PLand::load() {
 
 bool PLand::enable() {
     land::LandCommand::setup();
-
-    this->mLandScheduler     = std::make_unique<land::LandScheduler>();
+    this->mLandScheduler = std::make_unique<land::LandScheduler>();
     this->mEventListener     = std::make_unique<land::EventListener>();
     this->mSafeTeleport      = std::make_unique<land::SafeTeleport>();
+    this->mEventListener->registerHooks();
     this->mSelectorManager   = std::make_unique<land::SelectorManager>();
     this->mDrawHandleManager = std::make_unique<land::DrawHandleManager>();
-
 
 #ifdef LD_TEST
     test::TestMain::setup();
@@ -148,7 +147,9 @@ bool PLand::disable() {
     return true;
 }
 
-bool PLand::unload() { return true; }
+bool PLand::unload() {
+    this->mEventListener->registerHooks();
+    return true; }
 
 void PLand::onConfigReload() {
     auto& logger = getSelf().getLogger();

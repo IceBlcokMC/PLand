@@ -37,6 +37,9 @@ public:
 
     LDAPI explicit EventListener();
     LDAPI ~EventListener();
+
+    void registerHooks();
+    void unregisterHooks();
 };
 
 
