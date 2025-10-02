@@ -5,6 +5,8 @@
 #include "ll/api/i18n/I18n.h"
 #include "ll/api/mod/RegisterHelper.h"
 #include "ll/api/utils/SystemUtils.h"
+#include "ll/api/data/Version.h"
+#include "ll/api/Versions.h"
 
 #include "ll/api/io/LogLevel.h"
 #include "pland/Global.h"
@@ -56,6 +58,33 @@ bool PLand::load() {
     } else {
         logger.info("Version: {}", PLAND_VERSION_STRING);
     }
+#ifdef LEVI_LAMINA_VERSION
+    logger.info("LeviLamina Version: {}", LEVI_LAMINA_VERSION);
+    const auto& llVersion = ll::getLoaderVersion();
+    if (llVersion != ll::data::Version(LEVI_LAMINA_VERSION)) {
+        logger.warn("插件所依赖的 LeviLamina 版本 ({}) 与当前运行的版本 ({}) 不匹配。", LEVI_LAMINA_VERSION, llVersion.to_string());
+        logger.warn(
+            "这可能会让插件无法正常工作!建议使用与插件依赖版本相同的 LeviLamina 版本。"
+        );
+        logger.warn("这可能导致数据丢失或服务器不稳定。");
+        logger.warn("请谨慎使用，并随时准备好备份。");
+        logger.warn(
+            "The LeviLamina version ({}) that the plugin depends on does not match the currently running version ({}).",
+            LEVI_LAMINA_VERSION,
+            llVersion.to_string()
+        );
+        logger.warn("This may cause data loss or server instability.");
+        logger.warn("Please use with caution and be prepared to back up at any time.");
+    }
+#else
+    logger.info("LeviLamina Version: Unknown");
+#endif
+
+#ifdef ILISTENATTENTIVELY_VERSION
+    logger.info("iListenAttentively Version: {}", ILISTENATTENTIVELY_VERSION);
+#else
+    logger.info("iListenAttentively Version: Unknown");
+#endif
 
     if (auto res = ll::i18n::getInstance().load(getSelf().getLangDir()); !res) {
         logger.error("Load language file failed, plugin will use default language.");

@@ -6,11 +6,13 @@ add_repositories("miracleforest-repo https://github.com/MiracleForest/xmake-repo
 
 
 -- LeviMc(LiteLDev)
-add_requires("levilamina 1.5.2", {configs = {target_type = "server"}})
+local levilamina_version = "1.5.2"
+add_requires("levilamina " .. levilamina_version, {configs = {target_type = "server"}})
 add_requires("levibuildscript")
 
 -- MiracleForest
-add_requires("ilistenattentively 0.8.0")
+local ilistenattentively_version = "0.8.0"
+add_requires("ilistenattentively " .. ilistenattentively_version)
 
 -- xmake
 add_requires("exprtk 0.0.3")
@@ -66,6 +68,8 @@ target("PLand") -- Change this to your mod name.
         "exprtk",
         "ilistenattentively"
     )
+    add_defines("LEVI_LAMINA_VERSION=\"" .. levilamina_version .. "\"")
+    add_defines("ILISTENATTENTIVELY_VERSION=\"" .. ilistenattentively_version .. "\"")
 
     set_exceptions("none") -- To avoid conflicts with /EHa.
     set_kind("shared")
