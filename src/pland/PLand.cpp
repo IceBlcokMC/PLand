@@ -110,7 +110,6 @@ bool PLand::enable() {
     this->mLandScheduler = std::make_unique<land::LandScheduler>();
     this->mEventListener     = std::make_unique<land::EventListener>();
     this->mSafeTeleport      = std::make_unique<land::SafeTeleport>();
-    this->mEventListener->registerHooks();
     this->mSelectorManager   = std::make_unique<land::SelectorManager>();
     this->mDrawHandleManager = std::make_unique<land::DrawHandleManager>();
 
@@ -148,7 +147,6 @@ bool PLand::disable() {
 }
 
 bool PLand::unload() {
-    this->mEventListener->unregisterHooks();
     return true; }
 
 void PLand::onConfigReload() {
