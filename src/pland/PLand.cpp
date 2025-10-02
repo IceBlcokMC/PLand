@@ -148,7 +148,7 @@ bool PLand::disable() {
 }
 
 bool PLand::unload() {
-    this->mEventListener->registerHooks();
+    this->mEventListener->unregisterHooks();
     return true; }
 
 void PLand::onConfigReload() {
