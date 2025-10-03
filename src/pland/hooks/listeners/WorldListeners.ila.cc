@@ -12,7 +12,7 @@
 #include "ila/event/minecraft/world/level/block/BlockFallEvent.h"
 #include "ila/event/minecraft/world/level/block/DragonEggBlockTeleportEvent.h"
 #include "ila/event/minecraft/world/level/block/FarmDecayEvent.h"
-#include "ila/event/minecraft/world/level/block/LiquidTryFlowEvent.h"
+#include "ila/event/minecraft/world/level/block/LiquidFlowEvent.h"
 #include "ila/event/minecraft/world/level/block/MossGrowthEvent.h"
 #include "ila/event/minecraft/world/level/block/SculkCatalystAbsorbExperienceEvent.h"
 #include "ila/event/minecraft/world/level/block/SculkSpreadEvent.h"
@@ -171,7 +171,7 @@ void EventListener::registerILAWorldListeners() {
     });
 
     RegisterListenerIf(Config::cfg.listeners.LiquidTryFlowBeforeEvent, [&]() {
-        return bus->emplaceListener<ila::mc::LiquidTryFlowBeforeEvent>([db](ila::mc::LiquidTryFlowBeforeEvent& ev) {
+        return bus->emplaceListener<ila::mc::LiquidFlowBeforeEvent>([db](ila::mc::LiquidFlowBeforeEvent& ev) {
             auto& sou    = ev.flowFromPos();
             auto& to     = ev.pos();
             auto  landTo = db->getLandAt(to, ev.blockSource().getDimensionId());
