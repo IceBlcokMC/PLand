@@ -1,8 +1,6 @@
 
 #include "pland/hooks/EventListener.h"
 #include "ll/api/event/EventBus.h"
-#include "pland/hooks/hook.h"
-#include "pland/infra/Config.h"
 #include <functional>
 
 
@@ -26,23 +24,10 @@ EventListener::EventListener() {
 }
 
 EventListener::~EventListener() {
-}
-
-void EventListener::registerHooks() {
-    RegisterHookIf(
-        Config::cfg.hooks.registerMobHurtHook, [] { registerMobHurtHook(); }, [] { unregisterMobHurtHook(); }
-    );
-    RegisterHookIf(
-        Config::cfg.hooks.registerFishingHookHitHook,
-        [] { registerOnFishingHookHitHook(); },
-        [] { unregisterOnFishingHookHitHook(); }
-    );
-    RegisterHookIf(
-        Config::cfg.hooks.registerLayEggGoalHook, [] { registeronLayEggGoalHook(); }, [] { unregisteronLayEggGoalHook(); }
-    );
-}
-
-void EventListener::unregisterHooks() {
+    auto& bus = ll::event::EventBus::getInstance();
+    for (auto& ptr : mListenerPtrs) {
+        bus.removeListener(ptr);
+    }
 }
 
 void EventListener::RegisterListenerIf(bool need, std::function<ll::event::ListenerPtr()> const& factory) {
@@ -52,11 +37,9 @@ void EventListener::RegisterListenerIf(bool need, std::function<ll::event::Liste
     }
 }
 
-void EventListener::RegisterHookIf(
-    bool need, std::function<void()> registerFunc, std::function<void()> unregisterFunc
-) {
+void EventListener::RegisterHookIf(bool need, HookGuard::HookFunc setup, HookGuard::HookFunc teardown) {
     if (need) {
-        mHookGuards.emplace_back(std::move(registerFunc), std::move(unregisterFunc));
+        mHookGuards.emplace_back(setup, teardown);
     }
 }
 

@@ -12,41 +12,42 @@ namespace land {
  * @brief HookGuard
  * RAII 管理 hook 的注册和注销。
  */
-class HookGuard {
-    std::function<void()> mUnhookFunc;
-
+class HookGuard final {
 public:
-    explicit HookGuard(std::function<void()> registerFunc, std::function<void()> unregisterFunc)
-        : mUnhookFunc(std::move(unregisterFunc)) {
-        registerFunc();
+    using HookFunc = void (*)();
+
+    explicit inline HookGuard(HookFunc hook, HookFunc unhook) : mUnhook(unhook) {
+        if (hook) hook();
     }
 
     ~HookGuard() {
-        if (mUnhookFunc) {
-            mUnhookFunc();
-        }
+        if (mUnhook) mUnhook();
     }
 
-    // 禁止拷贝和赋值
-    HookGuard(const HookGuard&) = delete;
+    HookGuard(const HookGuard&)            = delete;
     HookGuard& operator=(const HookGuard&) = delete;
 
-    // 允许移动
-    HookGuard(HookGuard&& other) noexcept : mUnhookFunc(std::move(other.mUnhookFunc)) {
-        other.mUnhookFunc = nullptr;
-    }
+    HookGuard(HookGuard&& other) noexcept : mUnhook(other.mUnhook) { other.mUnhook = nullptr; }
     HookGuard& operator=(HookGuard&& other) noexcept {
         if (this != &other) {
-            if (mUnhookFunc) {
-                mUnhookFunc();
+            if (mUnhook) {
+                mUnhook();
             }
-            mUnhookFunc       = std::move(other.mUnhookFunc);
-            other.mUnhookFunc = nullptr;
+            mUnhook       = other.mUnhook;
+            other.mUnhook = nullptr;
         }
         return *this;
     }
+
+private:
+    HookFunc mUnhook;
 };
 
+template <typename T>
+concept Hookable = requires(T) {
+    { T::hook() };
+    { T::unhook() };
+};
 
 /**
  * @brief EventListener
@@ -54,10 +55,15 @@ public:
  */
 class EventListener {
     std::vector<ll::event::ListenerPtr> mListenerPtrs;
-    std::vector<HookGuard>              mHookGuards; // 新增用于管理 hook 的 RAII 对象
+    std::vector<HookGuard>              mHookGuards;
 
     void RegisterListenerIf(bool need, std::function<ll::event::ListenerPtr()> const& factory);
-    void RegisterHookIf(bool need, std::function<void()> registerFunc, std::function<void()> unregisterFunc);
+    void RegisterHookIf(bool need, HookGuard::HookFunc setup, HookGuard::HookFunc teardown);
+
+    template <Hookable T>
+    void RegisterHookIf(bool need) {
+        this->RegisterHookIf(need, []() { T::hook(); }, []() { T::unhook(); });
+    }
 
 
     // 为不同事件类别声明注册函数
@@ -73,15 +79,13 @@ class EventListener {
     void registerLLWorldListeners();
     void registerILAWorldListeners();
 
+    void registerHooks(); // impl in Hook.cc
 
 public:
     LD_DISABLE_COPY(EventListener);
 
     LDAPI explicit EventListener();
     LDAPI ~EventListener();
-
-    void registerHooks();
-    void unregisterHooks();
 };
 
 

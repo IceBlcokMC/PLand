@@ -1,8 +1,6 @@
-
-#include "hook.h"
-#include "mc/world/level/BlockSource.h"
 #include "pland/Global.h"
 #include "pland/PLand.h"
+#include "pland/hooks/EventListener.h"
 #include "pland/hooks/listeners/ListenerHelper.h"
 #include "pland/infra/Config.h"
 #include "pland/land/LandRegistry.h"
@@ -16,7 +14,8 @@
 #include "mc/world/actor/FishingHook.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/ai/goal/LayEggGoal.h"
-#include "mc/world/actor/player/Player.h" // 添加 Player 头文件
+#include "mc/world/actor/player/Player.h"
+#include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
 
 
@@ -91,8 +90,9 @@ LL_TYPE_INSTANCE_HOOK(
     return origin(source, damage, knock, ignite);
 }
 
+
 LL_TYPE_INSTANCE_HOOK(
-    onFishingHookHitHook,
+    FishingHookHitHook,
     ll::memory::HookPriority::Highest,
     ::FishingHook,
     &::FishingHook::_pullCloser,
@@ -128,8 +128,9 @@ LL_TYPE_INSTANCE_HOOK(
     origin(inEntity, inSpeed);
 }
 
+
 LL_TYPE_INSTANCE_HOOK(
-    onLayEggGoalHook,
+    LayEggGoalHook,
     ll::memory::HookPriority::Highest,
     ::LayEggGoal,
     &::LayEggGoal::$isValidTarget,
@@ -148,12 +149,13 @@ LL_TYPE_INSTANCE_HOOK(
     return origin(region, pos);
 }
 
-void registeronLayEggGoalHook() { onLayEggGoalHook::hook(); }
-void unregisteronLayEggGoalHook() { onLayEggGoalHook::unhook(); }
 
-void registerMobHurtHook() { MobHurtHook::hook(); }
-void unregisterMobHurtHook() { MobHurtHook::unhook(); }
+// impl EventListener
+void EventListener::registerHooks() {
+    RegisterHookIf<MobHurtHook>(Config::cfg.hooks.registerMobHurtHook);
+    RegisterHookIf<FishingHookHitHook>(Config::cfg.hooks.registerFishingHookHitHook);
+    RegisterHookIf<LayEggGoalHook>(Config::cfg.hooks.registerLayEggGoalHook);
+}
 
-void registerOnFishingHookHitHook() { onFishingHookHitHook::hook(); }
-void unregisterOnFishingHookHitHook() { onFishingHookHitHook::unhook(); }
+
 } // namespace land
