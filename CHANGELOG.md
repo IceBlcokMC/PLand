@@ -5,11 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### 🐛 问题修复
+
+- [#149] [#147] 修复 Mod 关闭时事件监听器未卸载导致的报错 @engsr6982
+
 ## [0.14.0] - 2025-10-2
 
 ### 🐛 问题修复
 
-- [#140] 领地外无权限玩家可击杀领地内实体   @engsr6982
+- [#140] 领地外无权限玩家可击杀领地内实体 @engsr6982
 - [#139] 修复领地禁止创建弹射物时使用三叉戟导致吞物品 @engsr6982
 - [#138] 修复凋灵在领地边缘冲撞可破坏方块 @engsr6982
 - 修复生物受伤权限部分生物伤害无效的问题 @yangyangzhong82
@@ -27,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 移除 `debug_shape` 相关封装，改为外部独立 **DebugShape.dll** 组件 @engsr6982
 - 适配 Levilamina v1.5.2 @yangyangzhong82
 - 适配 iListenAttentively v0.8.0 @yangyangzhong82
+
 ## [0.13.0] - 2025-8-27
 
 ### ✨ 新增功能
