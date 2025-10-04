@@ -4,7 +4,7 @@
 namespace land::events::inline infra {
 
 
-ConfigReloadEvent::ConfigReloadEvent(land::events::Config& config) : mConfig(config) {}
+ConfigReloadEvent::ConfigReloadEvent(land::Config& config) : mConfig(config) {}
 
 Config& ConfigReloadEvent::getConfig() { return mConfig; }
 

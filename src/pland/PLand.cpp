@@ -22,7 +22,6 @@
 #include "pland/infra/SafeTeleport.h"
 #include "pland/land/LandRegistry.h"
 #include "pland/land/LandScheduler.h"
-#include "pland/network/Telemetry.h"
 #include "pland/selector/SelectorManager.h"
 
 
