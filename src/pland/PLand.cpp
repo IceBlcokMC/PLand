@@ -22,6 +22,7 @@
 #include "pland/infra/SafeTeleport.h"
 #include "pland/land/LandRegistry.h"
 #include "pland/land/LandScheduler.h"
+#include "pland/network/telemetry/Telemetry.h"
 #include "pland/selector/SelectorManager.h"
 
 
@@ -46,12 +47,17 @@ struct PLand::Impl {
     std::unique_ptr<SelectorManager>                mSelectorManager{nullptr};
     std::unique_ptr<DrawHandleManager>              mDrawHandleManager{nullptr};
     ll::event::ListenerPtr                          mConfigReloadListener{nullptr};
+    std::unique_ptr<network::Telemetry>             mTelemetry{nullptr};
 
 #ifdef LD_DEVTOOL
     std::unique_ptr<devtool::DevToolApp> mDevToolApp{nullptr};
 #endif
 
-    explicit Impl() : mSelf(*ll::mod::NativeMod::current()) {}
+public: // API
+    explicit Impl() : mSelf(*ll::mod::NativeMod::current()) {
+        // !! 这里的构造时机很早，请不要在这里初始化任何带有依赖的资源 !!
+    }
+
     ~Impl() {
         // !! 务必注意析构顺序 !!
 #ifdef LD_DEVTOOL
@@ -60,12 +66,13 @@ struct PLand::Impl {
         }
 #endif
         ll::event::EventBus::getInstance().removeListener(this->mConfigReloadListener);
+
         auto& logger = mSelf.getLogger();
-        logger.debug("Destroying thread pool...");
-        this->mThreadPoolExecutor->destroy();
-        this->mThreadPoolExecutor.reset();
+        this->mTelemetry.reset();
+
         logger.debug("Saving land registry...");
         this->mLandRegistry->save();
+
         logger.debug("Destroying resources...");
         this->mLandScheduler.reset();
         this->mEventListener.reset();
@@ -73,6 +80,10 @@ struct PLand::Impl {
         this->mSelectorManager.reset();
         this->mDrawHandleManager.reset();
         this->mLandRegistry.reset();
+
+        logger.debug("Destroying thread pool...");
+        this->mThreadPoolExecutor->destroy();
+        this->mThreadPoolExecutor.reset();
     }
 };
 
@@ -157,6 +168,7 @@ bool PLand::enable() {
     mImpl->mSafeTeleport      = std::make_unique<land::SafeTeleport>();
     mImpl->mSelectorManager   = std::make_unique<land::SelectorManager>();
     mImpl->mDrawHandleManager = std::make_unique<land::DrawHandleManager>();
+    mImpl->mTelemetry         = std::make_unique<network::Telemetry>(this);
 
     mImpl->mConfigReloadListener = ll::event::EventBus::getInstance().emplaceListener<events::ConfigReloadEvent>(
         [this](events::ConfigReloadEvent& ev [[maybe_unused]]) {
@@ -164,8 +176,12 @@ bool PLand::enable() {
             mImpl->mEventListener = std::make_unique<land::EventListener>();
 
             EconomySystem::getInstance().reloadEconomySystem();
+
+            mImpl->mTelemetry.reset();
+            mImpl->mTelemetry = std::make_unique<network::Telemetry>(this);
         }
     );
+
 
 #ifdef LD_TEST
     test::TestMain::setup();

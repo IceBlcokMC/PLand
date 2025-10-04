@@ -142,9 +142,9 @@
     "MobTakeBlockBeforeEvent": true, // 末影人拿走方块
     "DragonEggBlockTeleportBeforeEvent": true // 龙蛋传送
   },
-  "hooks":{
-    "registerMobHurtHook": true,// 注册生物受伤Hook
-    "registerFishingHookHitHook": true,// 注册钓鱼竿Hook
+  "hooks": {
+    "registerMobHurtHook": true, // 注册生物受伤Hook
+    "registerFishingHookHitHook": true, // 注册钓鱼竿Hook
     "registerLayEggGoalHook": true //注册海龟产卵Hook
   },
   "protection": {
@@ -202,6 +202,7 @@
     }
   },
   "internal": {
+    "telemetry": true, // 遥测（匿名数据统计）
     "devTools": false // 是否启用开发工具, 此工具依赖 OpenGL, 请确保你的设备支持 OpenGL
   }
 }

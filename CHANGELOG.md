@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### ✨ 新增功能
+
+- [#90] 新增遥测功能，匿名统计版本使用情况 @engsr6982
+
 ## [0.14.1] - 2025-10-3
 
 ### 🐛 问题修复

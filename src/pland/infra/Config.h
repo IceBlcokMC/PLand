@@ -18,7 +18,7 @@ struct ForbiddenRange {
 };
 
 struct Config {
-    int              version{28};
+    int              version{29};
     ll::io::LogLevel logLevel{ll::io::LogLevel::Info};
 
     EconomyConfig economy;
@@ -199,6 +199,7 @@ struct Config {
     } protection;
 
     struct {
+        bool telemetry{true}; // 遥测（匿名数据统计）
         bool devTools{false}; // 开发工具
     } internal;
 
