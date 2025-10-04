@@ -51,7 +51,11 @@ void EventListener::registerLLEntityListeners() {
             auto& actor  = ev.self();
             auto& source = ev.source();
 
-            // MobHurtHook 已经处理了非玩家伤害的领地保护，这里只处理玩家伤害
+            if (source.getEntityType() != ActorType::Player) {
+                EVENT_TRACE("ActorHurtEvent", EVENT_TRACE_SKIP, "non-player damage");
+                return; // skip non-player damage
+            }
+
             auto sourcePlayer = actor.getLevel().getPlayer(source.getEntityUniqueID());
             if (!sourcePlayer) {
                 EVENT_TRACE("ActorHurtEvent", EVENT_TRACE_PASS, "source player not found");
