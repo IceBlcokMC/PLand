@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.1] - 2025-10-3
+
 ### 🐛 问题修复
 
 - [#149] [#147] 修复 Mod 关闭时事件监听器未卸载导致的报错 @engsr6982
