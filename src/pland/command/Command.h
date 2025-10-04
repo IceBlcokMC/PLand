@@ -3,13 +3,8 @@
 
 namespace land {
 
-class LandCommand {
-public:
-    LandCommand()                              = delete;
-    LandCommand(const LandCommand&)            = delete;
-    LandCommand& operator=(const LandCommand&) = delete;
-    ~LandCommand()                             = delete;
-
+struct LandCommand {
+    LandCommand() = delete;
     LDAPI static bool setup();
 };
 

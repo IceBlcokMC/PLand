@@ -3,6 +3,7 @@
 #include "pland/Global.h"
 #include "pland/PLand.h"
 #include "pland/command/Command.h"
+#include "pland/events/ConfigReloadEvent.h"
 #include "pland/gui/LandBuyGUI.h"
 #include "pland/gui/LandMainMenuGUI.h"
 #include "pland/gui/LandManagerGUI.h"
@@ -18,9 +19,11 @@
 #include "pland/utils/McUtils.h"
 #include "pland/utils/Utils.h"
 
+
 #include "ll/api/command/Command.h"
 #include "ll/api/command/CommandHandle.h"
 #include "ll/api/command/CommandRegistrar.h"
+#include "ll/api/event/EventBus.h"
 #include "ll/api/form/CustomForm.h"
 #include "ll/api/i18n/I18n.h"
 #include "ll/api/io/Logger.h"
@@ -28,6 +31,7 @@
 #include "ll/api/service/PlayerInfo.h"
 #include "ll/api/service/Service.h"
 #include "ll/api/utils/HashUtils.h"
+
 
 #include "mc/deps/core/math/Color.h"
 #include "mc/deps/core/string/HashedString.h"
@@ -266,7 +270,7 @@ static auto const Buy = [](CommandOrigin const& ori, CommandOutput& out) {
 static auto const Reload = [](CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::DedicatedServer);
     if (Config::tryLoad()) {
-        land::PLand::getInstance().onConfigReload();
+        ll::event::EventBus::getInstance().publish(events::ConfigReloadEvent{Config::cfg});
         mc_utils::sendText(out, "领地系统配置已重新加载"_tr());
     } else {
         mc_utils::sendText(out, "领地系统配置加载失败，请检查配置文件"_tr());
