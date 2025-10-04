@@ -170,7 +170,7 @@ void EventListener::registerILAWorldListeners() {
         });
     });
 
-    RegisterListenerIf(Config::cfg.listeners.LiquidTryFlowBeforeEvent, [&]() {
+    RegisterListenerIf(Config::cfg.listeners.LiquidFlowBeforeEvent, [&]() {
         return bus->emplaceListener<ila::mc::LiquidFlowBeforeEvent>([db](ila::mc::LiquidFlowBeforeEvent& ev) {
             auto& sou    = ev.flowFromPos();
             auto& to     = ev.pos();

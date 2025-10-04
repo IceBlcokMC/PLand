@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#149] [#147] 修复 Mod 关闭时事件监听器未卸载导致的报错 @engsr6982
 
+### 🧹 其他改动
+
+- [#148] `LiquidTryFlowBeforeEvent` 更改为 `LiquidFlowBeforeEvent` @engsr6982
+
 ## [0.14.0] - 2025-10-2
 
 ### 🐛 问题修复
