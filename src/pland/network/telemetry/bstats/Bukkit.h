@@ -74,16 +74,15 @@ struct Bukkit {
     std::optional<int>         playerAmount; // Number of online players (mapping to 'players')
 
 
-    // Deprecated: bStats server only accepts fixed Bukkit-side values,
-    // arbitrary strings (e.g. Bedrock-specific info) will be ignored or dropped.
+    std::optional<std::string> bukkitVersion; // Bukkit version (mapping to 'minecraftVersion')
 
-    // Dedicated field (cannot fill in arbitrary content)
-    [[deprecated]] std::optional<std::string> osName;        // Operating system name
-    [[deprecated]] std::optional<std::string> osVersion;     // Operating system version
-    [[deprecated]] std::optional<std::string> bukkitName;    // Bukkit name
-    [[deprecated]] std::optional<std::string> bukkitVersion; // Bukkit version
+    // Special fields, parsed to OS
+    // (due to the special behavior of the bstats backend, these two fields need to exist together)
+    std::optional<std::string> osName;    // Operating system name (Hard coding)
+    std::optional<std::string> osVersion; // Operating system version
 
     // Useless field (relative to Bedrock)
+    [[deprecated]] std::optional<std::string> bukkitName;  // Bukkit name (Hard coding) (mapping to 'serverSoftware')
     [[deprecated]] std::optional<std::string> javaVersion; // Java version
 
     Bukkit() = default;

@@ -1,5 +1,6 @@
 #include "Telemetry.h"
 #include "bstats/Bukkit.h"
+#include "ll/api/utils/SystemUtils.h"
 #include "pland/PLand.h"
 #include "pland/Version.h"
 #include "pland/infra/Config.h"
@@ -158,15 +159,10 @@ struct Telemetry::Impl {
         mBody.onlineMode            = ll::service::getPropertiesSettings().value().mIsOnlineMode;
         mBody.service.pluginVersion = PLAND_VERSION_STRING;
 
-        mBody.service.customCharts.emplace_back(
-            bstats::SimplePie{bstats::Bukkit::OsChartId, ll::sys_utils::isWine() ? "Linux(wine)" : "Windows"}
-        );
+        mBody.osName    = ll::sys_utils::isWine() ? "Linux" : "Windows";
+        mBody.osVersion = ll::sys_utils::getSystemVersion().to_string();
 
-        mBody.service.customCharts.emplace_back(
-            bstats::SimplePie{bstats::Bukkit::MinecraftVersionChartId, Common::getBuildInfo().mBuildId}
-        );
-
-        mBody.service.customCharts.emplace_back(bstats::SimplePie{bstats::Bukkit::ServerSoftwareChartId, "LeviLamina"});
+        mBody.bukkitVersion = Common::getBuildInfo().mBuildId;
 
         // custom
         mBody.service.customCharts.emplace_back(
