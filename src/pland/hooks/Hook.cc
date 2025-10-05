@@ -25,6 +25,7 @@
 namespace land {
 
 
+// Fix [#140](https://github.com/engsr6982/PLand/issues/140)
 LL_TYPE_INSTANCE_HOOK(
     MobHurtHook,
     HookPriority::Normal,
@@ -44,7 +45,7 @@ LL_TYPE_INSTANCE_HOOK(
     return origin(source, damage, knock, ignite);
 }
 
-
+// Fix [#56](https://github.com/engsr6982/PLand/issues/56)
 LL_TYPE_INSTANCE_HOOK(
     FishingHookHitHook,
     ll::memory::HookPriority::Highest,
@@ -82,7 +83,7 @@ LL_TYPE_INSTANCE_HOOK(
     origin(inEntity, inSpeed);
 }
 
-
+// Fix [#69](https://github.com/engsr6982/PLand/issues/69)
 LL_TYPE_INSTANCE_HOOK(
     LayEggGoalHook,
     ll::memory::HookPriority::Highest,
