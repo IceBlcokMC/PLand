@@ -18,7 +18,7 @@ struct ForbiddenRange {
 };
 
 struct Config {
-    int              version{29};
+    int              version{30};
     ll::io::LogLevel logLevel{ll::io::LogLevel::Info};
 
     EconomyConfig economy;
@@ -120,6 +120,7 @@ struct Config {
         bool registerMobHurtHook{true};        // 注册生物受伤Hook
         bool registerFishingHookHitHook{true}; // 注册钓鱼竿Hook
         bool registerLayEggGoalHook{true};     // 注册产卵AI目标Hook
+        bool registerFireBlockBurnHook{true};  // 注册火焰蔓延Hook
     } hooks;
 
     struct {

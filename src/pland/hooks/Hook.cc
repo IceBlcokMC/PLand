@@ -20,7 +20,7 @@
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
-
+#include "mc/world/level/block/FireBlock.h"
 
 namespace land {
 
@@ -48,7 +48,7 @@ LL_TYPE_INSTANCE_HOOK(
 // Fix [#56](https://github.com/engsr6982/PLand/issues/56)
 LL_TYPE_INSTANCE_HOOK(
     FishingHookHitHook,
-    ll::memory::HookPriority::Highest,
+    ll::memory::HookPriority::Normal,
     ::FishingHook,
     &::FishingHook::_pullCloser,
     void,
@@ -86,7 +86,7 @@ LL_TYPE_INSTANCE_HOOK(
 // Fix [#69](https://github.com/engsr6982/PLand/issues/69)
 LL_TYPE_INSTANCE_HOOK(
     LayEggGoalHook,
-    ll::memory::HookPriority::Highest,
+    ll::memory::HookPriority::Normal,
     ::LayEggGoal,
     &::LayEggGoal::$isValidTarget,
     bool,
@@ -104,12 +104,35 @@ LL_TYPE_INSTANCE_HOOK(
     return origin(region, pos);
 }
 
+// Fix [#136](https://github.com/engsr6982/PLand/issues/136)
+LL_TYPE_INSTANCE_HOOK(
+    FireBlockBurnHook,
+    ll::memory::HookPriority::Normal,
+    FireBlock,
+    &FireBlock::checkBurn,
+    void,
+    ::BlockSource&    region,
+    ::BlockPos const& pos,
+    int               chance,
+    ::Randomize&      randomize,
+    int               age
+) {
+    // 获取领地注册表实例
+    auto* db   = PLand::getInstance().getLandRegistry();
+    auto  land = db->getLandAt(pos, region.getDimensionId());
+
+    // 如果在领地内且不允许火焰蔓延，则拦截
+    if (land && !land->getPermTable().allowFireSpread) {
+        return;
+    }
+}
 
 // impl EventListener
 void EventListener::registerHooks() {
     RegisterHookIf<MobHurtHook>(Config::cfg.hooks.registerMobHurtHook);
     RegisterHookIf<FishingHookHitHook>(Config::cfg.hooks.registerFishingHookHitHook);
     RegisterHookIf<LayEggGoalHook>(Config::cfg.hooks.registerLayEggGoalHook);
+    RegisterHookIf<FireBlockBurnHook>(Config::cfg.hooks.registerFireBlockBurnHook);
 }
 
 
