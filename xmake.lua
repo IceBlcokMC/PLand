@@ -108,8 +108,8 @@ target("PLand") -- Change this to your mod name.
             "imgui",
             "glew"
         )
-        add_includedirs("devtool", "devtool/deps")
-        add_files("devtool/**.cc", "devtool/**.cpp")
+        add_includedirs("src-devtool", "src-devtool/deps")
+        add_files("src-devtool/**.cc", "src-devtool/**.cpp")
         add_defines("LD_DEVTOOL")
     end
 
