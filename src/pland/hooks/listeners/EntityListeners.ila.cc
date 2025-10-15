@@ -1,6 +1,7 @@
 #include "pland/PLand.h"
 #include "pland/hooks/EventListener.h"
 #include "pland/hooks/listeners/ListenerHelper.h"
+#include "pland/hooks/optimize/HashedTypeName.h"
 #include "pland/infra/Config.h"
 #include "pland/land/LandRegistry.h"
 
@@ -13,7 +14,6 @@
 #include "ila/event/minecraft/world/actor/MobPlaceBlockEvent.h"
 #include "ila/event/minecraft/world/actor/MobTakeBlockEvent.h"
 #include "ila/event/minecraft/world/actor/ProjectileCreateEvent.h"
-
 
 
 #include "mc/deps/ecs/WeakEntityRef.h"
@@ -59,65 +59,63 @@ void EventListener::registerILAEntityListeners() {
     });
 
     RegisterListenerIf(Config::cfg.listeners.MobTakeBlockBeforeEvent, [&]() {
-        return bus->emplaceListener<ila::mc::MobTakeBlockBeforeEvent>(
-            [db, logger](ila::mc::MobTakeBlockBeforeEvent& ev) {
-                auto& actor    = ev.self();
-                auto& blockPos = ev.pos();
+        return bus->emplaceListener<ila::mc::MobTakeBlockBeforeEvent>([db,
+                                                                       logger](ila::mc::MobTakeBlockBeforeEvent& ev) {
+            auto& actor    = ev.self();
+            auto& blockPos = ev.pos();
 
-                EVENT_TRACE(
-                    "MobTakeBlockBeforeEvent",
-                    EVENT_TRACE_LOG,
-                    "actor={}, pos={}",
-                    actor.getTypeName(),
-                    blockPos.toString()
-                );
+            EVENT_TRACE(
+                "MobTakeBlockBeforeEvent",
+                EVENT_TRACE_LOG,
+                "actor={}, pos={}",
+                actor.getTypeName(),
+                blockPos.toString()
+            );
 
-                auto land = db->getLandAt(blockPos, actor.getDimensionId());
-                if (PreCheckLandExistsAndPermission(land)) {
-                    EVENT_TRACE("MobTakeBlockBeforeEvent", EVENT_TRACE_PASS, "land not found or permission allowed");
-                    return;
-                }
-
-                if (land->getPermTable().allowActorDestroy) {
-                    EVENT_TRACE("MobTakeBlockBeforeEvent", EVENT_TRACE_PASS, "allowActorDestroy allowed");
-                    return;
-                }
-
-                ev.cancel();
-                EVENT_TRACE("MobTakeBlockBeforeEvent", EVENT_TRACE_CANCEL, "permission denied");
+            auto land = db->getLandAt(blockPos, actor.getDimensionId());
+            if (PreCheckLandExistsAndPermission(land)) {
+                EVENT_TRACE("MobTakeBlockBeforeEvent", EVENT_TRACE_PASS, "land not found or permission allowed");
+                return;
             }
-        );
+
+            if (land->getPermTable().allowActorDestroy) {
+                EVENT_TRACE("MobTakeBlockBeforeEvent", EVENT_TRACE_PASS, "allowActorDestroy allowed");
+                return;
+            }
+
+            ev.cancel();
+            EVENT_TRACE("MobTakeBlockBeforeEvent", EVENT_TRACE_CANCEL, "permission denied");
+        });
     });
 
     RegisterListenerIf(Config::cfg.listeners.MobPlaceBlockBeforeEvent, [&]() {
-        return bus->emplaceListener<ila::mc::MobPlaceBlockBeforeEvent>(
-            [db, logger](ila::mc::MobPlaceBlockBeforeEvent& ev) {
-                auto& actor    = ev.self();
-                auto& blockPos = ev.pos();
+        return bus->emplaceListener<ila::mc::MobPlaceBlockBeforeEvent>([db,
+                                                                        logger](ila::mc::MobPlaceBlockBeforeEvent& ev) {
+            auto& actor    = ev.self();
+            auto& blockPos = ev.pos();
 
-                EVENT_TRACE(
-                    "MobPlaceBlockBeforeEvent",
-                    EVENT_TRACE_LOG,
-                    "actor={}, pos={}",
-                    actor.getTypeName(),
-                    blockPos.toString()
-                );
+            EVENT_TRACE(
+                "MobPlaceBlockBeforeEvent",
+                EVENT_TRACE_LOG,
+                "actor={}, pos={}",
+                actor.getTypeName(),
+                blockPos.toString()
+            );
 
-                auto land = db->getLandAt(blockPos, actor.getDimensionId());
-                if (PreCheckLandExistsAndPermission(land)) {
-                    EVENT_TRACE("MobPlaceBlockBeforeEvent", EVENT_TRACE_PASS, "land not found or permission allowed");
-                    return;
-                }
-
-                if (land->getPermTable().allowActorDestroy) {
-                    EVENT_TRACE("MobPlaceBlockBeforeEvent", EVENT_TRACE_PASS, "allowActorDestroy allowed");
-                    return;
-                }
-
-                ev.cancel();
-                EVENT_TRACE("MobPlaceBlockBeforeEvent", EVENT_TRACE_CANCEL, "permission denied");
+            auto land = db->getLandAt(blockPos, actor.getDimensionId());
+            if (PreCheckLandExistsAndPermission(land)) {
+                EVENT_TRACE("MobPlaceBlockBeforeEvent", EVENT_TRACE_PASS, "land not found or permission allowed");
+                return;
             }
-        );
+
+            if (land->getPermTable().allowActorDestroy) {
+                EVENT_TRACE("MobPlaceBlockBeforeEvent", EVENT_TRACE_PASS, "allowActorDestroy allowed");
+                return;
+            }
+
+            ev.cancel();
+            EVENT_TRACE("MobPlaceBlockBeforeEvent", EVENT_TRACE_CANCEL, "permission denied");
+        });
     });
 
     RegisterListenerIf(Config::cfg.listeners.ActorRideBeforeEvent, [&]() {
@@ -145,10 +143,12 @@ void EventListener::registerILAEntityListeners() {
                 return;
             }
 
-            auto& typeName = target.getTypeName();
-            auto& tab      = land->getPermTable();
-            if (typeName == "minecraft:minecart" || typeName == "minecraft:boat"
-                || typeName == "minecraft:chest_boat") {
+            auto& typeName       = target.getTypeName();
+            auto  hashedTypeName = HashedStringView{typeName};
+
+            auto& tab = land->getPermTable();
+            if (hashedTypeName == HashedTypeName::Minecart || hashedTypeName == HashedTypeName::Boat
+                || hashedTypeName == HashedTypeName::ChestBoat) {
                 if (tab.allowRideTrans) {
                     EVENT_TRACE("ActorRideEvent", EVENT_TRACE_PASS, "allowRideTrans allowed");
                     return;
@@ -266,7 +266,7 @@ void EventListener::registerILAEntityListeners() {
                 }
 
                 auto const& tab = land->getPermTable();
-                if (typeName == "minecraft:fishing_hook") {
+                if (HashedStringView{typeName} == HashedTypeName::FishingHook) {
                     CANCEL_AND_RETURN_IF(
                         !tab.allowFishingRodAndHook,
                         EVENT_TRACE("ProjectileCreateEvent", EVENT_TRACE_CANCEL, "allowFishingRodAndHook denied")

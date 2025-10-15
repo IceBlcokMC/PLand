@@ -27,6 +27,7 @@
 #include "mc/world/level/block/SmokerBlock.h"
 
 #include "pland/PLand.h"
+#include "pland/hooks/optimize/HashedTypeName.h"
 #include "pland/infra/Config.h"
 #include "pland/land/LandRegistry.h"
 #include "pland/utils/McUtils.h"
@@ -38,49 +39,49 @@
 namespace land {
 
 // These maps are used by PlayerInteractBlockEvent, so they stay in this file.
-static std::unordered_map<std::string_view, bool LandPermTable::*> ItemSpecificPermissionMap;
-static std::unordered_map<std::string_view, bool LandPermTable::*> BlockSpecificPermissionMap;
-static std::unordered_map<std::string_view, bool LandPermTable::*> BlockFunctionalPermissionMap;
+static std::unordered_map<HashedStringView, bool LandPermTable::*> ItemSpecificPermissionMap;
+static std::unordered_map<HashedStringView, bool LandPermTable::*> BlockSpecificPermissionMap;
+static std::unordered_map<HashedStringView, bool LandPermTable::*> BlockFunctionalPermissionMap;
 
 // A map to convert permission names (from config) to member pointers.
-static const std::unordered_map<std::string, bool LandPermTable::*> StringToPermPtrMap = {
-    {          "allowPlace",           &LandPermTable::allowPlace},
-    {    "useFlintAndSteel",     &LandPermTable::useFlintAndSteel},
-    {         "useBoneMeal",          &LandPermTable::useBoneMeal},
-    {"allowAttackDragonEgg", &LandPermTable::allowAttackDragonEgg},
-    {              "useBed",               &LandPermTable::useBed},
-    {      "allowOpenChest",       &LandPermTable::allowOpenChest},
-    {         "useCampfire",          &LandPermTable::useCampfire},
-    {        "useComposter",         &LandPermTable::useComposter},
-    {        "useNoteBlock",         &LandPermTable::useNoteBlock},
-    {          "useJukebox",           &LandPermTable::useJukebox},
-    {             "useBell",              &LandPermTable::useBell},
-    { "useDaylightDetector",  &LandPermTable::useDaylightDetector},
-    {          "useLectern",           &LandPermTable::useLectern},
-    {         "useCauldron",          &LandPermTable::useCauldron},
-    {    "useRespawnAnchor",     &LandPermTable::useRespawnAnchor},
-    {       "editFlowerPot",        &LandPermTable::editFlowerPot},
-    {        "allowDestroy",         &LandPermTable::allowDestroy},
-    { "useCartographyTable",  &LandPermTable::useCartographyTable},
-    {    "useSmithingTable",     &LandPermTable::useSmithingTable},
-    {     "useBrewingStand",      &LandPermTable::useBrewingStand},
-    {            "useAnvil",             &LandPermTable::useAnvil},
-    {       "useGrindstone",        &LandPermTable::useGrindstone},
-    {  "useEnchantingTable",   &LandPermTable::useEnchantingTable},
-    {           "useBarrel",            &LandPermTable::useBarrel},
-    {           "useBeacon",            &LandPermTable::useBeacon},
-    {           "useHopper",            &LandPermTable::useHopper},
-    {          "useDropper",           &LandPermTable::useDropper},
-    {        "useDispenser",         &LandPermTable::useDispenser},
-    {             "useLoom",              &LandPermTable::useLoom},
-    {      "useStonecutter",       &LandPermTable::useStonecutter},
-    {          "useCrafter",           &LandPermTable::useCrafter},
-    {"useChiseledBookshelf", &LandPermTable::useChiseledBookshelf},
-    {             "useCake",              &LandPermTable::useCake},
-    {       "useComparator",        &LandPermTable::useComparator},
-    {         "useRepeater",          &LandPermTable::useRepeater},
-    {          "useBeeNest",           &LandPermTable::useBeeNest},
-    {            "useVault",             &LandPermTable::useVault}
+static const std::unordered_map<HashedStringView, bool LandPermTable::*> StringToPermPtrMap = {
+    {          {"allowPlace"},           &LandPermTable::allowPlace},
+    {    {"useFlintAndSteel"},     &LandPermTable::useFlintAndSteel},
+    {         {"useBoneMeal"},          &LandPermTable::useBoneMeal},
+    {{"allowAttackDragonEgg"}, &LandPermTable::allowAttackDragonEgg},
+    {              {"useBed"},               &LandPermTable::useBed},
+    {      {"allowOpenChest"},       &LandPermTable::allowOpenChest},
+    {         {"useCampfire"},          &LandPermTable::useCampfire},
+    {        {"useComposter"},         &LandPermTable::useComposter},
+    {        {"useNoteBlock"},         &LandPermTable::useNoteBlock},
+    {          {"useJukebox"},           &LandPermTable::useJukebox},
+    {             {"useBell"},              &LandPermTable::useBell},
+    { {"useDaylightDetector"},  &LandPermTable::useDaylightDetector},
+    {          {"useLectern"},           &LandPermTable::useLectern},
+    {         {"useCauldron"},          &LandPermTable::useCauldron},
+    {    {"useRespawnAnchor"},     &LandPermTable::useRespawnAnchor},
+    {       {"editFlowerPot"},        &LandPermTable::editFlowerPot},
+    {        {"allowDestroy"},         &LandPermTable::allowDestroy},
+    { {"useCartographyTable"},  &LandPermTable::useCartographyTable},
+    {    {"useSmithingTable"},     &LandPermTable::useSmithingTable},
+    {     {"useBrewingStand"},      &LandPermTable::useBrewingStand},
+    {            {"useAnvil"},             &LandPermTable::useAnvil},
+    {       {"useGrindstone"},        &LandPermTable::useGrindstone},
+    {  {"useEnchantingTable"},   &LandPermTable::useEnchantingTable},
+    {           {"useBarrel"},            &LandPermTable::useBarrel},
+    {           {"useBeacon"},            &LandPermTable::useBeacon},
+    {           {"useHopper"},            &LandPermTable::useHopper},
+    {          {"useDropper"},           &LandPermTable::useDropper},
+    {        {"useDispenser"},         &LandPermTable::useDispenser},
+    {             {"useLoom"},              &LandPermTable::useLoom},
+    {      {"useStonecutter"},       &LandPermTable::useStonecutter},
+    {          {"useCrafter"},           &LandPermTable::useCrafter},
+    {{"useChiseledBookshelf"}, &LandPermTable::useChiseledBookshelf},
+    {             {"useCake"},              &LandPermTable::useCake},
+    {       {"useComparator"},        &LandPermTable::useComparator},
+    {         {"useRepeater"},          &LandPermTable::useRepeater},
+    {          {"useBeeNest"},           &LandPermTable::useBeeNest},
+    {            {"useVault"},             &LandPermTable::useVault}
 };
 
 // Helper to load permissions from config
@@ -93,9 +94,9 @@ void loadPermissionMapsFromConfig() {
 
     auto populateMap = [&](const auto& configMap, auto& targetMap, const std::string& mapName) {
         for (const auto& [itemName, permName] : configMap) {
-            auto it = StringToPermPtrMap.find(permName);
+            auto it = StringToPermPtrMap.find(HashedStringView{permName});
             if (it != StringToPermPtrMap.end()) {
-                targetMap[itemName] = it->second;
+                targetMap.emplace(itemName, it->second);
             } else {
                 logger->warn(
                     "Permission '{}' for item '{}' in '{}' map not found. Ignoring.",
@@ -186,10 +187,11 @@ void EventListener::registerLLPlayerListeners() {
     RegisterListenerIf(Config::cfg.listeners.PlayerInteractBlockEvent, [&]() {
         return bus->emplaceListener<ll::event::PlayerInteractBlockEvent>(
             [db, logger](ll::event::PlayerInteractBlockEvent& ev) {
-                auto&      player       = ev.self();
-                auto&      pos          = ev.blockPos();
-                auto&      itemStack    = ev.item();
-                auto const itemTypeName = itemStack.getTypeName();
+                auto&      player         = ev.self();
+                auto&      pos            = ev.blockPos();
+                auto&      itemStack      = ev.item();
+                auto const itemTypeName   = itemStack.getTypeName();
+                auto       hashedItemType = HashedStringView{itemTypeName};
 
                 EVENT_TRACE(
                     "PlayerInteractBlockEvent",
@@ -230,20 +232,19 @@ void EventListener::registerLLPlayerListeners() {
                             !tab.useShovel,
                             EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "useShovel denied")
                         );
-                    } else if (item->hasTag(HashedString("minecraft:boat"))
-                               || item->hasTag(HashedString("minecraft:boats"))) {
+                    } else if (item->hasTag(HashedTypeName::Boat) || item->hasTag(HashedTypeName::Boats)) {
                         CANCEL_AND_RETURN_IF(
                             !tab.placeBoat,
                             EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "placeBoat denied")
                         );
-                    } else if (item->hasTag(HashedString("minecraft:is_minecart"))) {
+                    } else if (item->hasTag(HashedTypeName::IsMinecart)) {
                         CANCEL_AND_RETURN_IF(
                             !tab.placeMinecart,
                             EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "placeMinecart denied")
                         );
                     }
                 }
-                if (auto it = ItemSpecificPermissionMap.find(itemTypeName);
+                if (auto it = ItemSpecificPermissionMap.find(hashedItemType);
                     it != ItemSpecificPermissionMap.end() && !(tab.*(it->second))) {
                     EVENT_TRACE(
                         "PlayerInteractBlockEvent",
@@ -260,7 +261,9 @@ void EventListener::registerLLPlayerListeners() {
                     auto const& typeName    = block->getTypeName();
                     auto const& legacyBlock = block->getBlockType();
 
-                    if (auto iter = BlockSpecificPermissionMap.find(typeName);
+                    auto hashedBlockTy = HashedStringView{typeName};
+
+                    if (auto iter = BlockSpecificPermissionMap.find(hashedBlockTy);
                         iter != BlockSpecificPermissionMap.end() && !(tab.*(iter->second))) {
                         EVENT_TRACE(
                             "PlayerInteractBlockEvent",
@@ -272,7 +275,7 @@ void EventListener::registerLLPlayerListeners() {
                         return;
                     }
 
-                    if (auto iter = BlockFunctionalPermissionMap.find(typeName);
+                    if (auto iter = BlockFunctionalPermissionMap.find(hashedBlockTy);
                         iter != BlockFunctionalPermissionMap.end() && !(tab.*(iter->second))) {
                         EVENT_TRACE(
                             "PlayerInteractBlockEvent",
@@ -375,6 +378,8 @@ void EventListener::registerLLPlayerListeners() {
             auto const& typeName = mob.getTypeName();
             auto const& tab      = land->getPermTable();
 
+            auto hashed = HashedStringView{typeName};
+
             if (Config::cfg.protection.mob.hostileMobTypeNames.contains(typeName)) {
                 CANCEL_AND_RETURN_IF(
                     !tab.allowMonsterDamage,
@@ -385,7 +390,7 @@ void EventListener::registerLLPlayerListeners() {
                     !tab.allowSpecialDamage,
                     EVENT_TRACE("PlayerAttackEvent", EVENT_TRACE_CANCEL, "allowSpecialDamage denied")
                 );
-            } else if (typeName == "minecraft:player") {
+            } else if (hashed == HashedTypeName::Player) {
                 CANCEL_AND_RETURN_IF(
                     !tab.allowPlayerDamage,
                     EVENT_TRACE("PlayerAttackEvent", EVENT_TRACE_CANCEL, "allowPlayerDamage denied")
@@ -395,7 +400,7 @@ void EventListener::registerLLPlayerListeners() {
                     !tab.allowPassiveDamage,
                     EVENT_TRACE("PlayerAttackEvent", EVENT_TRACE_CANCEL, "allowPassiveDamage denied")
                 );
-            } else if (Config::cfg.protection.mob.customSpecialMobTypeNames.count(typeName)) {
+            } else if (Config::cfg.protection.mob.customSpecialMobTypeNames.contains(typeName)) {
                 CANCEL_AND_RETURN_IF(
                     !tab.allowCustomSpecialDamage,
                     EVENT_TRACE("PlayerAttackEvent", EVENT_TRACE_CANCEL, "allowCustomSpecialDamage denied")
@@ -459,9 +464,11 @@ void EventListener::registerLLPlayerListeners() {
                 return;
             }
 
+            auto hashed = HashedStringView{typeName};
+
             // patch https://github.com/engsr6982/PLand/issues/139
             CANCEL_AND_RETURN_IF(
-                !land->getPermTable().allowProjectileCreate && typeName == "minecraft:trident",
+                !land->getPermTable().allowProjectileCreate && hashed == HashedTypeName::Trident,
                 EVENT_TRACE("PlayerUseItemEvent", EVENT_TRACE_CANCEL, "allowProjectileCreate denied")
             );
         });

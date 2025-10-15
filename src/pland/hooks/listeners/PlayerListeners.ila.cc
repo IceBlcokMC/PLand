@@ -16,6 +16,7 @@
 
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/block/Block.h"
+#include "pland/hooks/optimize/HashedTypeName.h"
 
 
 namespace land {
@@ -57,32 +58,32 @@ void EventListener::registerILAPlayerListeners() {
     });
 
     RegisterListenerIf(Config::cfg.listeners.PlayerAttackBlockBeforeEvent, [&]() {
-        return bus->emplaceListener<ila::mc::PlayerAttackBlockBeforeEvent>(
-            [db, logger](ila::mc::PlayerAttackBlockBeforeEvent& ev) {
-                auto& player = ev.self();
-                auto& pos    = ev.pos();
+        return bus->emplaceListener<ila::mc::PlayerAttackBlockBeforeEvent>([db, logger](
+                                                                               ila::mc::PlayerAttackBlockBeforeEvent& ev
+                                                                           ) {
+            auto& player = ev.self();
+            auto& pos    = ev.pos();
 
-                EVENT_TRACE(
-                    "PlayerAttackBlockEvent",
-                    EVENT_TRACE_LOG,
-                    "player={}, pos={}",
-                    player.getRealName(),
-                    pos.toString()
-                );
+            EVENT_TRACE(
+                "PlayerAttackBlockEvent",
+                EVENT_TRACE_LOG,
+                "player={}, pos={}",
+                player.getRealName(),
+                pos.toString()
+            );
 
-                auto land = db->getLandAt(pos, player.getDimensionId());
-                if (PreCheckLandExistsAndPermission(land, player.getUuid())) {
-                    EVENT_TRACE("PlayerAttackBlockEvent", EVENT_TRACE_PASS, "land not found or permission allowed");
-                    return;
-                }
-
-                auto const& typeName = player.getDimensionBlockSourceConst().getBlock(pos).getTypeName();
-                if (typeName == "minecraft:dragon_egg" && !land->getPermTable().allowAttackDragonEgg) {
-                    ev.cancel();
-                    EVENT_TRACE("PlayerAttackBlockEvent", EVENT_TRACE_CANCEL, "allowAttackDragonEgg denied");
-                }
+            auto land = db->getLandAt(pos, player.getDimensionId());
+            if (PreCheckLandExistsAndPermission(land, player.getUuid())) {
+                EVENT_TRACE("PlayerAttackBlockEvent", EVENT_TRACE_PASS, "land not found or permission allowed");
+                return;
             }
-        );
+
+            auto const& typeName = player.getDimensionBlockSourceConst().getBlock(pos).getTypeName();
+            if (HashedStringView{typeName} == HashedTypeName::DragonEgg && !land->getPermTable().allowAttackDragonEgg) {
+                ev.cancel();
+                EVENT_TRACE("PlayerAttackBlockEvent", EVENT_TRACE_CANCEL, "allowAttackDragonEgg denied");
+            }
+        });
     });
 
     RegisterListenerIf(Config::cfg.listeners.ArmorStandSwapItemBeforeEvent, [&]() {
