@@ -112,8 +112,10 @@ bool PLand::load() {
 
 #ifdef LEVI_LAMINA_VERSION
     logger.info("LeviLamina Version: {}", LEVI_LAMINA_VERSION);
+    auto const  semver    = ll::data::Version{LEVI_LAMINA_VERSION};
     const auto& llVersion = ll::getLoaderVersion();
-    if (llVersion != ll::data::Version(LEVI_LAMINA_VERSION)) {
+    // 仅检查 major 和 minor 版本号
+    if (llVersion.major != semver.major || llVersion.minor != semver.minor) {
         logger.warn(
             "插件所依赖的 LeviLamina 版本 ({}) 与当前运行的版本 ({}) 不匹配。",
             LEVI_LAMINA_VERSION,
