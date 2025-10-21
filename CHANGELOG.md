@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🧩 逻辑优化
 
 - 优化部分物品、实体判定 @engsr6982
+- 重力方块下落更改为仅外部下落进领地内 @engsr6982
 
 ### 🧹 其他改动
 

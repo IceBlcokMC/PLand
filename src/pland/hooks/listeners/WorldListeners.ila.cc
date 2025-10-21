@@ -129,7 +129,6 @@ void EventListener::registerILAWorldListeners() {
             auto land = db->getLandAt(ev.pos(), ev.blockSource().getDimensionId());
             if (land) {
                 auto const& tab = land->getPermTable();
-                CANCEL_AND_RETURN_IF(!tab.allowBlockFall);
                 if (land->getAABB().isAboveLand(ev.pos()) && !tab.allowBlockFall) {
                     ev.cancel();
                 }

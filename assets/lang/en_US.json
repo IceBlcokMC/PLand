@@ -82,7 +82,7 @@
     "placeMinecart": "Place minecart",
     "placeBoat": "Place boat",
     "allowProjectileCreate": "Launch projectiles",
-    "allowBlockFall": "Allow gravity blocks to fall",
+    "allowBlockFall": "Allow gravity blocks to fall (from outside the territory into the territory)",
     "Unnamed territories": "Unnamed territories",
     "No description": "No description",
     "此命令仅限 {} 使用!": "This command is only available for {}!",

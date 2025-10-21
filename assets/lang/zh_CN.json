@@ -82,7 +82,7 @@
     "placeMinecart": "放置矿车",
     "placeBoat": "放置船",
     "allowProjectileCreate": "发射弹射物",
-    "allowBlockFall": "允许重力方块掉落",
+    "allowBlockFall": "允许重力方块下落(领地外落进领地内)",
     "Unnamed territories": "Unnamed territories",
     "No description": "No description",
     "此命令仅限 {} 使用!": "此命令仅限 {} 使用!",
