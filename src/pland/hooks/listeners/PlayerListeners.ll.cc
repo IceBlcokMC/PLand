@@ -232,12 +232,12 @@ void EventListener::registerLLPlayerListeners() {
                             !tab.useShovel,
                             EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "useShovel denied")
                         );
-                    } else if (item->hasTag(HashedTypeName::Boat) || item->hasTag(HashedTypeName::Boats)) {
+                    } else if (item->hasTag(HashedTypeName::BoatTag) || item->hasTag(HashedTypeName::BoatsTag)) {
                         CANCEL_AND_RETURN_IF(
                             !tab.placeBoat,
                             EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "placeBoat denied")
                         );
-                    } else if (item->hasTag(HashedTypeName::IsMinecart)) {
+                    } else if (item->hasTag(HashedTypeName::MinecartTag)) {
                         CANCEL_AND_RETURN_IF(
                             !tab.placeMinecart,
                             EVENT_TRACE("PlayerInteractBlockEvent", EVENT_TRACE_CANCEL, "placeMinecart denied")

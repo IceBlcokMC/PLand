@@ -7,9 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.0] - 2025-10-21
+
 ### ✨ 新增功能
 
 - [#90] 新增遥测功能，匿名统计版本使用情况 @engsr6982
+
+### 🐛 问题修复
+
+- [#136] 临时修复岩浆烧毁领地边缘方块 @yangyangzhong82
+
+### 🧩 逻辑优化
+
+- 优化部分物品、实体判定 @engsr6982
+
+### 🧹 其他改动
+
+- 适配 `LeviLamina v1.6.x` & `iListenAttentively v0.9.x` @engsr6982
 
 ## [0.14.1] - 2025-10-3
 

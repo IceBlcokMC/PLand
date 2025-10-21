@@ -49,16 +49,19 @@ public:
             molang->setMolangVariable("variable.particle_lifetime", 25);
         }
 
-        auto dim    = VanillaDimensions::fromSerializedInt(dimId);
+        auto maybeDimid = VanillaDimensions::fromSerializedInt(dimId);
+        if (!maybeDimid.has_value()) {
+            PLand::getInstance().getSelf().getLogger().error("[ParticleSpawner] Unknown dimension id: {}", dimId);
+            return;
+        }
+        auto dim = maybeDimid.value();
+
+        static std::string const particle = "minecraft:villager_happy";
+
         auto points = aabb.getBorder();
         mPackets.reserve(points.size());
         for (auto& point : points) {
-            mPackets.emplace_back(
-                Vec3{point.x + 0.5, point.y + 0.5, point.z + 0.5},
-                "minecraft:villager_happy",
-                dim,
-                molang
-            );
+            mPackets.emplace_back(Vec3{point.x + 0.5, point.y + 0.5, point.z + 0.5}, particle, dim, molang);
         }
     }
 

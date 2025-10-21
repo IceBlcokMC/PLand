@@ -19,8 +19,6 @@ public:
 
     constexpr bool operator==(const HashedStringView& other) const { return other.mHash == mHash; }
     constexpr bool operator==(const ::HashedString& other) const { return other.mStrHash == mHash; }
-
-    constexpr operator ::HashedString() const { return ::HashedString(mHash, mStr.data()); }
 };
 
 
