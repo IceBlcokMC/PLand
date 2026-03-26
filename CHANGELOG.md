@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.0-beta.1] - 2026-03-10
+
 ### ✨ 新增功能
 
 - 租赁模式 @engsr6982 #154
