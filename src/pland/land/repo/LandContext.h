@@ -87,7 +87,7 @@ struct RolePerms final {
     Entry allowUseRangedWeapon{true, false}; // 允许使用远程武器(弓/弩)
 
     // 新增权限(保持 ABI 稳定，不在前面插入字段，避免 LRCA 需要重新编译)
-    // Entry allowTriggerDripleaf{true, true}; // 允许触发垂滴叶 // todo
+    Entry allowTriggerDripleaf{true, true}; // 允许触发垂滴叶
 };
 struct LandPermTable final {
     EnvironmentPerms environment{};

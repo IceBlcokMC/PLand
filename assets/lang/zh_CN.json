@@ -69,6 +69,7 @@
     "useBeeNest": "使用蜂巢(蜂箱)",
     "editFlowerPot": "编辑花盆",
     "allowUseRangedWeapon": "允许使用远程武器(弓/弩)",
+    "allowTriggerDripleaf": "允许触发大型垂滴叶",
     "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$col": "自动收集的文本",
     "Unnamed territories": "Unnamed territories",
     "\n[Tip] 经济系统未启用，本次操作不消耗 {}": "\n[Tip] 经济系统未启用，本次操作不消耗 {}",

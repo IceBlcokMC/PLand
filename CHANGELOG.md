@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 租赁模式 @engsr6982 #154
 - 数据库快照 @engsr6982 #165
+- 添加**大型垂滴叶触发权限** @engsr6982 #192
 
 ### 🐛 问题修复
 

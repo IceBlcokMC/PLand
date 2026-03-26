@@ -69,6 +69,7 @@
     "useBeeNest": "Use Bee Nest (Beehive)",
     "editFlowerPot": "Edit Flower Pot",
     "allowUseRangedWeapon": "Allow Using Ranged Weapons (Bow/Crossbow)",
+    "allowTriggerDripleaf": "Allow Trigger Big Dripleaf",
     "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$col": "Auto-collected Text",
     "Unnamed territories": "Unnamed territories",
     "\n[Tip] 经济系统未启用，本次操作不消耗 {}": "\n[Tip] Economy system is not enabled, this operation consumes no {}",
