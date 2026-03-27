@@ -19,12 +19,13 @@
 #include "ll/api/command/Command.h"
 #include "ll/api/command/CommandHandle.h"
 #include "ll/api/command/CommandRegistrar.h"
+#include "ll/api/command/runtime/RuntimeCommand.h"
+#include "ll/api/command/runtime/RuntimeOverload.h"
 #include "ll/api/event/EventBus.h"
 #include "ll/api/form/CustomForm.h"
 #include "ll/api/i18n/I18n.h"
 #include "ll/api/io/Logger.h"
 #include "ll/api/service/PlayerInfo.h"
-
 
 #include "mc/deps/core/math/Color.h"
 #include "mc/deps/core/utility/optional_ref.h"
@@ -38,6 +39,8 @@
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockPos.h"
 #include "pland/gui/admin/OperatorManager.h"
+#include "pland/service/LeasingService.h"
+#include "pland/utils/TimeUtils.h"
 
 #include <memory>
 #include <sstream>
@@ -52,69 +55,31 @@ namespace land::internal {
         return;                                                                                                        \
     }
 
+#define GET_AS_PLAYER(ORI) (*static_cast<Player*>(ori.getEntity()))
 
 struct Selector3DLand {
     bool is3DLand{false};
 };
 
-namespace Lambda {
+namespace handlers {
 
-static auto const Root = [](CommandOrigin const& ori, CommandOutput& out) {
+void open_menu(CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::Player);
-    auto& player = *static_cast<Player*>(ori.getEntity());
+    auto& player = GET_AS_PLAYER(ori);
     gui::LandMainMenuGUI::sendTo(player);
-};
+}
 
-
-static auto const Mgr = [](CommandOrigin const& ori, CommandOutput& out) {
+void open_admin_mgr(CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::Player);
-    auto& player = *static_cast<Player*>(ori.getEntity());
+    auto& player = GET_AS_PLAYER(ori);
     gui::OperatorManager::sendMainMenu(player);
-};
+}
 
-
-enum class OperatorType : int { Op, Deop };
-struct OperatorParam {
-    OperatorType            type;
-    CommandSelector<Player> player;
-};
-static auto const Operator = [](CommandOrigin const& ori, CommandOutput& out, OperatorParam const& param) {
-    CHECK_TYPE(ori, out, CommandOriginType::DedicatedServer);
-    auto& db  = PLand::getInstance().getLandRegistry();
-    auto  pls = param.player.results(ori).data;
-
-    if (pls->empty()) {
-        feedback_utils::sendErrorText(out, "未找到任何玩家，请确保玩家在线后重试"_tr());
-        return;
-    }
-
-    for (auto& pl : *pls) {
-        if (!pl) {
-            continue;
-        }
-        auto& uid  = pl->getUuid();
-        auto  name = pl->getRealName();
-        if (param.type == OperatorType::Op) {
-            if (db.isOperator(uid)) {
-                feedback_utils::sendErrorText(out, "{} 已经是管理员，请不要重复添加"_tr(name));
-            } else {
-                if (db.addOperator(uid)) feedback_utils::sendText(out, "{} 已经被添加为管理员"_tr(name));
-            }
-        } else {
-            if (db.isOperator(uid)) {
-                if (db.removeOperator(uid)) feedback_utils::sendText(out, "{} 已经被移除管理员"_tr(name));
-            } else {
-                feedback_utils::sendErrorText(out, "{} 不是管理员，无需移除"_tr(name));
-            }
-        }
-    }
-};
-
-static auto const ListOperator = [](CommandOrigin const& ori, CommandOutput& out) {
-    CHECK_TYPE(ori, out, CommandOriginType::DedicatedServer);
+void list_admins(CommandOrigin const& origin, CommandOutput& output) {
+    CHECK_TYPE(origin, output, CommandOriginType::DedicatedServer);
     auto& operators = PLand::getInstance().getLandRegistry().getOperators();
     if (operators.empty()) {
-        feedback_utils::sendErrorText(out, "当前没有管理员"_tr());
+        feedback_utils::sendErrorText(output, "当前没有管理员"_tr());
         return;
     }
 
@@ -130,26 +95,60 @@ static auto const ListOperator = [](CommandOrigin const& ori, CommandOutput& out
         }
         oss << " | ";
     }
-    feedback_utils::sendText(out, oss.str());
-    return;
+    feedback_utils::sendText(output, oss.str());
+}
+
+struct AdminActionParam {
+    enum class Action { add, remove } action;
+    CommandSelector<Player> targets;
 };
+void admin_add_remove(CommandOrigin const& ori, CommandOutput& out, AdminActionParam const& param) {
+    CHECK_TYPE(ori, out, CommandOriginType::DedicatedServer);
+    auto& db  = PLand::getInstance().getLandRegistry();
+    auto  pls = param.targets.results(ori).data;
+
+    if (pls->empty()) {
+        feedback_utils::sendErrorText(out, "未找到任何玩家，请确保玩家在线后重试"_tr());
+        return;
+    }
+
+    for (auto& pl : *pls) {
+        if (!pl) {
+            continue;
+        }
+        auto& uid  = pl->getUuid();
+        auto  name = pl->getRealName();
+        if (param.action == AdminActionParam::Action::add) {
+            if (db.isOperator(uid)) {
+                feedback_utils::sendErrorText(out, "{} 已经是管理员，请不要重复添加"_tr(name));
+            } else {
+                if (db.addOperator(uid)) feedback_utils::sendText(out, "{} 已经被添加为管理员"_tr(name));
+            }
+        } else {
+            if (db.isOperator(uid)) {
+                if (db.removeOperator(uid)) feedback_utils::sendText(out, "{} 已经被移除管理员"_tr(name));
+            } else {
+                feedback_utils::sendErrorText(out, "{} 不是管理员，无需移除"_tr(name));
+            }
+        }
+    }
+}
 
 
-enum class NewType : int { Default = 0, SubLand };
-struct NewParam {
-    NewType type = NewType::Default;
+struct NewLandParam {
+    enum class NewType : int { Default = 0, SubLand } type{NewType::Default};
 };
-static auto const New = [](CommandOrigin const& ori, CommandOutput& out, NewParam const& param) {
+void new_land(CommandOrigin const& ori, CommandOutput& out, NewLandParam const& param) {
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player = *static_cast<Player*>(ori.getEntity());
 
     switch (param.type) {
-    case NewType::Default: {
+    case NewLandParam::NewType::Default: {
         gui::NewLandGUI::sendChooseLandDim(player);
         break;
     }
 
-    case NewType::SubLand: {
+    case NewLandParam::NewType::SubLand: {
         auto expected =
             PLand::getInstance().getServiceLocator().getLandManagementService().requestCreateSubLand(player);
         if (!expected) {
@@ -160,19 +159,19 @@ static auto const New = [](CommandOrigin const& ori, CommandOutput& out, NewPara
             player,
             "选区功能已开启，使用命令 /pland set 或使用 {} 来选择ab点"_trl(
                 player.getLocaleCode(),
-                Config::cfg.selector.tool
+                ConfigProvider::getSelectionConfig().alias
             )
         );
         break;
     }
     }
-};
+}
 
 enum class SetType : int { A, B };
 struct SetParam {
     SetType type;
 };
-static auto const Set = [](CommandOrigin const& ori, CommandOutput& out, SetParam const& param) {
+void selection_set_point(CommandOrigin const& ori, CommandOutput& out, SetParam const& param) {
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player = *static_cast<Player*>(ori.getEntity());
 
@@ -192,38 +191,38 @@ static auto const Set = [](CommandOrigin const& ori, CommandOutput& out, SetPara
     } else {
         selector->setPointB(pos);
     }
-};
+}
 
-static auto const Cancel = [](CommandOrigin const& ori, CommandOutput& out) {
+void selection_cancel(CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player = *static_cast<Player*>(ori.getEntity());
     PLand::getInstance().getSelectorManager()->stopSelection(player);
     feedback_utils::sendText(out, "已取消新建领地"_trl(player.getLocaleCode()));
-};
+}
 
 
-static auto const Buy = [](CommandOrigin const& ori, CommandOutput& out) {
+void land_buy(CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player = *static_cast<Player*>(ori.getEntity());
     gui::LandBuyGUI::sendTo(player);
-};
+}
 
-static auto const Reload = [](CommandOrigin const& ori, CommandOutput& out) {
+void reload(CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::DedicatedServer);
-    if (Config::tryLoad()) {
-        ll::event::EventBus::getInstance().publish(events::ConfigReloadEvent{Config::cfg});
+    if (PLand::getInstance().loadConfig()) {
+        ll::event::EventBus::getInstance().publish(events::ConfigReloadEvent{});
         feedback_utils::sendText(out, "领地系统配置已重新加载"_tr());
     } else {
         feedback_utils::sendErrorText(out, "领地系统配置加载失败，请检查配置文件"_tr());
     }
-};
+}
 
 
 enum class DrawType : int { Disable = 0, NearLand, CurrentLand };
 struct DrawParam {
     DrawType type;
 };
-static auto const Draw = [](CommandOrigin const& ori, CommandOutput& out, DrawParam const& param) {
+void land_draw(CommandOrigin const& ori, CommandOutput& out, DrawParam const& param) {
     CHECK_TYPE(ori, out, CommandOriginType::Player);
 
     auto& player     = *static_cast<Player*>(ori.getEntity());
@@ -250,15 +249,16 @@ static auto const Draw = [](CommandOrigin const& ori, CommandOutput& out, DrawPa
     }
 
     case DrawType::NearLand: {
-        auto lands = db.getLandAt(player.getPosition(), Config::cfg.land.drawRange, player.getDimensionId().id);
+        auto lands =
+            db.getLandAt(player.getPosition(), ConfigProvider::getDrawConfig().range, player.getDimensionId().id);
         for (auto& land : lands) handle->draw(land, mce::Color::WHITE());
         feedback_utils::sendText(out, "已绘制附近 {} 个领地"_trl(localeCode, lands.size()));
         break;
     }
     }
-};
+}
 
-static auto const SetLandTeleportPos = [](CommandOrigin const& ori, CommandOutput& out) {
+void land_set_teleport_pos(CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player     = *static_cast<Player*>(ori.getEntity());
     auto  localeCode = player.getLocaleCode();
@@ -278,9 +278,9 @@ static auto const SetLandTeleportPos = [](CommandOrigin const& ori, CommandOutpu
     } else {
         feedback_utils::sendError(player, res.error());
     }
-};
+}
 
-static auto const This = [](CommandOrigin const& ori, CommandOutput& out) {
+void show_current_land_mgr(CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player     = *static_cast<Player*>(ori.getEntity());
     auto  localeCode = player.getLocaleCode();
@@ -298,60 +298,416 @@ static auto const This = [](CommandOrigin const& ori, CommandOutput& out) {
     }
 
     gui::LandManagerGUI::sendMainMenu(player, land);
-};
+}
 
-}; // namespace Lambda
+using ll::command::RuntimeCommand;
+
+bool ensure_origin_console_or_player(CommandOrigin const& ori, CommandOutput& out) {
+    auto originType = ori.getOriginType();
+    if (originType != CommandOriginType::DedicatedServer && originType != CommandOriginType::Player) {
+        feedback_utils::sendErrorText(out, "This command can only be executed by players and the console"_tr());
+        return false;
+    }
+    return true;
+}
+
+bool ensure_admin(CommandOrigin const& ori, CommandOutput& out) {
+    if (ori.getOriginType() == CommandOriginType::Player) {
+        auto& player = GET_AS_PLAYER(ori);
+        if (!PLand::getInstance().getLandRegistry().isOperator(player.getUuid())) {
+            feedback_utils::sendErrorText(out, "You do not have permission to execute this command"_tr());
+            return false;
+        }
+    }
+    return true;
+}
+
+std::shared_ptr<Land> resolve_lease_land(
+    CommandOrigin const&  ori,
+    CommandOutput&        out,
+    RuntimeCommand const& param,
+    std::string const&    idKey = "id"
+) {
+    if (!ensure_origin_console_or_player(ori, out)) return nullptr;
+
+    auto& registry = PLand::getInstance().getLandRegistry();
+
+    if (auto& optID = param[idKey]) {
+        // 指定 ID，进行精确查询
+        LandID id = std::get<int>(optID.value());
+
+        if (auto land = registry.getLand(id)) {
+            // 非控制台执行此命令，校验权限
+            if (ori.getOriginType() == CommandOriginType::Player) {
+                auto& player = GET_AS_PLAYER(ori);
+                if (!land->isOwner(player.getUuid()) && !registry.isOperator(player.getUuid())) {
+                    feedback_utils::sendErrorText(out, "您没有权限操作此领地"_tr());
+                    return nullptr;
+                }
+            }
+            return land;
+        } else {
+            feedback_utils::sendErrorText(out, "指定的领地 ID 不存在"_tr());
+            return nullptr;
+        }
+    } else if (ori.getOriginType() == CommandOriginType::Player) {
+        // 未指定 ID，进行当前位置查询
+        auto& player = GET_AS_PLAYER(ori);
+        if (auto land = registry.getLandAt(player.getPosition(), player.getDimensionId())) {
+            return land;
+        } else {
+            feedback_utils::sendErrorText(out, "当前位置没有领地"_tr());
+            return nullptr;
+        }
+    } else {
+        feedback_utils::sendErrorText(out, "仅玩家可以查询当前位置的领地"_tr());
+        return nullptr;
+    }
+}
+
+void show_lease_info(CommandOrigin const& ori, CommandOutput& out, RuntimeCommand const& param) {
+    if (!ensure_origin_console_or_player(ori, out)) return;
+
+    auto land = resolve_lease_land(ori, out, param);
+    if (!land) return;
+
+    if (!land->isLeased()) {
+        feedback_utils::sendErrorText(out, "当前领地不是租赁模式"_tr());
+        return;
+    }
+
+    auto&       infoDb = ll::service::PlayerInfo::getInstance();
+    std::string displayName;
+    if (land->isSystemOwned()) {
+        displayName = "系统"_tr();
+    } else if (auto info = infoDb.fromUuid(land->getOwner())) {
+        displayName = info->name;
+    } else {
+        displayName = land->getOwner().asString();
+    }
+
+    out.success("---- 租赁信息 ----"_tr());
+    out.success("领地ID: {}"_tr(land->getId()));
+    out.success("领地名称: {}"_tr(land->getName()));
+    out.success("所有者: {}"_tr(displayName));
+    out.success("租赁状态: {}"_tr(magic_enum::enum_name(land->getLeaseState())));
+    out.success("租赁起始时间: {}"_tr(time_utils::formatTime(time_utils::toClockTime(land->getLeaseStartAt()))));
+    out.success("租赁结束时间: {}"_tr(time_utils::formatTime(time_utils::toClockTime(land->getLeaseEndAt()))));
+    out.success("剩余租期: {}"_tr(time_utils::formatRemaining(land->getLeaseEndAt())));
+}
+
+void admin_set_lease_start_end(CommandOrigin const& ori, CommandOutput& out, RuntimeCommand const& param) {
+    if (!ensure_origin_console_or_player(ori, out)) return;
+    if (!ensure_admin(ori, out)) return;
+
+    auto land = resolve_lease_land(ori, out, param);
+    if (!land) return;
+
+    auto& target  = std::get<ll::command::RuntimeEnum>(param["set_target"].value());
+    bool  isStart = target.name == "set_start";
+
+    auto date  = std::get<std::string>(param["date"].value());
+    auto clock = time_utils::parseTime(date);
+    if (clock == std::chrono::system_clock::time_point{}) {
+        feedback_utils::sendErrorText(out, "无效的日期格式"_tr());
+        return;
+    }
+
+    auto& service = PLand::getInstance().getServiceLocator().getLeasingService();
+    if (isStart) {
+        if (auto exp = service.setStartAt(land, clock)) {
+            feedback_utils::sendText(out, "领地租赁起始时间已修改为: {}"_tr(time_utils::formatTime(clock)));
+        } else {
+            feedback_utils::sendError(out, exp.error());
+        }
+    } else {
+        if (auto exp = service.setEndAt(land, clock)) {
+            feedback_utils::sendText(out, "领地租赁结束时间已修改为: {}"_tr(time_utils::formatTime(clock)));
+        } else {
+            feedback_utils::sendError(out, exp.error());
+        }
+    }
+}
+
+enum class AdminLeaseAddTimeUint { day, hour, min, sec };
+void admin_add_lease_time(CommandOrigin const& ori, CommandOutput& out, RuntimeCommand const& param) {
+    if (!ensure_origin_console_or_player(ori, out)) return;
+    if (!ensure_admin(ori, out)) return;
+
+    auto land = resolve_lease_land(ori, out, param);
+    if (!land) return;
+
+    auto amount = std::get<int>(param["amount"].value());
+    if (amount <= 0) {
+        feedback_utils::sendErrorText(out, "无效的时间数量"_tr());
+        return;
+    }
+
+    long long sec = 0;
+
+    auto rawUint = std::get<ll::command::RuntimeEnum>(param["uint"].value());
+    auto uint    = static_cast<AdminLeaseAddTimeUint>(rawUint.index);
+    switch (uint) {
+    case AdminLeaseAddTimeUint::day:
+        sec = time_utils::toSeconds(amount);
+        break;
+    case AdminLeaseAddTimeUint::hour:
+        sec = amount * time_utils::MinutesPerHour * time_utils::SecondsPerMinute;
+        break;
+    case AdminLeaseAddTimeUint::min:
+        sec = amount * time_utils::SecondsPerMinute;
+        break;
+    case AdminLeaseAddTimeUint::sec:
+        sec = amount;
+        break;
+    default:
+        feedback_utils::sendErrorText(out, "无效的时间单位"_tr());
+        return;
+    }
+
+    auto& service = PLand::getInstance().getServiceLocator().getLeasingService();
+    if (auto exp = service.addTime(land, sec)) {
+        feedback_utils::sendText(out, "领地租赁时间已延长 {} 秒"_tr(sec));
+        feedback_utils::sendText(
+            out,
+            "领地到期时间: {}"_tr(time_utils::formatTime(time_utils::toClockTime(land->getLeaseEndAt())))
+        );
+    } else {
+        feedback_utils::sendError(out, exp.error());
+    }
+}
+
+enum class AdminLeaseForceTarget {
+    force_freeze,
+    force_recycle,
+};
+void admin_force_freeze_or_recycle(CommandOrigin const& ori, CommandOutput& out, RuntimeCommand const& param) {
+    if (!ensure_origin_console_or_player(ori, out)) return;
+    if (!ensure_admin(ori, out)) return;
+
+    auto land = resolve_lease_land(ori, out, param);
+    if (!land) return;
+
+    auto force_target = std::get<ll::command::RuntimeEnum>(param["force_target"].value());
+    auto target       = static_cast<AdminLeaseForceTarget>(force_target.index);
+
+    auto& service = PLand::getInstance().getServiceLocator().getLeasingService();
+
+    switch (target) {
+    case AdminLeaseForceTarget::force_freeze:
+        if (auto exp = service.forceFreeze(land)) {
+            feedback_utils::sendText(out, "领地 '{}(ID: {})' 已强制冻结"_tr(land->getName(), land->getId()));
+        } else {
+            feedback_utils::sendError(out, exp.error());
+        }
+        break;
+    case AdminLeaseForceTarget::force_recycle:
+        if (auto exp = service.forceRecycle(land)) {
+            feedback_utils::sendText(out, "领地 '{}(ID: {})' 已强制回收"_tr(land->getName(), land->getId()));
+        } else {
+            feedback_utils::sendError(out, exp.error());
+        }
+        break;
+    default:
+        feedback_utils::sendErrorText(out, "无效的强制目标"_tr());
+    }
+}
+
+void admin_clean_lease(CommandOrigin const& ori, CommandOutput& out, RuntimeCommand const& param) {
+    if (!ensure_origin_console_or_player(ori, out)) return;
+    if (!ensure_admin(ori, out)) return;
+
+    auto days = std::get<int>(param["days"].value());
+
+    auto& service = PLand::getInstance().getServiceLocator().getLeasingService();
+    if (auto exp = service.cleanExpiredLands(days)) {
+        feedback_utils::sendText(out, "已删除 {} 个过期领地"_tr(exp.value()));
+    } else {
+        feedback_utils::sendError(out, exp.error());
+    }
+}
+
+void admin_to_bought(CommandOrigin const& ori, CommandOutput& out, RuntimeCommand const& param) {
+    if (!ensure_origin_console_or_player(ori, out)) return;
+    if (!ensure_admin(ori, out)) return;
+
+    auto land = resolve_lease_land(ori, out, param);
+    if (!land) return;
+
+    auto& service = PLand::getInstance().getServiceLocator().getLeasingService();
+    if (auto exp = service.toBought(land)) {
+        feedback_utils::sendText(out, "领地 '{}(ID: {})' 已转为购买领地"_tr(land->getName(), land->getId()));
+    } else {
+        feedback_utils::sendError(out, exp.error());
+    }
+}
+
+void admin_to_leased(CommandOrigin const& ori, CommandOutput& out, RuntimeCommand const& param) {
+    if (!ensure_origin_console_or_player(ori, out)) return;
+    if (!ensure_admin(ori, out)) return;
+
+    auto land = resolve_lease_land(ori, out, param);
+    if (!land) return;
+
+    auto days = std::get<int>(param["days"].value());
+
+    auto& service = PLand::getInstance().getServiceLocator().getLeasingService();
+    if (auto exp = service.toLeased(land, days)) {
+        feedback_utils::sendText(
+            out,
+            "领地 '{}(ID: {})' 已转为租赁领地，租期 {} 天"_tr(land->getName(), land->getId(), days)
+        );
+    } else {
+        feedback_utils::sendError(out, exp.error());
+    }
+}
+
+void admin_snapshot_db(CommandOrigin const& ori, CommandOutput& out, RuntimeCommand const& param) {
+    if (!ensure_origin_console_or_player(ori, out)) return;
+    if (!ensure_admin(ori, out)) return;
+
+    std::optional<std::string> dirName;
+    if (auto& dir = param["dirName"]) {
+        dirName = std::get<std::string>(dir.value());
+    }
+
+    PLand::getInstance().getLandRegistry().createSnapshot(dirName);
+    feedback_utils::sendText(out, "The task has been created, please wait for it to complete..."_tr());
+}
+
+}; // namespace handlers
 
 
 bool LandCommand::setup() {
-    auto& cmd =
-        ll::command::CommandRegistrar::getInstance(false).getOrCreateCommand("pland", "LandRegistry 领地系统"_tr());
+    auto& registrar = ll::command::CommandRegistrar::getInstance(false);
+    auto& h         = registrar.getOrCreateCommand("pland", "PLand - 领地系统"_tr());
+    h.alias("land");
 
     // pland reload
-    cmd.overload().text("reload").execute(Lambda::Reload);
+    h.overload().text("reload").execute(&handlers::reload);
 
-    // pland 领地GUI
-    cmd.overload().execute(Lambda::Root);
-
-    // pland gui 领地管理GUI
-    cmd.overload().text("gui").execute(Lambda::Root);
+    // pland [gui|menu] 领地GUI
+    h.overload().execute(&handlers::open_menu);
+    h.overload().text("gui").execute(&handlers::open_menu);
+    h.overload().text("menu").execute(&handlers::open_menu);
 
     // pland mgr 领地管理GUI
-    cmd.overload().text("mgr").execute(Lambda::Mgr);
+    h.overload().text("mgr").execute(&handlers::open_admin_mgr);
 
-    // pland <op/deop> <player> 添加/移除管理员
-    cmd.overload<Lambda::OperatorParam>().required("type").required("player").execute(Lambda::Operator);
+    // pland admin list 列出所有管理员
+    h.overload().text("admin").text("list").execute(&handlers::list_admins);
 
-    // pland list op
-    cmd.overload().text("list").text("op").execute(Lambda::ListOperator);
+    // pland admin <add|remove> <targets> 添加/移除管理员
+    h.overload<handlers::AdminActionParam>().text("admin").required("action").required("targets").execute(
+        &handlers::admin_add_remove
+    );
 
     // pland new [NewType: type] 新建一个领地
-    cmd.overload<Lambda::NewParam>().text("new").optional("type").execute(Lambda::New);
+    h.overload<handlers::NewLandParam>().text("new").optional("type").execute(&handlers::new_land);
 
     // pland this 获取当前领地信息
-    cmd.overload().text("this").execute(Lambda::This);
+    h.overload().text("this").execute(&handlers::show_current_land_mgr);
 
     // pland set <a/b> 选点a/b
-    cmd.overload<Lambda::SetParam>().text("set").required("type").execute(Lambda::Set);
+    h.overload<handlers::SetParam>().text("set").required("type").execute(&handlers::selection_set_point);
 
     // pland cancel 取消新建
-    cmd.overload().text("cancel").execute(Lambda::Cancel);
+    h.overload().text("cancel").execute(&handlers::selection_cancel);
 
     // pland buy 购买
-    cmd.overload().text("buy").execute(Lambda::Buy);
+    h.overload().text("buy").execute(&handlers::land_buy);
 
     // pland draw <disable|near|current> 开启/关闭领地绘制
-    if (Config::cfg.land.setupDrawCommand) {
-        cmd.overload<Lambda::DrawParam>().text("draw").required("type").execute(Lambda::Draw);
+    if (ConfigProvider::getDrawConfig().enabled) {
+        h.overload<handlers::DrawParam>().text("draw").required("type").execute(&handlers::land_draw);
     }
 
     // pland set teleport_pos 设置传送点
-    cmd.overload().text("set").text("teleport_pos").execute(Lambda::SetLandTeleportPos);
+    h.overload().text("set").text("teleport_pos").execute(&handlers::land_set_teleport_pos);
+
+    if (ConfigProvider::getLeasingConfig().enabled) {
+        // pland lease info [id] 查看当前/指定领地的租赁信息
+        h.runtimeOverload()
+            .text("lease")
+            .text("info")
+            .optional("id", ll::command::ParamKind::Int)
+            .execute(&handlers::show_lease_info);
+
+        // pland admin lease <set_start|set_end> <timestamp|YYYY-MM-DD HH:mm:ss> [id] 设置领地租赁 开启/结束 时间
+        if (!registrar.hasEnum("pland_lease_set_target")) {
+            registrar.tryRegisterRuntimeEnum(
+                "pland_lease_set_target",
+                {
+                    {"set_start", 0},
+                    {  "set_end", 1}
+            }
+            );
+        }
+        h.runtimeOverload()
+            .text("admin")
+            .text("lease")
+            .required("set_target", ll::command::ParamKind::Enum, "pland_lease_set_target")
+            .required("date", ll::command::ParamKind::String)
+            .optional("id", ll::command::ParamKind::Int)
+            .execute(&handlers::admin_set_lease_start_end);
+
+        // pland admin lease add_time <amount> <day|hour|min|sec> [id] 增加领地租赁时间
+        registrar.tryRegisterRuntimeEnum<handlers::AdminLeaseAddTimeUint>();
+        h.runtimeOverload()
+            .text("admin")
+            .text("lease")
+            .text("add_time")
+            .required("amount", ll::command::ParamKind::Int)
+            .required("uint", ll::command::ParamKind::Enum, ll::command::enum_name_v<handlers::AdminLeaseAddTimeUint>)
+            .optional("id", ll::command::ParamKind::Int)
+            .execute(&handlers::admin_add_lease_time);
+
+        // pland admin lease <force_freeze|force_recycle> [id] 强制冻结/回收领地
+        registrar.tryRegisterRuntimeEnum<handlers::AdminLeaseForceTarget>();
+        h.runtimeOverload()
+            .text("admin")
+            .text("lease")
+            .required("force_target", ll::command::ParamKind::Enum, ll::command::enum_name_v<handlers::AdminLeaseForceTarget>)
+            .optional("id", ll::command::ParamKind::Int)
+            .execute(&handlers::admin_force_freeze_or_recycle);
+
+        // pland admin lease clean <days> 回收到期超过n天的领地
+        h.runtimeOverload()
+            .text("admin")
+            .text("lease")
+            .text("clean")
+            .required("days", ll::command::ParamKind::Int)
+            .execute(&handlers::admin_clean_lease);
+
+        // pland admin lease to_bought [id] 将租赁领地转为购买领地
+        h.runtimeOverload()
+            .text("admin")
+            .text("lease")
+            .text("to_bought")
+            .optional("id", ll::command::ParamKind::Int)
+            .execute(&handlers::admin_to_bought);
+
+        // pland admin lease to_leased <days> [id] 将购买领地转为租赁领地
+        h.runtimeOverload()
+            .text("admin")
+            .text("lease")
+            .text("to_leased")
+            .required("days", ll::command::ParamKind::Int)
+            .optional("id", ll::command::ParamKind::Int)
+            .execute(&handlers::admin_to_leased);
+    }
+
+    // pland admin snapshot_db [dirName: string] 备份领地数据库
+    h.runtimeOverload()
+        .text("admin")
+        .text("snapshot_db")
+        .optional("dirName", ll::command::ParamKind::String)
+        .execute(&handlers::admin_snapshot_db);
 
 #ifdef LD_DEVTOOL
     // pland devtool
-    if (Config::cfg.internal.devTools) {
-        cmd.overload().text("devtool").execute([](CommandOrigin const& ori, CommandOutput&) {
+    if (ConfigProvider::isDevToolsEnabled()) {
+        h.overload().text("devtool").execute([](CommandOrigin const& ori, CommandOutput&) {
             if (ori.getOriginType() == CommandOriginType::DedicatedServer) {
                 auto& mod = PLand::getInstance();
                 mod.setDevToolVisible(true);
@@ -361,7 +717,7 @@ bool LandCommand::setup() {
 #endif
 
 #ifdef DEBUG
-    cmd.overload().text("debug").text("dump_selectors").execute([](CommandOrigin const& ori, CommandOutput&) {
+    h.overload().text("debug").text("dump_selectors").execute([](CommandOrigin const& ori, CommandOutput&) {
         if (ori.getOriginType() != CommandOriginType::DedicatedServer) {
             return;
         }

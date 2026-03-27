@@ -23,6 +23,10 @@
 #define STATIC_ASSERT_AGGREGATE(TYPE) static_assert(std::is_aggregate_v<TYPE>, #TYPE " must be an aggregate type")
 
 
+namespace mce {
+class UUID;
+}
+
 namespace land {
 
 // 全局类型定义
@@ -31,14 +35,28 @@ using LandDimid = int;     // 领地所在维度
 
 inline constexpr LandID INVALID_LAND_ID = -1; // 无效的领地ID / 默认值
 
-enum class LandPermType : int {
-    Operator = 0, // 领地操作员（管理）
-    Owner,        // 领地主人
-    Member,       // 领地成员
-    Guest,        // 访客
+enum class LandPermType : uint8_t {
+    Admin  = 0, // 管理员
+    Owner  = 1, // 领地主人
+    Member = 2, // 领地成员
+
+    // Actor includes both non-member players and non-player entities (e.g., Mobs, TNT).
+    Actor = 3, // 实体
+
+    // 兼容旧数据
+    Operator [[deprecated]] = 0, // 旧版操作员，映射到 Admin
+    Guest [[deprecated]]    = 3, // 旧版访客，映射到 Actor
 };
+using LandPermRole = LandPermType;
+
 
 inline int constexpr GlobalSubLandMaxNestedLevel = 16; // 子领地最大嵌套层数
+
+// Minecraft UUID::fromString / canParse 仅允许 0-9, a-f, A-F
+// 所以这里使用一个几乎不可能冲突的合法 16 进制字符串，作为领地系统账号
+inline constexpr std::string_view SYSTEM_ACCOUNT_UUID_STR = "deadbeef-dead-beef-dead-beefdeadbeef";
+
+LDAPI extern mce::UUID const SYSTEM_ACCOUNT_UUID;
 
 } // namespace land
 

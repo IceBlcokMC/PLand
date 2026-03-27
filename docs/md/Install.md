@@ -8,19 +8,19 @@
 > 使用以下命令安装 PLand
 
 ```bash
-lip install github.com/engsr6982/PLand
+lip install github.com/IceBlcokMC/PLand
 ```
 
 > 或者安装指定版本的 PLand
 
 ```bash
-lip install github.com/engsr6982/PLand@v1.0.0
+lip install github.com/IceBlcokMC/PLand@v1.0.0
 ```
 
 > 您可以使用一下命令更新 PLand
 
 ```bash
-lip install --upgrade github.com/engsr6982/PLand
+lip install --upgrade github.com/IceBlcokMC/PLand
 ```
 
 - 安装后，您可以在 `plugins` 文件夹中找到 PLand 的安装文件
@@ -33,13 +33,12 @@ lip install --upgrade github.com/engsr6982/PLand
 
 目前 **PLand** 依赖以下前置组件
 
-| 前置组件                     | 项目地址                                                              | 依赖等级 | 备注                                                            |
-| :--------------------------- | :-------------------------------------------------------------------- | :------: | :-------------------------------------------------------------- |
-| LeviLamina                   | [GitHub](https://github.com/LiteLDev/LeviLamina)                      |   必须   | Mod 框架                                                        |
-| iListenAttentively           | [GitHub](https://github.com/MiracleForest/iListenAttentively-Release) |   必须   | 事件库                                                          |
-| BedrockServerClientInterface | [GitHub](https://github.com/OEOTYAN/BedrockServerClientInterface)     |   可选   | `drawHandleBackend` 为 `BedrockServerClientInterfaceMod` 时需要 |
-| LegacyMoney                  | [GitHub](https://github.com/LiteLDev/LegacyMoney)                     |   可选   | `economy.kit` 为 `LegacyMoney` 时需要                           |
-| DebugShape                   | [Github](https://github.com/engsr6982/DebugShape)                     |   可选   | `drawHandleBackend: MinecraftDebugShape` 时需要                 |
+| 前置组件                     | 项目地址                                                              | 依赖等级 | 备注                                        |
+| :--------------------------- | :-------------------------------------------------------------------- | :------: |:------------------------------------------|
+| LeviLamina                   | [GitHub](https://github.com/LiteLDev/LeviLamina)                      |   必须   | Mod 框架                                    |
+| iListenAttentively           | [GitHub](https://github.com/MiracleForest/iListenAttentively-Release) |   必须   | 事件库                                       |
+| LegacyMoney                  | [GitHub](https://github.com/LiteLDev/LegacyMoney)                     |   可选   | `economy.kit` 为 `LegacyMoney` 时需要         |
+| DebugShape                   | [Github](https://github.com/IceBlcokMC/DebugShape)                     |   可选   | `features.draw.backend == DebugShape` 时需要 |
 
 > 您需要手动下载对应版本的前置组件  
 > 在下载前置组件时，请确保您下载的版本与 PLand 的版本兼容  

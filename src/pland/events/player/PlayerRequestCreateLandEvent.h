@@ -1,6 +1,6 @@
 #pragma once
 #include "pland/Global.h"
-#include "pland/land/LandType.h"
+#include "pland/enums/LandType.h"
 
 #include <ll/api/event/player/PlayerEvent.h>
 

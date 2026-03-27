@@ -15,6 +15,9 @@
 inline ToastRequestPacket::ToastRequestPacket()               = default;
 inline ToastRequestPacketPayload::ToastRequestPacketPayload() = default;
 
+inline SetTitlePacket::SetTitlePacket()               = default;
+inline SetTitlePacketPayload::SetTitlePacketPayload() = default;
+
 namespace land ::feedback_utils {
 
 template <typename... Args>

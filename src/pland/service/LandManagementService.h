@@ -110,8 +110,6 @@ public:
 
     LDNDAPI ll::Expected<> setLandName(Player& player, std::shared_ptr<Land> const& land, std::string name);
 
-    LDNDAPI ll::Expected<> changeOwner(std::shared_ptr<Land> const& land, mce::UUID const& newOwner);
-
     LDNDAPI ll::Expected<> transferLand(Player& player, std::shared_ptr<Land> const& land, Player& target);
     LDNDAPI ll::Expected<> transferLand(Player& player, std::shared_ptr<Land> const& land, mce::UUID const& target);
 
@@ -124,13 +122,6 @@ public:
 private:
     ll::Expected<>
     _playerChangeMember(Player& player, std::shared_ptr<Land> const& land, mce::UUID const& target, bool isAdd);
-
-    enum class ChangeMemberResult {
-        Success,
-        AlreadyMember,
-        NotMember,
-    };
-    ChangeMemberResult _changeMember(std::shared_ptr<Land> const& land, mce::UUID const& target, bool isAdd);
 
     ll::Expected<> _ensureChangeRangelegal(
         std::shared_ptr<Land> const&    land,

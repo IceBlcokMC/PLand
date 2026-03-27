@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.0-beta.1] - 2026-03-10
+
+### ✨ 新增功能
+
+- 租赁模式 @engsr6982 #154
+- 数据库快照 @engsr6982 #165
+- 添加**大型垂滴叶触发权限** @engsr6982 #192
+
+### 🐛 问题修复
+
+- 修复 DevTool 领地编辑器非等宽字体显示错位 @engsr6982
+- 提高防抖阈值修复PC端选区时可能出现的多次触发 @engsr6982 #199
+
+### 🚀 性能优化
+
+- 新增领地 Owner、Member 索引优化性能 @engsr6982 #204
+
+### 🧩 其他改动
+
+- 重构配置文件结构 @engsr6982
+
+### 🛠️ 开发者相关
+
+新增事件:
+
+- `PlayerLeaseLandEvent` - 玩家租赁领地事件
+- `PlayerRenewLandEvent` - 玩家续租领地事件
+- `LandStateChangedEvent` - 领地状态变更事件
+- `LandRecycleEvent` - 领地被回收事件
+- `MembersClearedEvent` - 领地成员清空事件
+
 ## [0.18.2] - 2026-03-01
 
 ### ✨ 新增功能
@@ -24,7 +55,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 问题修复
 
-- 修复部分事件误拦截玩家操作的问题 (`MobHurtEffectBeforeEvent`,`ActorHurtEvent`,`PlayerAttackEvent`,`PlayerInteractBlockEvent`恢复为黑名单模式) @engsr6982
+- 修复部分事件误拦截玩家操作的问题 (`MobHurtEffectBeforeEvent`,`ActorHurtEvent`,`PlayerAttackEvent`,
+  `PlayerInteractBlockEvent`恢复为黑名单模式) @engsr6982
 - 将漏斗矿车行为拆分为独立权限，避免影响生电机器运作 @engsr6982
 
 ## [0.18.0] - 2026-02-14

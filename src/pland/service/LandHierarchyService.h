@@ -31,6 +31,8 @@ public:
     ~LandHierarchyService();
     LD_DISABLE_COPY_AND_MOVE(LandHierarchyService);
 
+    LDNDAPI ll::Expected<> ensureBoughtLand(std::shared_ptr<Land> const& land);
+
     /**
      * 创建子领地关系
      * @note sub 必须为新创建的普通领地，被 parent 完整包含

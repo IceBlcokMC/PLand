@@ -1,7 +1,7 @@
 #pragma once
 #include "pland/Global.h"
+#include "pland/enums/LandType.h"
 #include "pland/events/LandEventMixin.h"
-#include "pland/land/LandType.h"
 
 #include "ll/api/event/player/PlayerEvent.h"
 #include <ll/api/event/Cancellable.h>

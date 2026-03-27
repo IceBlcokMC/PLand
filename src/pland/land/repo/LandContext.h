@@ -1,18 +1,21 @@
 #pragma once
 #include "pland/Global.h"
 #include "pland/aabb/LandAABB.h"
+#include "pland/enums/LandHoldType.h"
+#include "pland/enums/LeaseState.h"
+
 #include <vector>
 
 
 namespace land {
 
 struct EnvironmentPerms final {
-    bool allowFireSpread{true};   // 火焰蔓延
-    bool allowMonsterSpawn{true}; // 怪物生成
-    bool allowAnimalSpawn{true};  // 动物生成
-    bool allowMobGrief{false}; // 实体破坏(破坏/拾取/放置方块) v25 allowActorDestroy=false, enderman=false
-    bool allowExplode{false};  // 爆炸
-    bool allowFarmDecay{true}; // 耕地退化
+    bool allowFireSpread{true};              // 火焰蔓延
+    bool allowMonsterSpawn{true};            // 怪物生成
+    bool allowAnimalSpawn{true};             // 动物生成
+    bool allowMobGrief{false};               // 实体破坏(破坏/拾取/放置方块) v25 allowActorDestroy=false, enderman=false
+    bool allowExplode{false};                // 爆炸
+    bool allowFarmDecay{true};               // 耕地退化
     bool allowPistonPushOnBoundary{true};    // 活塞推动边界方块
     bool allowRedstoneUpdate{true};          // 红石更新
     bool allowBlockFall{false};              // 方块掉落
@@ -28,24 +31,24 @@ struct EnvironmentPerms final {
 struct RolePerms final {
     struct Entry final {
         bool member;
-        bool guest;
+        bool actor;
     };
-    Entry allowDestroy{true, false};  // 允许破坏方块
-    Entry allowPlace{true, false};    // 允许放置方块
-    Entry useBucket{true, false};     // 允许使用桶(水/岩浆/...)
-    Entry useAxe{true, false};        // 允许使用斧头
-    Entry useHoe{true, false};        // 允许使用锄头
-    Entry useShovel{true, false};     // 允许使用铲子
-    Entry placeBoat{true, false};     // 允许放置船
-    Entry placeMinecart{true, false}; // 允许放置矿车
-    Entry useButton{true, false};     // 允许使用按钮
-    Entry useDoor{true, false};       // 允许使用门
-    Entry useFenceGate{true, false};  // 允许使用栅栏门
+    Entry allowDestroy{true, false};        // 允许破坏方块
+    Entry allowPlace{true, false};          // 允许放置方块
+    Entry useBucket{true, false};           // 允许使用桶(水/岩浆/...)
+    Entry useAxe{true, false};              // 允许使用斧头
+    Entry useHoe{true, false};              // 允许使用锄头
+    Entry useShovel{true, false};           // 允许使用铲子
+    Entry placeBoat{true, false};           // 允许放置船
+    Entry placeMinecart{true, false};       // 允许放置矿车
+    Entry useButton{true, false};           // 允许使用按钮
+    Entry useDoor{true, false};             // 允许使用门
+    Entry useFenceGate{true, false};        // 允许使用栅栏门
     Entry allowInteractEntity{true, false}; // 允许与实体交互 // TODO: 解决歧义：玩家交互实体 & 玩家取走栅栏上的拴绳实体
-    Entry useTrapdoor{true, false};            // 允许使用活板门
-    Entry editSign{true, false};               // 允许编辑告示牌
-    Entry useLever{true, false};               // 允许使用拉杆
-    Entry useFurnaces{true, false};            // 允许使用所有熔炉类方块（熔炉/高炉/烟熏炉）
+    Entry useTrapdoor{true, false};         // 允许使用活板门
+    Entry editSign{true, false};            // 允许编辑告示牌
+    Entry useLever{true, false};            // 允许使用拉杆
+    Entry useFurnaces{true, false};         // 允许使用所有熔炉类方块（熔炉/高炉/烟熏炉）
     Entry allowPlayerPickupItem{true, false};  // 允许玩家拾取物品
     Entry allowRideTrans{true, false};         // 允许骑乘运输工具（矿车/船）
     Entry allowRideEntity{true, false};        // 允许骑乘实体
@@ -64,11 +67,11 @@ struct RolePerms final {
     Entry allowHostileDamage{true, true};         // 敌对生物受到伤害 v25 allowMonsterDamage=true
     Entry allowFriendlyDamage{false, false};      // 友好生物受到伤害
     Entry allowSpecialEntityDamage{false, false}; // 特殊生物受到伤害
-    Entry useContainer{true, false}; // 允许使用容器(箱子/木桶/潜影盒/发射器/投掷器/漏斗/雕纹书架/试炼宝库/...)
+    Entry useContainer{true, false};   // 允许使用容器(箱子/木桶/潜影盒/发射器/投掷器/漏斗/雕纹书架/试炼宝库/...)
     Entry useWorkstation{true, false}; // 工作站类(工作台/铁砧/附魔台/酿造台/锻造台/砂轮/织布机/切石机/制图台/合成器)
-    Entry useBell{true, false};              // 使用钟
-    Entry useCampfire{true, false};          // 使用营火
-    Entry useComposter{true, false};         // 使用堆肥桶
+    Entry useBell{true, false};        // 使用钟
+    Entry useCampfire{true, false};    // 使用营火
+    Entry useComposter{true, false};   // 使用堆肥桶
     Entry useDaylightDetector{true, false};  // 使用阳光探测器
     Entry useJukebox{true, false};           // 使用唱片机
     Entry useNoteBlock{true, false};         // 使用音符盒
@@ -82,6 +85,9 @@ struct RolePerms final {
     Entry useBeeNest{true, false};           // 使用蜂巢(蜂箱)
     Entry editFlowerPot{true, false};        // 编辑花盆
     Entry allowUseRangedWeapon{true, false}; // 允许使用远程武器(弓/弩)
+
+    // 新增权限(保持 ABI 稳定，不在前面插入字段，避免 LRCA 需要重新编译)
+    Entry allowTriggerDripleaf{true, true}; // 允许触发垂滴叶
 };
 struct LandPermTable final {
     EnvironmentPerms environment{};
@@ -90,21 +96,27 @@ struct LandPermTable final {
 
 // ! 注意：如果 LandContext 有更改，则必须递增 LandSchemaVersion，否则导致加载异常
 // 对于字段变动、重命名，请注册对应的 migrator 转换数据
-constexpr int LandSchemaVersion = 29;
+constexpr int LandSchemaVersion = 31;
 struct LandContext {
-    int                      version{LandSchemaVersion}; // 版本号
-    LandAABB                 mPos{};                     // 领地对角坐标
-    LandPos                  mTeleportPos{};             // 领地传送坐标
-    LandID                   mLandID{INVALID_LAND_ID};   // 领地唯一ID  (由 LandRegistry::addLand() 时分配)
-    LandDimid                mLandDimid{};               // 领地所在维度
-    bool                     mIs3DLand{};                // 是否为3D领地
-    LandPermTable            mLandPermTable{};           // 领地权限
-    std::string              mLandOwner{};               // 领地主人(默认UUID,其余情况看mOwnerDataIsXUID)
-    std::vector<std::string> mLandMembers{};             // 领地成员
+    int                      version{LandSchemaVersion};            // 版本号
+    LandAABB                 mPos{};                                // 领地对角坐标
+    LandPos                  mTeleportPos{};                        // 领地传送坐标
+    LandID                   mLandID{INVALID_LAND_ID};              // 领地唯一ID  (由 LandRegistry::addLand() 时分配)
+    LandDimid                mLandDimid{};                          // 领地所在维度
+    bool                     mIs3DLand{};                           // 是否为3D领地
+    LandPermTable            mLandPermTable{};                      // 领地权限
+    std::string              mLandOwner{};                          // 领地主人(默认UUID,其余情况看mOwnerDataIsXUID)
+    std::vector<std::string> mLandMembers{};                        // 领地成员
     std::string              mLandName{"Unnamed territories"_tr()}; // 领地名称
     int                      mOriginalBuyPrice{0};                  // 原始购买价格
-    [[deprecated]] bool      mIsConvertedLand{false}; // 是否为转换后的领地(其它插件创建的领地)
-    [[deprecated]] bool mOwnerDataIsXUID{false}; // 领地主人数据是否为XUID (如果为true，则主人上线自动转换为UUID)
+    LandHoldType             mHoldType{LandHoldType::Bought};       // 购买/租赁模式
+    struct LeaseInfo {
+        LeaseState mState{LeaseState::None}; // 租赁状态
+        time_t     mStartAt{0};              // 租赁开始时间(秒)
+        time_t     mEndAt{0};                // 租赁到期时间(秒)
+    } mLeasing;
+    [[deprecated]] bool mIsConvertedLand{false};        // 是否为转换后的领地(其它插件创建的领地)
+    [[deprecated]] bool mOwnerDataIsXUID{false};        // 领地主人数据是否为XUID (如果为true，则主人上线自动转换为UUID)
     LandID              mParentLandID{INVALID_LAND_ID}; // 父领地ID
     std::vector<LandID> mSubLandIDs{};                  // 子领地ID
 };

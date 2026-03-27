@@ -25,7 +25,8 @@ struct DrawHandleManager::Impl {
     ll::event::ListenerPtr                                                mPlayerDisconnectListener;
 
     std::unique_ptr<drawer::IDrawerHandle> _createHandle() const {
-        switch (Config::cfg.land.drawHandleBackend) {
+        auto backend = ConfigProvider::getDrawConfig().backend;
+        switch (backend) {
         case DrawerType::DefaultParticle:
             return std::make_unique<drawer::detail::DefaultParticleHandle>();
         case DrawerType::DebugShape:
@@ -59,7 +60,9 @@ struct DrawHandleManager::Impl {
 
     void ensureDrawerBackendAvailable() const {
         auto& logger = PLand::getInstance().getSelf().getLogger();
-        switch (Config::cfg.land.drawHandleBackend) {
+
+        auto& conf = ConfigProvider::getDrawConfig();
+        switch (conf.backend) {
         case DrawerType::DebugShape: {
             if (!drawer::detail::DebugShapeHandle::isDebugShapeLoaded()) {
                 logger.warn(
@@ -67,8 +70,8 @@ struct DrawHandleManager::Impl {
                     "particle "
                     "system!"
                 );
-                Config::cfg.land.drawHandleBackend = DrawerType::DefaultParticle;
-                Config::trySave();
+                conf.backend = DrawerType::DefaultParticle;
+                (void)ConfigProvider::save(PLand::getInstance().getSelf().getConfigDir());
             }
             break;
         }

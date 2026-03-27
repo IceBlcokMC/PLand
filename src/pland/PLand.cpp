@@ -82,7 +82,7 @@ bool PLand::load() {
 
     internal::interceptor::InterceptorConfig::tryMigrate(getSelf().getConfigDir());
 
-    Config::tryLoad();
+    loadConfig();
     internal::interceptor::InterceptorConfig::load(getSelf().getConfigDir());
 
     mImpl->mThreadPoolExecutor = std::make_unique<ll::thread::ThreadPoolExecutor>("PLand-ThreadPool", 2);
@@ -113,7 +113,7 @@ bool PLand::enable() {
     mImpl->mSelectorManager   = std::make_unique<SelectorManager>();
     mImpl->mDrawHandleManager = std::make_unique<DrawHandleManager>();
     mImpl->mTelemetry         = std::make_unique<internal::adapter::Telemetry>();
-    if (Config::cfg.internal.telemetry) {
+    if (ConfigProvider::isTelemetryEnabled()) {
         mImpl->mTelemetry->launch(getThreadPool());
     }
 
@@ -127,7 +127,7 @@ bool PLand::enable() {
 
             EconomySystem::getInstance().reload();
 
-            if (ev.config().internal.telemetry) {
+            if (ConfigProvider::isTelemetryEnabled()) {
                 mImpl->mTelemetry->launch(getThreadPool());
             } else {
                 mImpl->mTelemetry->shutdown();
@@ -139,7 +139,7 @@ bool PLand::enable() {
     );
 
 #ifdef LD_DEVTOOL
-    if (land::Config::cfg.internal.devTools) {
+    if (ConfigProvider::isDevToolsEnabled()) {
         mImpl->mDevToolApp = devtool::DevToolApp::make();
     }
 #endif
@@ -149,7 +149,7 @@ bool PLand::enable() {
 
 bool PLand::disable() {
 #ifdef LD_DEVTOOL
-    if (Config::cfg.internal.devTools) {
+    if (ConfigProvider::isDevToolsEnabled()) {
         mImpl->mDevToolApp.reset();
     }
 #endif
@@ -191,13 +191,31 @@ SelectorManager*        PLand::getSelectorManager() const { return mImpl->mSelec
 LandRegistry&           PLand::getLandRegistry() const { return *mImpl->mLandRegistry; }
 DrawHandleManager*      PLand::getDrawHandleManager() const { return mImpl->mDrawHandleManager.get(); }
 internal::SafeTeleport& PLand::getSafeTeleport() const { return *mImpl->mSafeTeleport; }
+bool                    PLand::loadConfig() {
+    if (auto expected = ConfigProvider::load(getSelf().getConfigDir())) {
+        return true;
+    } else {
+        auto& logger = mImpl->mSelf.getLogger();
+        expected.error().log(logger);
+        return false;
+    }
+}
+bool PLand::saveConfig() {
+    if (auto expected = ConfigProvider::save(getSelf().getConfigDir())) {
+        return true;
+    } else {
+        auto& logger = mImpl->mSelf.getLogger();
+        expected.error().log(logger);
+        return false;
+    }
+}
 
 ll::thread::ThreadPoolExecutor& PLand::getThreadPool() const { return *mImpl->mThreadPoolExecutor; }
 service::ServiceLocator&        PLand::getServiceLocator() const { return *mImpl->mServiceLocator; }
 
 #ifdef LD_DEVTOOL
 void PLand::setDevToolVisible(bool visible) {
-    if (Config::cfg.internal.devTools) {
+    if (ConfigProvider::isDevToolsEnabled()) {
         if (visible) {
             mImpl->mDevToolApp->show();
         } else {

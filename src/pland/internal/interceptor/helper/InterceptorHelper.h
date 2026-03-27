@@ -1,5 +1,6 @@
 #pragma once
 #include "pland/PLand.h"
+#include "pland/land/Config.h"
 #include "pland/land/Land.h"
 #include "pland/land/repo/LandRegistry.h"
 #include "pland/reflect/TypeName.h"
@@ -18,12 +19,29 @@ namespace land::internal::interceptor {
  */
 inline bool hasPrivilege(std::shared_ptr<Land> const& land, mce::UUID const& uuid) {
     TRACE_ADD_SCOPE("hasPrivilege");
+
     TRACE_LOG("land={}", land ? land->getName() : "nullptr");
-    if (!land) return true; // 领地不存在 => 放行
+    if (!land) {
+        TRACE_LOG("land not exist, bypass");
+        return true; // 领地不存在 => 放行
+    }
+
+    if (land->isLeaseFrozen()) {
+        // 如果冻结, 则仅放行管理员
+        TRACE_LOG("land is frozen, check for operator");
+        goto admin;
+    }
+
+    if (land->isOwner(uuid)) {
+        // 短路: 如果是主人则直接放行, 避免无意义的查管理表
+        TRACE_LOG("owner allowed");
+        return true;
+    }
+
+admin:
     bool isOperator = PLand::getInstance().getLandRegistry().isOperator(uuid);
-    bool isOwner    = land->isOwner(uuid);
-    TRACE_LOG("isOperator={}, isOwner={}", isOperator, isOwner);
-    return isOperator || isOwner;
+    TRACE_LOG("check for operator table, result: {}", isOperator ? "allowed" : "denied");
+    return isOperator;
 }
 
 /**
@@ -35,30 +53,18 @@ inline bool hasPrivilege(std::shared_ptr<Land> const& land, mce::UUID const& uui
 template <bool EnvironmentPerms::* Member>
 inline bool hasEnvironmentPermission(std::shared_ptr<Land> const& land) {
     TRACE_ADD_SCOPE(reflect::extractFunctionSignature(__FUNCSIG__));
+
     TRACE_LOG("land={}", land ? land->getName() : "nullptr");
-    if (!land) return true; // 领地不存在 => 放行
+    if (!land) {
+        TRACE_LOG("land not exist, bypass");
+        return true; // 领地不存在 => 放行
+    }
+
     bool result = land->getPermTable().environment.*Member;
-    TRACE_LOG("{}={}", reflect::extractTemplateInnerLeafName(__FUNCSIG__), result);
+    TRACE_LOG("{}={}", reflect::extractTemplateInnerLeafName(__FUNCSIG__), result ? "allowed" : "denied");
     return result;
 }
 
-/**
- * 检查玩家成员访客权限
- */
-template <RolePerms::Entry RolePerms::* Member>
-inline bool hasMemberOrGuestPermission(std::shared_ptr<Land> const& land, mce::UUID const& uuid) {
-    TRACE_ADD_SCOPE(reflect::extractFunctionSignature(__FUNCSIG__));
-    TRACE_LOG("land={}", land ? land->getName() : "nullptr");
-    if (!land) return true; // 领地不存在 => 放行
-
-    auto& ptable = land->getPermTable();
-    auto  entry  = ptable.role.*Member;
-    TRACE_LOG("{}: member={}, guest={}", reflect::extractTemplateInnerLeafName(__FUNCSIG__), entry.member, entry.guest);
-    bool isMember = land->isMember(uuid);
-    TRACE_LOG("isMember={}", isMember);
-    if (isMember && entry.member) return true;
-    return entry.guest;
-}
 inline bool _hasMemberOrGuestPermission(
     std::shared_ptr<Land> const& land,
     mce::UUID const&             uuid,
@@ -66,16 +72,41 @@ inline bool _hasMemberOrGuestPermission(
 ) {
     assert(pointer);
     TRACE_ADD_SCOPE("_hasMemberOrGuestPermission");
-    TRACE_LOG("land={}", land ? land->getName() : "nullptr");
-    if (!land) return true; // 领地不存在 => 放行
 
-    auto& ptable = land->getPermTable();
-    auto  entry  = ptable.role.*pointer;
-    TRACE_LOG("unknown: member={}, guest={}", entry.member, entry.guest);
+    TRACE_LOG("land={}", land ? land->getName() : "nullptr");
+    if (!land) {
+        TRACE_LOG("land not exist, bypass");
+        return true; // 领地不存在 => 放行
+    }
+
+    auto entry = land->getPermTable().role.*pointer;
+    TRACE_LOG("unknown: member={}, actor={}", entry.member ? "allowed" : "denied", entry.actor ? "allowed" : "denied");
+
+    if (land->isLeaseFrozen()) {
+        TRACE_LOG("land is frozen, fallback to actor");
+        return entry.actor; // 如果冻结, 不再允许 Member 特权，退化为 Actor
+    }
+
+    if (entry.actor) {
+        TRACE_LOG("actor allowed");
+        return true; // 短路: 如果访客允许，那么不必再查成员
+    }
+    if (!entry.member) {
+        TRACE_LOG("member denied");
+        return false; // 短路: 如果成员直接不允许，那么没有查表的必要
+    }
     bool isMember = land->isMember(uuid);
-    TRACE_LOG("isMember={}", isMember);
-    if (isMember && entry.member) return true;
-    return entry.guest;
+    TRACE_LOG("check for member table, result: {}", isMember ? "allowed" : "denied");
+    return isMember;
+}
+/**
+ * 检查玩家成员访客权限
+ */
+template <RolePerms::Entry RolePerms::* Member>
+inline bool hasMemberOrGuestPermission(std::shared_ptr<Land> const& land, mce::UUID const& uuid) {
+    TRACE_ADD_SCOPE(reflect::extractFunctionSignature(__FUNCSIG__));
+    TRACE_LOG("check permission for: {}", reflect::extractTemplateInnerLeafName(__FUNCSIG__));
+    return _hasMemberOrGuestPermission(land, uuid, Member);
 }
 
 
@@ -104,12 +135,20 @@ inline bool hasRolePermission(std::shared_ptr<Land> const& land, mce::UUID const
 template <RolePerms::Entry RolePerms::* Member>
 inline bool hasGuestPermission(std::shared_ptr<Land> const& land) {
     TRACE_ADD_SCOPE(reflect::extractFunctionSignature(__FUNCSIG__));
+
     TRACE_LOG("land={}", land ? land->getName() : "nullptr");
-    if (!land) return true; // 领地不存在 => 放行
-    auto& ptable = land->getPermTable();
-    auto  entry  = ptable.role.*Member;
-    TRACE_LOG("{}: member={}, guest={}", reflect::extractTemplateInnerLeafName(__FUNCSIG__), entry.member, entry.guest);
-    return entry.guest;
+    if (!land) {
+        TRACE_LOG("land not exist, bypass");
+        return true; // 领地不存在 => 放行
+    }
+
+    auto entry = land->getPermTable().role.*Member;
+    TRACE_LOG(
+        "check actor permission('{}'), result: {}",
+        reflect::extractTemplateInnerLeafName(__FUNCSIG__),
+        entry.actor ? "allowed" : "denied"
+    );
+    return entry.actor;
 }
 
 

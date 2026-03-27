@@ -11,7 +11,7 @@ PLand is a land protection system for BDS, developed based on LeviLamina.
     - [x] 2D Lands
     - [x] 3D Lands
     - [x] Sub-lands (supports multi-level nesting)
-    - [ ] Rental Mode
+    - [x] Lease Mode
 - Land Protection
     - [x] 60+ fine-grained permissions for land protection
     - [x] Dynamically extensible interception rules (e.g., block interaction, entity damage, etc.)

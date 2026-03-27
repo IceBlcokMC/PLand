@@ -3,6 +3,7 @@
 #include "LandHierarchyService.h"
 #include "LandManagementService.h"
 #include "LandPriceService.h"
+#include "LeasingService.h"
 #include "pland/PLand.h"
 #include "pland/service/SelectionService.h"
 
@@ -16,6 +17,7 @@ struct ServiceLocator::Impl {
     std::unique_ptr<LandPriceService>      mLandPriceService{nullptr};
     std::unique_ptr<SelectionService>      mSelectionService{nullptr};
     std::unique_ptr<LandManagementService> mLandManagementService{nullptr};
+    std::unique_ptr<LeasingService>        mLeasingService{nullptr};
 
     void init(PLand& entry) {
         mLandHierarchyService  = std::make_unique<LandHierarchyService>(entry.getLandRegistry());
@@ -27,8 +29,11 @@ struct ServiceLocator::Impl {
             *mLandHierarchyService,
             *mLandPriceService
         );
+        mLeasingService =
+            std::make_unique<LeasingService>(entry.getLandRegistry(), *mLandPriceService, *mSelectionService);
     }
     void destroy() {
+        mLeasingService.reset();
         mLandManagementService.reset();
         mSelectionService.reset();
         mLandPriceService.reset();
@@ -43,6 +48,7 @@ LandManagementService& ServiceLocator::getLandManagementService() const { return
 LandHierarchyService&  ServiceLocator::getLandHierarchyService() const { return *impl->mLandHierarchyService; }
 LandPriceService&      ServiceLocator::getLandPriceService() const { return *impl->mLandPriceService; }
 SelectionService&      ServiceLocator::getSelectionService() const { return *impl->mSelectionService; }
+LeasingService&        ServiceLocator::getLeasingService() const { return *impl->mLeasingService; }
 
 } // namespace service
 } // namespace land

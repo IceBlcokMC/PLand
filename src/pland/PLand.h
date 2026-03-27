@@ -49,6 +49,9 @@ public: /* public */
 
     LDNDAPI internal::SafeTeleport& getSafeTeleport() const;
 
+    LDAPI bool loadConfig();
+    LDAPI bool saveConfig();
+
 #ifdef LD_DEVTOOL
     void setDevToolVisible(bool visible);
 #endif

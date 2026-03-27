@@ -4,6 +4,7 @@
 #include "pland/Global.h"
 #include "pland/gui/utils/BackUtils.h"
 #include "pland/land/Land.h"
+#include "pland/utils/TimeUtils.h"
 
 namespace land {
 namespace gui {
@@ -111,8 +112,25 @@ struct AdvancedLandPicker::Impl : std::enable_shared_from_this<Impl> {
             if (!canRender(view, land->getType())) {
                 continue;
             }
+            std::string leaseContent = "";
+            if (land->isLeased()) {
+                auto state = land->getLeaseState();
+                if (state == LeaseState::Active) {
+                    leaseContent = time_utils::formatRemaining(land->getLeaseEndAt());
+                } else if (state == LeaseState::Frozen) {
+                    leaseContent = " | §e已冻结§r"_trl(localeCode);
+                } else {
+                    leaseContent = " | §c租赁过期§r"_trl(localeCode);
+                }
+            }
             form.appendButton(
-                "{}\n维度: {} | ID: {}"_trl(localeCode, land->getName(), land->getDimensionId(), land->getId()),
+                "[{}] {}§r\n维度: {}{}§r"_trl(
+                    localeCode,
+                    land->getId(),
+                    land->getName(),
+                    land->getDimensionId(),
+                    leaseContent
+                ),
                 "textures/ui/icon_recipe_nature",
                 "path",
                 [data = shared_from_this(), weak = std::weak_ptr(land)](Player& player) {

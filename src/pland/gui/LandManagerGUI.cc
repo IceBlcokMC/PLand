@@ -14,6 +14,7 @@
 #include "mc/world/level/Level.h"
 
 #include "pland/PLand.h"
+#include "pland/economy/EconomySystem.h"
 #include "pland/gui/common/OnlinePlayerPicker.h"
 #include "pland/gui/utils/BackUtils.h"
 #include "pland/land/Config.h"
@@ -22,8 +23,10 @@
 #include "pland/service/LandHierarchyService.h"
 #include "pland/service/LandManagementService.h"
 #include "pland/service/LandPriceService.h"
+#include "pland/service/LeasingService.h"
 #include "pland/service/ServiceLocator.h"
 #include "pland/utils/FeedbackUtils.h"
+#include "pland/utils/TimeUtils.h"
 
 #include <string>
 #include <utility>
@@ -60,8 +63,34 @@ void LandManagerGUI::sendMainMenu(Player& player, std::shared_ptr<Land> land) {
         );
     }
 
+    std::string leaseContent;
+    if (land->isLeased()) {
+
+
+        auto state = land->getLeaseState();
+        switch (state) {
+        case LeaseState::None:
+            break;
+        case LeaseState::Active: {
+            leaseContent =
+                "租赁状态:正常\n剩余租期:{}"_trl(localeCode, time_utils::formatRemaining(land->getLeaseEndAt()));
+            break;
+        }
+        case LeaseState::Frozen: {
+            auto& priceService = PLand::getInstance().getServiceLocator().getLandPriceService();
+            auto  detail       = priceService.calculateRenewCost(land, 0);
+            leaseContent       = "租赁状态: 已冻结\n欠费: {}"_trl(localeCode, detail.total);
+            break;
+        }
+        case LeaseState::Expired: {
+            leaseContent = "租赁状态: 已到期(系统回收)"_trl(localeCode);
+            break;
+        }
+        }
+    }
+
     fm.setContent(
-        "领地: {}\n类型: {}\n大小: {}x{}x{} = {}\n范围: {}\n\n{}"_trl(
+        "领地: {}\n类型: {}\n大小: {}x{}x{} = {}\n范围: {}\n{}\n{}"_trl(
             localeCode,
             land->getName(),
             land->is3D() ? "3D" : "2D",
@@ -70,70 +99,156 @@ void LandManagerGUI::sendMainMenu(Player& player, std::shared_ptr<Land> land) {
             land->getAABB().getBlockCountY(),
             land->getAABB().getVolume(),
             land->getAABB().toString(),
+            leaseContent,
             subContent
         )
     );
 
+    bool const isAdmin     = PLand::getInstance().getLandRegistry().isOperator(player.getUuid());
+    bool const canOperLand = isAdmin ||             // 管理员
+                             !land->isLeased() ||   // 未租赁(普通领地)
+                             land->isLeaseActive(); // 租赁状态为正常
 
-    fm.appendButton("编辑权限"_trl(localeCode), "textures/ui/sidebar_icons/promotag", "path", [land](Player& pl) {
-        sendEditLandPermGUI(pl, land);
-    });
-    fm.appendButton("修改成员"_trl(localeCode), "textures/ui/FriendsIcon", "path", [land](Player& pl) {
-        sendChangeMember(pl, land);
-    });
-    fm.appendButton("修改领地名称"_trl(localeCode), "textures/ui/book_edit_default", "path", [land](Player& pl) {
-        sendEditLandNameGUI(pl, land);
-    });
-
-    // 开启了领地传送功能，或者玩家是领地管理员
-    if (Config::cfg.land.landTp || PLand::getInstance().getLandRegistry().isOperator(player.getUuid())) {
-        fm.appendButton("传送到领地"_trl(localeCode), "textures/ui/icon_recipe_nature", "path", [land](Player& pl) {
-            LandTeleportGUI::impl(pl, land);
+    if (canOperLand) {
+        fm.appendButton("编辑权限"_trl(localeCode), "textures/ui/sidebar_icons/promotag", "path", [land](Player& pl) {
+            sendEditLandPermGUI(pl, land);
         });
+        fm.appendButton("修改成员"_trl(localeCode), "textures/ui/FriendsIcon", "path", [land](Player& pl) {
+            sendChangeMember(pl, land);
+        });
+        fm.appendButton("修改领地名称"_trl(localeCode), "textures/ui/book_edit_default", "path", [land](Player& pl) {
+            sendEditLandNameGUI(pl, land);
+        });
+    }
 
-        // 如果玩家在领地内，则显示设置传送点按钮
-        if (land->getAABB().hasPos(player.getPosition())) {
-            fm.appendButton(
-                "设置传送点"_trl(localeCode),
-                "textures/ui/Add-Ons_Nav_Icon36x36",
-                "path",
-                [land](Player& pl) {
-                    auto& service = PLand::getInstance().getServiceLocator().getLandManagementService();
-                    if (auto res = service.setLandTeleportPos(pl, land, pl.getPosition())) {
-                        feedback_utils::notifySuccess(pl, "传送点已设置!"_trl(pl.getLocaleCode()));
-                    } else {
-                        feedback_utils::sendError(pl, res.error());
+    if (land->isLeased()) {
+        fm.appendButton("续费/缴费"_trl(localeCode), "textures/ui/MCoin", "path", [land](Player& pl) {
+            sendLeaseRenewGUI(pl, land);
+        });
+    }
+
+    if (canOperLand) {
+        // 开启了领地传送功能，或者玩家是领地管理员
+        if (ConfigProvider::isLandTeleportEnabled() || isAdmin) {
+            fm.appendButton("传送到领地"_trl(localeCode), "textures/ui/icon_recipe_nature", "path", [land](Player& pl) {
+                LandTeleportGUI::impl(pl, land);
+            });
+
+            // 如果玩家在领地内，则显示设置传送点按钮
+            if (land->getAABB().hasPos(player.getPosition())) {
+                fm.appendButton(
+                    "设置传送点"_trl(localeCode),
+                    "textures/ui/Add-Ons_Nav_Icon36x36",
+                    "path",
+                    [land](Player& pl) {
+                        auto& service = PLand::getInstance().getServiceLocator().getLandManagementService();
+                        if (auto res = service.setLandTeleportPos(pl, land, pl.getPosition())) {
+                            feedback_utils::notifySuccess(pl, "传送点已设置!"_trl(pl.getLocaleCode()));
+                        } else {
+                            feedback_utils::sendError(pl, res.error());
+                        }
                     }
-                }
-            );
+                );
+            }
         }
-    }
 
-    fm.appendButton("领地过户"_trl(localeCode), "textures/ui/sidebar_icons/my_characters", "path", [land](Player& pl) {
-        sendTransferLandGUI(pl, land);
-    });
+        fm.appendButton(
+            "领地过户"_trl(localeCode),
+            "textures/ui/sidebar_icons/my_characters",
+            "path",
+            [land](Player& pl) { sendTransferLandGUI(pl, land); }
+        );
 
-    if (Config::ensureSubLandFeatureEnabled() && land->canCreateSubLand()) {
-        fm.appendButton("创建子领地"_trl(localeCode), "textures/ui/icon_recipe_nature", "path", [land](Player& pl) {
-            sendCreateSubLandConfirm(pl, land);
+        if (Config::ensureSubLandFeatureEnabled() && land->canCreateSubLand()) {
+            fm.appendButton("创建子领地"_trl(localeCode), "textures/ui/icon_recipe_nature", "path", [land](Player& pl) {
+                sendCreateSubLandConfirm(pl, land);
+            });
+        }
+
+        if (land->isOrdinaryLand() && !land->isLeased()) {
+            fm.appendButton("重新选区"_trl(localeCode), "textures/ui/anvil_icon", "path", [land](Player& pl) {
+                sendChangeRangeConfirm(pl, land);
+            });
+        }
+
+        fm.appendButton("删除领地"_trl(localeCode), "textures/ui/icon_trash", "path", [land](Player& pl) {
+            showRemoveConfirm(pl, land);
         });
     }
-
-    if (land->isOrdinaryLand()) {
-        fm.appendButton("重新选区"_trl(localeCode), "textures/ui/anvil_icon", "path", [land](Player& pl) {
-            sendChangeRangeConfirm(pl, land);
-        });
-    }
-
-    fm.appendButton("删除领地"_trl(localeCode), "textures/ui/icon_trash", "path", [land](Player& pl) {
-        showRemoveConfirm(pl, land);
-    });
 
     fm.sendTo(player);
 }
 
+void LandManagerGUI::sendLeaseRenewGUI(Player& player, std::shared_ptr<Land> const& land) {
+    if (!land || !land->isLeased()) {
+        return;
+    }
+
+    auto localeCode = player.getLocaleCode();
+
+    std::string status;
+    if (land->isLeaseFrozen()) {
+        auto& priceService = PLand::getInstance().getServiceLocator().getLandPriceService();
+        auto  detail       = priceService.calculateRenewCost(land, 0);
+        status             = "当前状态: 已冻结\n欠费: {}"_trl(localeCode, detail.total);
+    } else {
+        status = "当前状态: 正常\n剩余到期时间: {}"_trl(localeCode, time_utils::formatRemaining(land->getLeaseEndAt()));
+    }
+
+    auto const& duration = ConfigProvider::getLeasingConfig().duration;
+
+    CustomForm fm{"[PLand] | 租赁续费"_trl(localeCode)};
+    fm.appendLabel(status);
+    fm.appendSlider(
+        "days",
+        "续租天数"_trl(localeCode),
+        duration.minPeriod,
+        duration.maxPeriod,
+        1.0,
+        duration.minPeriod
+    );
+    fm.setSubmitButton("下一步"_trl(localeCode));
+    fm.sendTo(player, [land](Player& pl, CustomFormResult const& res, FormCancelReason) {
+        if (!res) {
+            return;
+        }
+
+        auto days = static_cast<int>(std::get<double>(res->at("days")));
+        confirmRenewDuration(pl, land, days);
+    });
+}
+void LandManagerGUI::confirmRenewDuration(Player& player, std::shared_ptr<Land> const& land, int days) {
+    auto  localeCode   = player.getLocaleCode();
+    auto& priceService = PLand::getInstance().getServiceLocator().getLandPriceService();
+    auto  detail       = priceService.calculateRenewCost(land, days);
+
+    std::string content = "续租天数: {}\n每日租金: {}\n欠费天数: {}\n滞纳金: {}\n总计: {}\n{}"_trl(
+        localeCode,
+        days,
+        detail.dailyRent,
+        detail.overdueDays,
+        detail.penalty,
+        detail.total,
+        EconomySystem::getInstance().getCostMessage(player, detail.total)
+    );
+
+    auto confirm = SimpleForm{};
+    confirm.setTitle("[PLand] | 确认续租"_trl(localeCode));
+    confirm.setContent(content);
+    confirm
+        .appendButton("确认续租"_trl(localeCode), "textures/ui/realms_green_check", "path", [land, days](Player& pl2) {
+            auto& service = PLand::getInstance().getServiceLocator().getLeasingService();
+            if (auto exp = service.renewLease(pl2, land, days)) {
+                feedback_utils::notifySuccess(pl2, "续租成功"_trl(pl2.getLocaleCode()));
+            } else {
+                feedback_utils::sendError(pl2, exp.error());
+            }
+        });
+    back_utils::injectBackButton(confirm, back_utils::wrapCallback<sendLeaseRenewGUI>(land));
+    confirm.sendTo(player);
+}
 void LandManagerGUI::sendEditLandPermGUI(Player& player, std::shared_ptr<Land> const& ptr) {
-    gui::PermTableEditor::sendTo(
+    PermTableEditor::sendTo(
         player,
         ptr->getPermTable(),
         [ptr](Player& self, LandPermTable newTable) {
@@ -165,16 +280,21 @@ void LandManagerGUI::confirmSimpleDelete(Player& player, std::shared_ptr<Land> c
         return;
     }
     auto localeCode = player.getLocaleCode();
-    ModalForm(
-        "[PLand] | 确认删除?"_trl(localeCode),
-        "您确定要删除领地 '{}' 吗?\n删除领地后，您将获得 {} 金币的退款。\n此操作不可逆,请谨慎操作!"_trl(
-            localeCode,
-            ptr->getName(),
-            PLand::getInstance().getServiceLocator().getLandPriceService().getRefundAmount(ptr)
-        ),
-        "确认"_trl(localeCode),
-        "返回"_trl(localeCode)
-    )
+    auto refund =
+        ptr->isLeased() ? 0 : PLand::getInstance().getServiceLocator().getLandPriceService().getRefundAmount(ptr);
+    auto content =
+        ptr->isLeased()
+            ? "您确定要删除领地 \"{}\" 吗?\n租赁领地删除后不会退还租金。\n此操作不可逆,请谨慎操作!"_trl(
+                  localeCode,
+                  ptr->getName()
+              )
+            : "您确定要删除领地 \"{}\" 吗?\n删除领地后，您将获得 {} 金币的退款。\n此操作不可逆,请谨慎操作!"_trl(
+                  localeCode,
+                  ptr->getName(),
+                  refund
+              );
+
+    ModalForm("[PLand] | 确认删除?"_trl(localeCode), content, "确认"_trl(localeCode), "返回"_trl(localeCode))
         .sendTo(player, [ptr](Player& pl, ModalFormResult const& res, FormCancelReason) {
             if (!res) {
                 return;
@@ -419,7 +539,7 @@ void LandManagerGUI::sendCreateSubLandConfirm(Player& player, const std::shared_
                     player,
                     "选区功能已开启，使用命令 /pland set 或使用 {} 来选择ab点"_trl(
                         player.getLocaleCode(),
-                        Config::cfg.selector.tool
+                        ConfigProvider::getSelectionConfig().alias
                     )
                 );
             } else {
@@ -454,7 +574,7 @@ void LandManagerGUI::sendChangeRangeConfirm(Player& player, std::shared_ptr<Land
                 self,
                 "选区功能已开启，使用命令 /pland set 或使用 {} 来选择ab点"_trl(
                     self.getLocaleCode(),
-                    Config::cfg.selector.tool
+                    ConfigProvider::getSelectionConfig().alias
                 )
             );
         } else {

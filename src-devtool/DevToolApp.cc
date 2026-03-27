@@ -98,29 +98,27 @@ struct DevToolApp::Impl {
             prevScale   = xScale;
             ImGuiIO& io = ImGui::GetIO();
 
-            auto fontPath = land::PLand::getInstance().getSelf().getDataDir() / "fonts" / "font.ttf";
-            if (!std::filesystem::exists(fontPath)) {
-                this->appendError(
-                    fmt::format(
-                        "由于字体文件 ( {} ) 不存在\n这可能导致部分模块字体显示异常\n\n建议下载 maple-font 字体的 "
-                        "Normal-Ligature CN 版本\n将 \"MapleMonoNormal-CN-Regular.ttf\" 重命名为 font.ttf "
-                        "放置在上述路径下",
-                        fontPath.string()
-                    )
-                );
-                fontPath = "C:/Windows/Fonts/msyh.ttc";
-            }
-
             io.Fonts->Clear();
+
+            // 加载 Consolas 字体避免 msyh.ttc 的非等宽字符导致显示问题
+            ImFontConfig config;
+            config.SizePixels = std::round(16 * xScale);
+
+            io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\consola.ttf", config.SizePixels, &config);
+
+            config.MergeMode = true; // 启用合并模式
+
             io.Fonts->AddFontFromFileTTF(
-                fontPath.string().c_str(),
-                std::round(15 * xScale),
-                nullptr,
-                io.Fonts->GetGlyphRangesChineseFull()
+                "C:\\Windows\\Fonts\\msyh.ttc", // 借用微软雅黑
+                config.SizePixels,
+                &config,
+                io.Fonts->GetGlyphRangesChineseFull() // 只合并中文/全角标点集合
             );
+
             io.Fonts->Build();
             ImGui_ImplOpenGL3_DestroyFontsTexture();
             ImGui_ImplOpenGL3_CreateFontsTexture();
+
             auto style = ImGuiStyle();
             style.ScaleAllSizes(xScale);
         }

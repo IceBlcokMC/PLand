@@ -13,57 +13,58 @@ namespace land {
 
 namespace fs = std::filesystem;
 
-bool Config::tryLoad() {
-    auto path = land::PLand::getInstance().getSelf().getConfigDir() / FileName;
+decltype(ConfigProvider::cfg) ConfigProvider::cfg = {};
 
-    if (!std::filesystem::exists(path)) {
-        trySave();
-        return true;
+std::filesystem::path ConfigProvider::_filePath(const std::filesystem::path& baseDir) { return baseDir / FILE_NAME; }
+ll::Expected<>        ConfigProvider::load(const std::filesystem::path& baseDir) {
+    auto path = _filePath(baseDir);
+
+    if (!fs::exists(path)) {
+        return save(baseDir);
     }
+
     auto data = ll::file_utils::readFile(path);
     if (!data) {
-        return false;
+        return ll::makeStringError("Failed to read config file: " + path.string());
     }
-    auto json = nlohmann::json::parse(*data);
 
+    auto  json     = nlohmann::json::parse(*data);
     auto& migrator = internal::ConfigMigrator::getInstance();
-    if (auto exp = migrator.migrate(json, SchemaVersion); !exp) {
-        throw std::runtime_error{exp.error().message()};
+
+    auto expected = migrator.migrate(json, Impl::SchemaVersion);
+    if (!expected) {
+        return ll::makeStringError(expected.error().message());
     }
+
     json_util::json2structWithVersionPatch(json, cfg, true);
-    return true;
+    if (expected.value() == JsonMigrator::MigrateResult::Success) {
+        (void)save(baseDir);
+    }
+    return {};
+}
+ll::Expected<> ConfigProvider::save(const std::filesystem::path& baseDir) {
+    auto path = _filePath(baseDir);
+    ll::config::saveConfig(cfg, path);
+    return {};
 }
 
-bool Config::trySave() {
-    auto dir = land::PLand::getInstance().getSelf().getConfigDir() / FileName;
-
-    bool status = ll::config::saveConfig(cfg, dir);
-
-    return status;
-}
 bool Config::ensureDimensionAllowed(int dimensionId) {
-    auto& allowed = cfg.land.bought.allowDimensions;
+    auto& allowed = cfg.business.bought.allowDimensions;
     return std::find(allowed.begin(), allowed.end(), dimensionId) != allowed.end();
 }
-bool Config::ensureSubLandFeatureEnabled() { return cfg.land.subLand.enabled; }
+bool Config::ensureSubLandFeatureEnabled() { return cfg.business.bought.subLand.enabled; }
 bool Config::ensureOrdinaryLandEnabled(bool is3D) {
-    return is3D ? cfg.land.bought.threeDimensionl.enabled : cfg.land.bought.twoDimensionl.enabled;
+    return is3D ? cfg.business.bought.mode3D.enabled : cfg.business.bought.mode2D.enabled;
 }
-bool                  Config::ensureEconomySystemEnabled() { return cfg.economy.enabled; }
-std::optional<double> Config::getLandDimensionMultipliers(LandDimid dimid) {
-    auto& map  = cfg.land.bought.dimensionPriceCoefficients;
-    auto  iter = map.find(std::to_string(dimid));
-    if (iter != map.end()) {
-        return iter->second;
-    }
-    return std::nullopt;
+bool Config::ensureLeasingEnabled() { return cfg.business.leasing.enabled; }
+bool Config::ensureLeasingDimensionAllowed(int dimensionId) {
+    auto& allowed = cfg.business.leasing.allowDimensions;
+    return std::find(allowed.begin(), allowed.end(), dimensionId) != allowed.end();
 }
 std::string const& Config::getLandPriceCalculateFormula(bool is3D) {
-    return is3D ? cfg.land.bought.threeDimensionl.calculate : cfg.land.bought.twoDimensionl.calculate;
+    return is3D ? cfg.business.bought.mode3D.formula : cfg.business.bought.mode2D.formula;
 }
-std::string const& Config::getSubLandPriceCalculateFormula() { return cfg.land.subLand.calculate; }
+std::string const& Config::getSubLandPriceCalculateFormula() { return cfg.business.bought.subLand.formula; }
 
-
-Config Config::cfg = {};
 
 } // namespace land

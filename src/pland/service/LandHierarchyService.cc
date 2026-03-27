@@ -1,9 +1,9 @@
 #include "LandHierarchyService.h"
 
+#include "pland/land/Land.h"
 #include "pland/land/repo/LandRegistry.h"
 #include "pland/land/repo/TransactionContext.h"
 #include "pland/land/validator/LandCreateValidator.h"
-#include "pland/land/Land.h"
 
 namespace land {
 namespace service {
@@ -16,8 +16,24 @@ struct LandHierarchyService::Impl {
 LandHierarchyService::LandHierarchyService(LandRegistry& registry) : impl(std::make_unique<Impl>(registry)) {}
 LandHierarchyService::~LandHierarchyService() {}
 
+#define UNEXPECTED_UNSUPPORTED_LEASED_ERR()                                                                            \
+    ll::makeStringError(                                                                                               \
+        "Leased land do not support adding any territorial hierarchy information; leasing and sub-land "               \
+        "are mutually exclusive."                                                                                      \
+    )
+
+ll::Expected<> LandHierarchyService::ensureBoughtLand(std::shared_ptr<Land> const& land) {
+    if (!land->isBought()) {
+        return UNEXPECTED_UNSUPPORTED_LEASED_ERR();
+    }
+    return {};
+}
+
 ll::Expected<>
 LandHierarchyService::attachSubLand(std::shared_ptr<Land> const& parent, std::shared_ptr<Land> const& sub) {
+    if (!parent->isBought() || !sub->isBought()) {
+        return UNEXPECTED_UNSUPPORTED_LEASED_ERR();
+    }
     if (!sub->isOrdinaryLand()) {
         // 禁止两个领地家族整合
         return ll::makeStringError("The land type does not match the required type");
@@ -42,7 +58,11 @@ LandHierarchyService::attachSubLand(std::shared_ptr<Land> const& parent, std::sh
     }
     return result;
 }
+
 ll::Expected<> LandHierarchyService::deleteSubLand(std::shared_ptr<Land> const& sub) {
+    if (!sub->isBought()) {
+        return UNEXPECTED_UNSUPPORTED_LEASED_ERR();
+    }
     if (!sub->isSubLand()) {
         return ll::makeStringError("The land type does not match the required type");
     }
@@ -60,7 +80,11 @@ ll::Expected<> LandHierarchyService::deleteSubLand(std::shared_ptr<Land> const& 
         return true;
     });
 }
+
 ll::Expected<> LandHierarchyService::deleteLandRecursive(std::shared_ptr<Land> const& land) {
+    if (!land->isBought()) {
+        return UNEXPECTED_UNSUPPORTED_LEASED_ERR();
+    }
     if (!land->isParentLand() && !land->isMixLand()) {
         return ll::makeStringError("The land type does not match the required type");
     }
@@ -89,7 +113,11 @@ ll::Expected<> LandHierarchyService::deleteLandRecursive(std::shared_ptr<Land> c
         return true;
     });
 }
+
 ll::Expected<> LandHierarchyService::deleteParentLandAndPromoteChildren(std::shared_ptr<Land> const& parent) {
+    if (!parent->isBought()) {
+        return UNEXPECTED_UNSUPPORTED_LEASED_ERR();
+    }
     if (!parent->isParentLand()) {
         return ll::makeStringError("The land type does not match the required type");
     }
@@ -118,7 +146,11 @@ ll::Expected<> LandHierarchyService::deleteParentLandAndPromoteChildren(std::sha
     }
     return result;
 }
+
 ll::Expected<> LandHierarchyService::deleteMixLandAndTransferChildren(std::shared_ptr<Land> const& mixLand) {
+    if (!mixLand->isBought()) {
+        return UNEXPECTED_UNSUPPORTED_LEASED_ERR();
+    }
     if (!mixLand->isMixLand()) {
         return ll::makeStringError("The land type does not match the required type");
     }
@@ -272,10 +304,13 @@ LandHierarchyService::getSelfAndDescendants(std::shared_ptr<Land> const& land) c
 
 ll::Expected<>
 LandHierarchyService::ensureSubLandLegal(std::shared_ptr<Land> const& parent, std::shared_ptr<Land> const& sub) {
-    if (auto expected = LandCreateValidator::isLandRangeLegal(sub->getAABB(), sub->getDimensionId(), true); !expected) {
+    if (!parent->isBought() || !sub->isBought()) {
+        return UNEXPECTED_UNSUPPORTED_LEASED_ERR();
+    }
+    if (auto expected = LandCreateValidator::ensureLandRangeIsLegal(sub->getAABB(), sub->getDimensionId(), true); !expected) {
         return expected;
     }
-    if (auto expected = LandCreateValidator::isSubLandPositionLegal(*this, parent, sub->getAABB()); !expected) {
+    if (auto expected = LandCreateValidator::ensureSubLandPositionIsLegal(*this, parent, sub->getAABB()); !expected) {
         return expected;
     }
     if (parent->getDimensionId() != sub->getDimensionId()) {
@@ -284,6 +319,7 @@ LandHierarchyService::ensureSubLandLegal(std::shared_ptr<Land> const& parent, st
     return {};
 }
 
+#undef UNEXPECTED_UNSUPPORTED_LEASED_ERR
 
 } // namespace service
 } // namespace land

@@ -11,4 +11,6 @@ bool MemberChangedEvent::isAdd() const { return mIsAdd; }
 
 IMPLEMENT_EVENT_EMITTER(MemberChangedEvent)
 
+IMPLEMENT_EVENT_EMITTER(MembersClearedEvent)
+
 } // namespace land::event

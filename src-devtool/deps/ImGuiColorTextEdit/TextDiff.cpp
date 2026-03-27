@@ -16,6 +16,8 @@
 #include "dtl.h"
 #include "TextDiff.h"
 
+#include "GlyphColumnWidth.h"
+
 
 //
 //	TextDiff::TextDiff
@@ -431,7 +433,8 @@ void TextDiff::renderSideBySideLine(float x, float y, TextEditor::Line& line) {
 		}
 
 		index++;
-		column += (codepoint == '\t') ? tabSize - (column % tabSize) : 1;
+	    int charWidth = GetGlyphColumnWidth(codepoint);
+	    column += (charWidth == -1) ? tabSize - (column % tabSize) : charWidth;
 	}
 }
 

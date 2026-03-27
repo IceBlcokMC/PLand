@@ -5,7 +5,6 @@
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
-#include <utility>
 #include <vector>
 
 class Player;
@@ -39,6 +38,14 @@ public:
     LD_DISABLE_COPY_AND_MOVE(LandRegistry);
     explicit LandRegistry(PLand& mod);
     ~LandRegistry();
+
+    /**
+     * 创建数据库快照
+     * @param dirName 快照文件夹名称，如果为空，则使用当前时间戳
+     * @note 创建的快照会被写入磁盘, SnapshotDir/<dirName.value_or(timestamp)>
+     * @note 此任务为异步任务，如果任务未完成，文件夹下会存在 .incomplete 文件
+     */
+    LDAPI void createSnapshot(std::optional<std::string> const& dirName = std::nullopt);
 
     LDAPI void save();
 
@@ -108,7 +115,9 @@ public: // 领地查询API
     LDNDAPI std::vector<std::shared_ptr<Land>> getLandsWhere(CustomFilter const& filter) const;
 
 public:
-    static constexpr auto DbDirName              = "db";              // 数据库目录名
+    static constexpr auto DatabaseDir = "db";        // 数据库目录名
+    static constexpr auto SnapshotDir = "snapshots"; // 快照目录名
+
     static constexpr auto DbVersionKey           = "__version__";     // 数据库版本键
     static constexpr auto DbOperatorDataKey      = "operators";       // 操作员数据键
     static constexpr auto DbPlayerSettingDataKey = "player_settings"; // 玩家设置数据键

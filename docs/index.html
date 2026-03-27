@@ -9,15 +9,15 @@
         content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0" />
     <!-- 网站描述+关键字+作者 -->
     <meta name="description" content="PLand Docs" />
-    <meta name="keywords" content="PLand,levilamina" />
-    <meta name="author" content="engsr6982" />
+    <meta name="keywords" content="PLand,LeviLamina" />
+    <meta name="author" content="IceBlcokMC" />
     <title>PLand Docs</title>
 
     <!-- docsify的主题样式 -->
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify/lib/themes/vue.css" />
-    <!-- 侧边栏插件的样式 -->
-    <!-- <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/sidebar.min.css" /> -->
-    <!-- <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/sidebar-folder.min.css" /> -->
+
+    <!--prism高亮-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/themes/prism.min.css">
 </head>
 
 <body>
@@ -25,7 +25,7 @@
     <div id="app">Loading...</div>
     <script>
         window.$docsify = {
-            repo: 'https://github.com/engsr6982/PLand',
+            repo: 'https://github.com/IceBlcokMC/PLand',
             // 加载自定义导航栏,需要目录下有_navbar.md文件
             loadNavbar: false,
             // 开启侧边栏，需要目录下有_sidebar.md文件
@@ -103,6 +103,10 @@
                 },
             },
             sidebarDisplayLevel: 0,
+            // mermaid
+            mermaidConfig: {
+                querySelector: ".mermaid"
+            }
         };
     </script>
     <!-- docsify的js依赖 -->
@@ -120,10 +124,24 @@
     <!-- 侧边栏扩展与折叠 -->
     <script src="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/docsify-sidebar-collapse.min.js"></script>
 
+    <!-- mermaid支持 -->
+    <script type="module">
+        import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+        mermaid.initialize({
+            startOnLoad: true,
+            securityLevel: 'loose',
+            logLevel: 1
+        });
+        window.mermaid = mermaid;
+    </script>
+    <script src="//unpkg.com/docsify-mermaid@2.0.1/dist/docsify-mermaid.js"></script>
+
     <!-- 高亮支持 -->
-    <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-cpp.min.js"></script>
-    <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-json.min.js"></script>
-    <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-log.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-bash.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-cpp.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-json.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-log.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-lua.min.js"></script>
 </body>
 
 </html>

@@ -18,6 +18,10 @@ public:
 
     LDAPI static void sendMainMenu(Player& player, std::shared_ptr<Land> land);
 
+    LDAPI static void sendLeaseRenewGUI(Player& player, std::shared_ptr<Land> const& land);
+
+    LDAPI static void confirmRenewDuration(Player& player, std::shared_ptr<Land> const& land, int days);
+
     LDAPI static void sendEditLandPermGUI(Player& player, std::shared_ptr<Land> const& ptr); // 编辑领地权限
 
     // 删除领地

@@ -11,6 +11,9 @@
 - [Event](dev/Event.md)
 - [i18n](dev/I18n.md)
 
+- **设计文档**
+- [租赁模式](design/feat/LeasingModel.md)
+
 - **其他**
 - [更新日志](https://github.com/engsr6982/PLand/blob/main/CHANGELOG.md)
 - [QQ 群](https://qm.qq.com/q/v2faa5B2xk)

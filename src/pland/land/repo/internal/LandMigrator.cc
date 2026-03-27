@@ -199,6 +199,22 @@ LandMigrator::LandMigrator() {
 
         return {};
     });
+
+    registerMigrator(31, [](nlohmann::json& root) -> ll::Expected<> {
+        if (!root.contains("mLandPermTable")) {
+            return {};
+        }
+        auto& mLandPermTable = root["mLandPermTable"];
+        auto& role           = mLandPermTable["role"];
+
+        static constexpr auto legacyField = "guest";
+        static constexpr auto newField    = "actor";
+
+        for (auto& [key, entry] : role.items()) {
+            mapPath(role, fmt::format("{}.{}", key, legacyField), fmt::format("{}.{}", key, newField));
+        }
+        return {};
+    });
 }
 
 } // namespace internal

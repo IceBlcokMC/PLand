@@ -28,5 +28,10 @@ public:
     LDNDAPI bool isAdd() const;
 };
 
+class MembersClearedEvent final : public LandEventMixin<ll::event::Event> {
+public:
+    explicit MembersClearedEvent(std::shared_ptr<Land> land) : LandEventMixin(std::move(land)) {}
+};
+
 
 } // namespace land::event

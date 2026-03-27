@@ -29,16 +29,17 @@ public:
     LandCreateValidator() = delete;
 
     enum class ErrorCode {
-        Undefined,                     // 未定义
-        LandCountLimitExceeded,        // 领地数量超过限制
-        LandInForbiddenRange,          // 领地位于禁止范围内
-        LandRangeTooSmall,             // 领地范围太小
-        LandRangeTooLarge,             // 领地范围太大
-        LandHeightTooSmall,            // 领地高度太低
-        LandRangeConflict,             // 领地范围冲突
-        LandSpacingTooSmall,           // 领地间距太小
-        SubLandOutOfParentLandRange,   // 子领地超出父领地范围
-        LandOutOfDimensionHeightRange, // 领地高度超出范围(维度高度)
+        Undefined                     = 0, // 未定义
+        LandCountLimitExceeded        = 1, // 领地数量超过限制
+        LandInForbiddenRange          = 2, // 领地位于禁止范围内
+        LandRangeTooSmall             = 3, // 领地范围太小
+        LandRangeTooLarge             = 4, // 领地范围太大
+        LandHeightTooSmall            = 5, // 领地高度太低
+        LandRangeConflict             = 6, // 领地范围冲突
+        LandSpacingTooSmall           = 7, // 领地间距太小
+        SubLandOutOfParentLandRange   = 8, // 子领地超出父领地范围
+        LandOutOfDimensionHeightRange = 9, // 领地高度超出范围(维度高度)
+        LandInLeaseOnlyRange          = 10 // 领地位于租赁范围内
     };
 
     // 由于 LeviLamina 限制，Error::isA<T> 只能精确匹配匹配类型
@@ -63,6 +64,13 @@ public:
         LandAABB range;
         LandAABB forbiddenRange;
         LandInForbiddenRangeContext(LandAABB const& range, LandAABB const& forbiddenRange);
+        std::string translateError(std::string const& localeCode) const override;
+    };
+
+    struct LandInLeaseOnlyRangeContext : ErrorContext {
+        LandAABB range;
+        LandAABB leaseOnlyRange;
+        LandInLeaseOnlyRangeContext(LandAABB const& range, LandAABB const& leaseOnlyRange);
         std::string translateError(std::string const& localeCode) const override;
     };
 
@@ -122,11 +130,17 @@ public:
     }
 
 public:
+    /**
+     * 验证创建普通领地
+     * @param registry 领地注册表
+     * @param player 创建此领地的玩家
+     * @param land 创建的领地对象
+     */
     LDNDAPI static ll::Expected<>
-    validateCreateOrdinaryLand(LandRegistry& registry, Player& player, std::shared_ptr<Land> land); // 普通领地
+    validateCreateOrdinaryLand(LandRegistry& registry, Player& player, std::shared_ptr<Land> land);
 
     LDNDAPI static ll::Expected<>
-    validateChangeLandRange(LandRegistry& registry, std::shared_ptr<Land> land, LandAABB newRange); // 改变范围
+    validateChangeLandRange(LandRegistry& registry, std::shared_ptr<Land> land, LandAABB newRange);
 
     LDNDAPI static ll::Expected<> validateCreateSubLand(
         Player&                        player,
@@ -134,36 +148,41 @@ public:
         LandAABB const&                subRange,
         LandRegistry&                  registry,
         service::LandHierarchyService& service
-    ); // 创建子领地
+    );
 
 public:
     /**
-     * @brief 玩家领地数量是否超过限制
+     * @brief 确保玩家领地数量未超限
      */
-    LDNDAPI static ll::Expected<> isPlayerLandCountLimitExceeded(LandRegistry& registry, mce::UUID const& uuids);
+    LDNDAPI static ll::Expected<> ensurePlayerLandCountNotExceeded(LandRegistry& registry, mce::UUID const& uuids);
 
     /**
-     * @brief 领地是否在禁止范围内
+     * @brief 确保领地不在禁止范围内
      */
-    LDNDAPI static ll::Expected<> isLandInForbiddenRange(LandAABB const& range, LandDimid dimid);
+    LDNDAPI static ll::Expected<> ensureLandNotInForbiddenRange(LandAABB const& range, LandDimid dimid);
 
     /**
-     * @brief 领地范围是否合法
+     * @brief 确保领地不再仅租赁区域内
      */
-    LDNDAPI static ll::Expected<> isLandRangeLegal(LandAABB const& range, LandDimid dimid, bool is3D);
+    LDNDAPI static ll::Expected<> ensureLandNotInLeaseOnlyRange(LandAABB const& range, LandDimid dimid);
 
     /**
-     * @brief 领地范围与其他领地是否冲突
+     * @brief 确保领地范围合法
+     */
+    LDNDAPI static ll::Expected<> ensureLandRangeIsLegal(LandAABB const& range, LandDimid dimid, bool is3D);
+
+    /**
+     * @brief 确保领地范围无冲突
      * @param newRange 新范围，若为空则使用 land 的范围
      */
-    LDNDAPI static ll::Expected<> isOrdinaryLandRangeConflict(
+    LDNDAPI static ll::Expected<> ensureNoLandRangeConflict(
         LandRegistry&                registry,
         std::shared_ptr<Land> const& land,
         std::optional<LandAABB>      newRange = std::nullopt
     );
 
     /**
-     * @brief 验证子领地位置是否合法(相对于父领地)
+     * @brief 确保子领地位置合法(相对于父领地)
      * @param hierarchyService 领地层级服务
      * @param land 父领地 (相对于 sub 的父领地)
      * @param subRange 子领地
@@ -172,7 +191,7 @@ public:
      * @note 2. 子领地不能与父领地的其它子孙领地冲突（除直系父领地）。
      * @note 3. 子领地与其它家族成员的距离不能小于最小间距要求。
      */
-    LDNDAPI static ll::Expected<> isSubLandPositionLegal(
+    LDNDAPI static ll::Expected<> ensureSubLandPositionIsLegal(
         service::LandHierarchyService& hierarchyService,
         std::shared_ptr<Land> const&   land,
         LandAABB const&                subRange

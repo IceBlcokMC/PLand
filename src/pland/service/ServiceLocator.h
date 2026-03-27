@@ -12,6 +12,7 @@ class LandHierarchyService;
 class LandManagementService;
 class LandPriceService;
 class SelectionService;
+class LeasingService;
 
 class ServiceLocator {
     struct Impl;
@@ -30,6 +31,8 @@ public:
     LDNDAPI LandPriceService& getLandPriceService() const;
 
     LDNDAPI SelectionService& getSelectionService() const;
+
+    LDNDAPI LeasingService& getLeasingService() const;
 };
 
 } // namespace service

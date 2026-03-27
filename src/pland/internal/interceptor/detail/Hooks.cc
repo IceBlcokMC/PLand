@@ -26,11 +26,12 @@
 #include "mc/world/effect/WeavingMobEffect.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
+#include "mc/world/level/block/BigDripleafBlock.h"
+#include "mc/world/level/block/FarmBlock.h"
 #include "mc/world/level/block/FireBlock.h"
 #include "mc/world/level/block/LecternBlock.h"
 #include "mc/world/level/block/actor/ChestBlockActor.h"
 #include "mc/world/level/block/block_events/BlockPlayerInteractEvent.h"
-#include "mc/world/level/block/FarmBlock.h"
 
 namespace land::internal::interceptor {
 
@@ -383,6 +384,33 @@ LL_TYPE_INSTANCE_HOOK(
     origin(region, pos, actor, fallDistance);
 }
 
+LL_TYPE_INSTANCE_HOOK(
+    BigDripleafBlockHook,
+    ll::memory::HookPriority::Normal,
+    BigDripleafBlock,
+    &BigDripleafBlock::$entityInside,
+    void,
+    ::BlockSource&    region,
+    ::BlockPos const& pos,
+    ::Actor&          entity
+) {
+    auto& registry = PLand::getInstance().getLandRegistry();
+    if (auto land = registry.getLandAt(pos, region.getDimensionId())) {
+        if (entity.isPlayer()) {
+            // 玩家触发
+            auto& player = static_cast<Player&>(entity);
+            if (!hasRolePermission<&RolePerms::allowTriggerDripleaf>(land, player.getUuid())) {
+                return;
+            }
+
+            // 实体触发
+        } else if (!hasGuestPermission<&RolePerms::allowTriggerDripleaf>(land)) {
+            return;
+        }
+    }
+    origin(region, pos, entity);
+}
+
 void EventInterceptor::setupHooks() {
     auto& config = InterceptorConfig::cfg.hooks;
     registerHookIf<MobHurtHook>(config.MobHurtHook);
@@ -401,6 +429,7 @@ void EventInterceptor::setupHooks() {
     registerHookIf<ArrowPlayerTouchHook>(config.ArrowPlayerTouchHook);
     registerHookIf<AbstractArrowPlayerTouchHook>(config.AbstractArrowPlayerTouchHook);
     registerHookIf<FarmChangeEventHook>(config.FarmChangeEventHook);
+    registerHookIf<BigDripleafBlockHook>(config.BigDripleafBlockHook);
 }
 
 } // namespace land::internal::interceptor

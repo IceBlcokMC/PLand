@@ -35,7 +35,8 @@ void LandMainMenuGUI::sendTo(Player& player) {
         );
     });
 
-    if (Config::cfg.land.landTp || PLand::getInstance().getLandRegistry().isOperator(player.getUuid())) {
+    if (ConfigProvider::isLandTeleportEnabled()
+        || PLand::getInstance().getLandRegistry().isOperator(player.getUuid())) {
         fm.appendButton("领地传送"_trl(localeCode), "textures/ui/icon_recipe_nature", "path", [](Player& pl) {
             LandTeleportGUI::sendTo(pl);
         });

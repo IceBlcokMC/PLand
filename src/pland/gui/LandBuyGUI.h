@@ -1,5 +1,6 @@
 #pragma once
 #include "pland/Global.h"
+#include "pland/selector/land/OrdinaryLandCreateSelector.h"
 
 class Player;
 
@@ -19,9 +20,27 @@ public:
     LDAPI static void sendTo(Player& player);
 
     /**
+     * 进行路由跳转
+     */
+    LDAPI static void _chooseHoldType(Player& player, OrdinaryLandCreateSelector* selector);
+
+    /**
      * @brief 购买普通领地
      */
     static void _impl(Player& player, OrdinaryLandCreateSelector* selector);
+
+    /**
+     * @brief 选择租赁天数
+     */
+    static void _chooseLeaseDays(Player& player, OrdinaryLandCreateSelector* selector);
+
+    static void _confirmLeaseDays(
+        Player&                     player,
+        OrdinaryLandCreateSelector* selector,
+        int                         days,
+        int64_t                     totalPrice,
+        std::string                 baseContent
+    );
 
     /**
      * @brief 购买新的领地范围

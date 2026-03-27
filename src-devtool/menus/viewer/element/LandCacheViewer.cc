@@ -67,8 +67,12 @@ void LandCacheViewerWindow::preBuildData() {
     for (const auto& owner : lands_ | std::views::keys) {
         // 更新玩家名缓存
         if (!realNames_.contains(owner)) {
-            auto info         = playerInfo.fromUuid(owner);
-            realNames_[owner] = info.has_value() ? info->name : owner.asString();
+            if (owner == land::SYSTEM_ACCOUNT_UUID) {
+                realNames_[owner] = "PLandSystem";
+            } else {
+                auto info         = playerInfo.fromUuid(owner);
+                realNames_[owner] = info.has_value() ? info->name : owner.asString();
+            }
         }
         // 更新 CheckBox
         if (!isShow_.contains(owner)) {

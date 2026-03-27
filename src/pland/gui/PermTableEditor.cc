@@ -10,7 +10,7 @@ namespace land {
 namespace gui {
 
 struct PermTableEditor::Impl : std::enable_shared_from_this<Impl> {
-    enum class EditType : uint8_t { Environment, Member, Guest };
+    enum class EditType : uint8_t { Environment, Member, Actor };
     Callback      mCallback;
     LandPermTable mTable;
 
@@ -30,8 +30,8 @@ struct PermTableEditor::Impl : std::enable_shared_from_this<Impl> {
         case EditType::Member:
             f.setTitle("Perm - 成员权限管理"_trl(localeCode));
             break;
-        case EditType::Guest:
-            f.setTitle("Perm - 游客权限管理"_trl(localeCode));
+        case EditType::Actor:
+            f.setTitle("Perm - 实体权限管理"_trl(localeCode));
             break;
         }
 
@@ -54,10 +54,10 @@ struct PermTableEditor::Impl : std::enable_shared_from_this<Impl> {
                               bool>);
                 value = v["member"].get<bool>();
                 break;
-            case EditType::Guest:
+            case EditType::Actor:
                 static_assert(std::
-                                  same_as<std::remove_const_t<decltype(std::declval<RolePerms::Entry>().guest)>, bool>);
-                value = v["guest"].get<bool>();
+                                  same_as<std::remove_const_t<decltype(std::declval<RolePerms::Entry>().actor)>, bool>);
+                value = v["actor"].get<bool>();
                 break;
             }
             f.appendToggle(k, std::string{i18n.get(k, localeCode)}, value);
@@ -84,8 +84,8 @@ struct PermTableEditor::Impl : std::enable_shared_from_this<Impl> {
                     case EditType::Member:
                         v["member"] = newVal;
                         break;
-                    case EditType::Guest:
-                        v["guest"] = newVal;
+                    case EditType::Actor:
+                        v["actor"] = newVal;
                         break;
                     }
                 }
@@ -128,10 +128,10 @@ void PermTableEditor::sendTo(
         [impl](Player& player) { impl->sendEdit(player, Impl::EditType::Member); }
     );
     f.appendButton(
-        "游客权限\n§7所有未被标记为成员的行为(实体/玩家)"_trl(localeCode),
+        "实体权限\n§7影响所有实体(陌生玩家/特殊实体等)"_trl(localeCode),
         "textures/ui/permissions_visitor_hand",
         "path",
-        [impl](Player& player) { impl->sendEdit(player, Impl::EditType::Guest); }
+        [impl](Player& player) { impl->sendEdit(player, Impl::EditType::Actor); }
     );
     if (backTo) {
         back_utils::injectBackButton(f, std::move(backTo));

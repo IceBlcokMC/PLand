@@ -2,6 +2,7 @@
 
 #include "mc/platform/UUID.h"
 
+#include "observer/ILandObserver.h"
 #include "pland/Global.h"
 #include "pland/PLand.h"
 #include "pland/land/Config.h"
@@ -17,6 +18,8 @@ namespace land {
 struct Land::Impl {
     LandContext  mContext;
     DirtyCounter mDirtyCounter;
+
+    observer::ILandObserver* mObserver{nullptr};
 
     // cache
     mutable std::optional<mce::UUID>      mCacheOwner;
@@ -81,22 +84,56 @@ mce::UUID const& Land::getOwner() const {
     return *impl->mCacheOwner;
 }
 void Land::setOwner(mce::UUID const& uuid) {
-    impl->mCacheOwner         = uuid;
-    impl->mContext.mLandOwner = uuid.asString();
-    impl->mDirtyCounter.increment();
+    auto old = impl->mCacheOwner.value_or(mce::UUID::EMPTY());
+    if (uuid != old) {
+        impl->mCacheOwner         = uuid;
+        impl->mContext.mLandOwner = uuid.asString();
+        markDirty();
+        if (auto observer = tryGetObserver()) {
+            observer->onOwnerChanged(shared_from_this(), old, uuid);
+        }
+    }
 }
 std::string const& Land::getRawOwner() const { return impl->mContext.mLandOwner; }
+bool               Land::isSystemOwned() const {
+    assert(SYSTEM_ACCOUNT_UUID != mce::UUID::EMPTY());
+    assert(SYSTEM_ACCOUNT_UUID.asString() == SYSTEM_ACCOUNT_UUID_STR);
+    return impl->mCacheOwner == SYSTEM_ACCOUNT_UUID;
+}
 
 std::unordered_set<mce::UUID> const& Land::getMembers() const { return impl->mCacheMembers; }
-void                                 Land::addLandMember(mce::UUID const& uuid) {
+
+bool Land::addLandMember(mce::UUID const& uuid) {
+    if (isOwner(uuid) || isMember(uuid)) {
+        return false;
+    }
     impl->mCacheMembers.insert(uuid);
     impl->mContext.mLandMembers.emplace_back(uuid.asString());
-    impl->mDirtyCounter.increment();
+    markDirty();
+    if (auto observer = tryGetObserver()) {
+        observer->onMemberAdded(shared_from_this(), uuid);
+    }
+    return true;
 }
-void Land::removeLandMember(mce::UUID const& uuid) {
+bool Land::removeLandMember(mce::UUID const& uuid) {
+    if (!isMember(uuid)) {
+        return false;
+    }
     impl->mCacheMembers.erase(uuid);
     std::erase_if(impl->mContext.mLandMembers, [uuid = uuid.asString()](auto const& u) { return u == uuid; });
-    impl->mDirtyCounter.increment();
+    markDirty();
+    if (auto observer = tryGetObserver()) {
+        observer->onMemberRemoved(shared_from_this(), uuid);
+    }
+    return true;
+}
+void Land::clearMembers() {
+    impl->mCacheMembers.clear();
+    impl->mContext.mLandMembers.clear();
+    markDirty();
+    if (auto observer = tryGetObserver()) {
+        observer->onMembersCleared(shared_from_this());
+    }
 }
 
 std::string const& Land::getName() const { return impl->mContext.mLandName; }
@@ -108,6 +145,39 @@ void               Land::setName(std::string const& name) {
 int  Land::getOriginalBuyPrice() const { return impl->mContext.mOriginalBuyPrice; }
 void Land::setOriginalBuyPrice(int price) {
     impl->mContext.mOriginalBuyPrice = price;
+    impl->mDirtyCounter.increment();
+}
+
+LandHoldType Land::getHoldType() const { return impl->mContext.mHoldType; }
+LeaseState   Land::getLeaseState() const { return impl->mContext.mLeasing.mState; }
+bool         Land::isBought() const { return impl->mContext.mHoldType == LandHoldType::Bought; }
+bool         Land::isLeased() const { return impl->mContext.mHoldType == LandHoldType::Leased; }
+bool         Land::isLeaseActive() const { return isLeased() && impl->mContext.mLeasing.mState == LeaseState::Active; }
+bool         Land::isLeaseFrozen() const { return isLeased() && impl->mContext.mLeasing.mState == LeaseState::Frozen; }
+bool   Land::isLeaseExpired() const { return isLeased() && impl->mContext.mLeasing.mState == LeaseState::Expired; }
+time_t Land::getLeaseStartAt() const { return impl->mContext.mLeasing.mStartAt; }
+time_t Land::getLeaseEndAt() const { return impl->mContext.mLeasing.mEndAt; }
+
+void Land::setHoldType(LandHoldType type) {
+    impl->mContext.mHoldType = type;
+    impl->mDirtyCounter.increment();
+}
+void Land::setLeaseState(LeaseState state) {
+    auto old = impl->mContext.mLeasing.mState;
+    if (old != state) {
+        impl->mContext.mLeasing.mState = state;
+        impl->mDirtyCounter.increment();
+        if (auto observer = tryGetObserver()) {
+            observer->onLeaseStateChanged(shared_from_this(), old, state);
+        }
+    }
+}
+void Land::setLeaseStartAt(time_t ts) {
+    impl->mContext.mLeasing.mStartAt = ts;
+    impl->mDirtyCounter.increment();
+}
+void Land::setLeaseEndAt(time_t ts) {
+    impl->mContext.mLeasing.mEndAt = ts;
     impl->mDirtyCounter.increment();
 }
 
@@ -146,9 +216,11 @@ bool Land::isMixLand() const { return hasParentLand() && hasSubLand(); }        
 bool Land::isSubLand() const { return hasParentLand() && !hasSubLand(); }       // 有父 & 无子
 
 bool Land::canCreateSubLand() const {
-    auto nestedLevel = getNestedLevel();
-    return nestedLevel < Config::cfg.land.subLand.maxNested && nestedLevel < GlobalSubLandMaxNestedLevel
-        && static_cast<int>(impl->mContext.mSubLandIDs.size()) < Config::cfg.land.subLand.maxSubLand;
+    if (isLeased()) return false;
+    auto const& conf        = ConfigProvider::getSubLandConfig();
+    auto        nestedLevel = getNestedLevel();
+    return nestedLevel < conf.maxNestedDepth && nestedLevel < GlobalSubLandMaxNestedLevel
+        && static_cast<int>(impl->mContext.mSubLandIDs.size()) < conf.maxSubLandsPerLand;
 }
 
 LandID              Land::getParentLandID() const { return impl->mContext.mParentLandID; }
@@ -183,9 +255,12 @@ bool Land::isCollision(BlockPos const& pos1, BlockPos const& pos2) const {
 
 
 LandPermType Land::getPermType(mce::UUID const& uuid) const {
+    if (isLeaseFrozen()) {
+        return LandPermType::Actor;
+    }
     if (isOwner(uuid)) return LandPermType::Owner;
     if (isMember(uuid)) return LandPermType::Member;
-    return LandPermType::Guest;
+    return LandPermType::Actor;
 }
 
 void Land::migrateOwner(mce::UUID const& ownerUUID) {
@@ -221,6 +296,12 @@ bool Land::_setAABB(LandAABB const& newRange) {
     impl->mContext.mPos = newRange;
     markDirty();
     return true;
+}
+
+observer::ILandObserver* Land::tryGetObserver() const { return impl->mObserver; }
+void                     Land::setObserver(observer::ILandObserver* observer) {
+    assert(observer != nullptr);
+    impl->mObserver = observer;
 }
 
 } // namespace land

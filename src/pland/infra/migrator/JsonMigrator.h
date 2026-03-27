@@ -50,6 +50,12 @@ public:
 
     LDNDAPI optional_ref<const Executor> getExecutor(Version version) const;
 
+    enum class MigrateResult : uint8_t {
+        Success,                     // 迁移成功
+        SkipByNoAvailableMigrate,    // 没有可用的迁移器，跳过
+        SkipByCurrentVersionTooHigh, // 当前版本高于目标版本，跳过
+    };
+
     /**
      * @brief 核心迁移函数
      * @param data 待迁移的 JSON 对象
@@ -58,7 +64,7 @@ public:
      *        - 若为 true：从 v1 迁移到 v15 时，即使中间没有 2-14 的迁移器也会继续。
      *        - 若为 false：要求每一步版本提升必须连续 (N -> N+1)。
      */
-    LDNDAPI virtual ll::Expected<>
+    LDNDAPI virtual ll::Expected<MigrateResult>
     migrate(nlohmann::json& data, Version targetVersion, bool allowVersionGap = true) const;
 
     LDNDAPI std::optional<Version> getMinVersion() const;
@@ -68,6 +74,22 @@ public:
     inline static constexpr std::string_view VersionKey = "version";
 
 protected:
+    struct Route {
+        const char* src;
+        const char* dst;
+    };
+
+    /**
+     * @brief 将JSON数据中的路径从src映射到dst
+     *
+     * @param root JSON数据的引用，将被修改以包含路径映射信息
+     * @param src 源路径字符串视图，表示原始路径
+     * @param dst 目标路径字符串视图，表示映射后的目标路径
+     */
+    static void mapPath(nlohmann::json& root, std::string_view src, std::string_view dst);
+
+    static void mapPath(nlohmann::json& root, Route const& route);
+
     std::map<Version, Executor> mMigrators_;
 };
 

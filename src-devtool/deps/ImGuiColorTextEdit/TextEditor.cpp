@@ -21,6 +21,7 @@
 
 #include "TextEditor.h"
 
+#include "GlyphColumnWidth.h"
 
 //
 //	TextEditor::setText
@@ -410,7 +411,8 @@ void TextEditor::renderText() {
 			}
 
 			index++;
-			column += (codepoint == '\t') ? tabSize - (column % tabSize) : 1;
+		    int charWidth = GetGlyphColumnWidth(codepoint);
+		    column += (charWidth == -1) ? tabSize - (column % tabSize) : charWidth;
 		}
 
 		lineScreenPos.y += glyphSize.y;
@@ -3145,7 +3147,8 @@ void TextEditor::Document::updateMaximumColumn(int first, int last) {
 		int column = 0;
 
 		for (auto glyph = line->begin(); glyph < line->end(); glyph++) {
-			column = (glyph->codepoint == '\t') ? ((column / tabSize) + 1) * tabSize : column + 1;
+		    int charWidth = GetGlyphColumnWidth(glyph->codepoint);
+		    column += (charWidth == -1) ? tabSize - (column % tabSize) : charWidth;
 		}
 
 		line->maxColumn = column;
@@ -3178,7 +3181,8 @@ size_t TextEditor::Document::getIndex(const Line& line, int column) const {
 			return index - 1;
 		}
 
-		c = (glyph->codepoint == '\t') ? ((c / tabSize) + 1) * tabSize : c + 1;
+	    int charWidth = GetGlyphColumnWidth(glyph->codepoint);
+	    c += (charWidth == -1) ? tabSize - (c % tabSize) : charWidth;
 		index++;
 	}
 
@@ -3196,7 +3200,8 @@ int TextEditor::Document::getColumn(const Line& line, size_t index) const {
 	int column = 0;
 
 	for (auto glyph = line.begin(); glyph < end; glyph++) {
-		column = (glyph->codepoint == '\t') ? ((column / tabSize) + 1) * tabSize : column + 1;
+	    int charWidth = GetGlyphColumnWidth(glyph->codepoint);
+	    column += (charWidth == -1) ? tabSize - (column % tabSize) : charWidth;
 	}
 
 	return column;

@@ -35,8 +35,12 @@ struct LandOwnerPicker::Impl : std::enable_shared_from_this<Impl> {
         auto  lands = PLand::getInstance().getLandRegistry().getLandsByOwner();
         mEntries.reserve(lands.size());
         for (auto const& [owner, landSet] : lands) {
-            auto entry = info.fromUuid(owner);
-            mEntries.emplace_back(owner, entry ? entry->name : owner.asString(), landSet.size());
+            if (owner == SYSTEM_ACCOUNT_UUID) {
+                mEntries.emplace_back(owner, "PLandSystem", landSet.size());
+            } else {
+                auto entry = info.fromUuid(owner);
+                mEntries.emplace_back(owner, entry ? entry->name : owner.asString(), landSet.size());
+            }
         }
     }
 

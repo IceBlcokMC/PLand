@@ -11,7 +11,7 @@
 namespace land::internal::interceptor {
 
 struct InterceptorConfig {
-    inline static int SchemaVersion = 2;
+    inline static int SchemaVersion = 3;
 
     int version = SchemaVersion;
     struct Listeners {
@@ -65,6 +65,7 @@ struct InterceptorConfig {
         bool ArrowPlayerTouchHook{true};           // 拾取箭
         bool AbstractArrowPlayerTouchHook{true};   // 拾取箭类投射物
         bool FarmChangeEventHook{true};            // 耕地踩踏/退化
+        bool BigDripleafBlockHook{true};           // 大型垂滴叶
     } hooks;
 
     struct Rules {

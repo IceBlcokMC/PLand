@@ -58,7 +58,7 @@ void NewLandGUI::sendChooseLandDim(Player& player) {
                 pl,
                 "选区功能已开启，使用命令 /pland set 或使用 {} 来选择ab点"_trl(
                     pl.getLocaleCode(),
-                    Config::cfg.selector.tool
+                    ConfigProvider::getSelectionConfig().alias
                 )
             );
         });
