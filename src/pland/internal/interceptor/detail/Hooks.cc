@@ -12,6 +12,7 @@
 #include "mc/entity/components_json_legacy/HopperComponent.h"
 #include "mc/server/ServerPlayer.h"
 #include "mc/world/actor/ActorDamageSource.h"
+#include "mc/world/actor/ActorHurtResult.h"
 #include "mc/world/actor/ActorType.h"
 #include "mc/world/actor/FishingHook.h"
 #include "mc/world/actor/Mob.h"
@@ -32,6 +33,7 @@
 #include "mc/world/level/block/LecternBlock.h"
 #include "mc/world/level/block/actor/ChestBlockActor.h"
 #include "mc/world/level/block/block_events/BlockPlayerInteractEvent.h"
+#include <mc/deps/core/math/IRandom.h>
 
 namespace land::internal::interceptor {
 
@@ -42,7 +44,7 @@ LL_TYPE_INSTANCE_HOOK(
     HookPriority::Normal,
     Mob,
     &Mob::$_hurt,
-    bool,
+    ActorHurtResult,
     ::ActorDamageSource const& source,
     float                      damage,
     bool                       knock,
@@ -65,24 +67,24 @@ LL_TYPE_INSTANCE_HOOK(
         return origin(source, damage, knock, ignite);
     }
 
-    if (actor.isPlayer()) {
+    if (actor.getEntityTypeId() == ActorType::Player) {
         if (!hasMemberOrGuestPermission<&RolePerms::allowPvP>(land, uuid)) {
-            return false;
+            return {false, false};
         }
     }
 
     HashedString typeName{actor.getTypeName()};
     if (InterceptorConfig::cfg.rules.mob.allowFriendlyDamage.contains(typeName)) {
         if (!hasMemberOrGuestPermission<&RolePerms::allowFriendlyDamage>(land, uuid)) {
-            return false;
+            return {false, false};
         }
     } else if (InterceptorConfig::cfg.rules.mob.allowHostileDamage.contains(typeName)) {
         if (!hasMemberOrGuestPermission<&RolePerms::allowHostileDamage>(land, uuid)) {
-            return false;
+            return {false, false};
         }
     } else if (InterceptorConfig::cfg.rules.mob.allowSpecialEntityDamage.contains(typeName)) {
         if (!hasMemberOrGuestPermission<&RolePerms::allowSpecialEntityDamage>(land, uuid)) {
-            return false;
+            return {false, false};
         }
     }
 
@@ -146,7 +148,7 @@ LL_TYPE_INSTANCE_HOOK(
     ::BlockSource&    region,
     ::BlockPos const& pos,
     int               chance,
-    ::Randomize&      randomize,
+    ::IRandom&        random,
     int               age,
     ::BlockPos const& firePos
 ) {
@@ -155,7 +157,7 @@ LL_TYPE_INSTANCE_HOOK(
     if (!hasEnvironmentPermission<&EnvironmentPerms::allowFireSpread>(land)) {
         return; // 如果领地内不允许火焰蔓延，则阻止蔓延
     }
-    origin(region, pos, chance, randomize, age, firePos);
+    origin(region, pos, chance, random, age, firePos);
 }
 
 
@@ -168,7 +170,7 @@ LL_TYPE_INSTANCE_HOOK(
     void,
     ::Actor& actor
 ) {
-    if (actor.isPlayer()) {
+    if (actor.getEntityTypeId() == ActorType::Player) {
         origin(actor);
         return;
     }
@@ -282,7 +284,7 @@ LL_TYPE_INSTANCE_HOOK(
     bool,
     ::Actor& owner // 拥有此组件的 Actor
 ) {
-    if (!owner.isType(ActorType::MinecartHopper)) {
+    if (owner.getEntityTypeId() != ActorType::MinecartHopper) {
         return origin(owner);
     }
 
@@ -374,7 +376,7 @@ LL_TYPE_INSTANCE_HOOK(
     }
 
     // Falling entities still trigger farmland decay; only players need role checks.
-    if (actor && actor->isPlayer()) {
+    if (actor && actor->getEntityTypeId() == ActorType::Player) {
         auto& player = static_cast<Player&>(*actor);
         if (!hasRolePermission<&RolePerms::allowDestroy>(land, player.getUuid())) {
             return;
@@ -396,7 +398,7 @@ LL_TYPE_INSTANCE_HOOK(
 ) {
     auto& registry = PLand::getInstance().getLandRegistry();
     if (auto land = registry.getLandAt(pos, region.getDimensionId())) {
-        if (entity.isPlayer()) {
+        if (entity.getEntityTypeId() == ActorType::Player) {
             // 玩家触发
             auto& player = static_cast<Player&>(entity);
             if (!hasRolePermission<&RolePerms::allowTriggerDripleaf>(land, player.getUuid())) {

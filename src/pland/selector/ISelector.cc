@@ -1,5 +1,7 @@
 #include "ISelector.h"
 #include "mc/deps/core/math/Color.h"
+#include "mc/world/actor/ActorType.h"
+#include "mc/world/actor/Mob.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/dimension/Dimension.h"
 #include "pland/Global.h"
@@ -33,7 +35,13 @@ ISelector::~ISelector() {
     }
 }
 
-optional_ref<Player> ISelector::getPlayer() const { return mPlayer.tryUnwrap<Player>(); }
+optional_ref<Player> ISelector::getPlayer() const {
+    auto player = mPlayer.tryUnwrap<Mob>();
+    if (!player || player->getEntityTypeId() != ActorType::Player) {
+        return nullptr;
+    }
+    return static_cast<Player*>(player.as_ptr());
+}
 
 LandDimid ISelector::getDimensionId() const { return mDimid; }
 

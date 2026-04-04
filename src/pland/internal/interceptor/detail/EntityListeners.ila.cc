@@ -16,13 +16,14 @@
 #include "mc/platform/UUID.h"
 #include "mc/server/ServerPlayer.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
+#include "mc/world/actor/ActorType.h"
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/PlayerInventory.h"
 #include "mc/world/actor/projectile/AbstractArrow.h"
 #include "mc/world/actor/projectile/ThrownTrident.h"
 
 #include <ll/api/event/EventBus.h>
-#include <mc/nbt/CompoundTag.h>
+#include <mc/deps/nbt/CompoundTag.h>
 
 
 namespace land::internal::interceptor {
@@ -108,7 +109,7 @@ void EventInterceptor::setupIlaEntityListeners() {
             Actor& passenger = ev.self();
             Actor& target    = ev.target();
 
-            if (!passenger.isPlayer()) {
+            if (passenger.getEntityTypeId() != ActorType::Player) {
                 TRACE_LOG("passenger is not player");
                 return;
             }
@@ -142,7 +143,7 @@ void EventInterceptor::setupIlaEntityListeners() {
                 auto& actor       = ev.self();
                 auto  sourceActor = ev.source();
 
-                if (!sourceActor || !sourceActor->isPlayer()) {
+                if (!sourceActor || sourceActor->getEntityTypeId() != ActorType::Player) {
                     TRACE_LOG("source is not player");
                     return;
                 }
@@ -152,7 +153,7 @@ void EventInterceptor::setupIlaEntityListeners() {
                 auto land = registry->getLandAt(actor.getPosition(), actor.getDimensionId());
                 if (hasPrivilege(land, uuid)) return;
 
-                if (actor.isPlayer()) {
+                if (actor.getEntityTypeId() == ActorType::Player) {
                     if (!hasMemberOrGuestPermission<&RolePerms::allowPvP>(land, uuid)) {
                         ev.cancel();
                         return;
@@ -184,7 +185,7 @@ void EventInterceptor::setupIlaEntityListeners() {
 
                 auto& actor    = ev.self();
                 auto& blockPos = ev.pos();
-                auto  isPlayer = actor.isPlayer();
+                auto  isPlayer = actor.getEntityTypeId() == ActorType::Player;
 
                 TRACE_LOG("pos={}, isPlayer={}", blockPos.toString(), isPlayer);
 

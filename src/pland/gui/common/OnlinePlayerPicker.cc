@@ -5,6 +5,8 @@
 #include "ll/api/form/SimpleForm.h"
 
 #include "mc/deps/ecs/WeakEntityRef.h"
+#include "mc/world/actor/ActorType.h"
+#include "mc/world/actor/Mob.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/Level.h"
 
@@ -25,8 +27,8 @@ void OnlinePlayerPicker::sendTo(Player& player, Callback const& callback, BackTo
             return true; // skip
         }
         f.appendButton(target.getRealName(), [weak = target.getWeakEntity(), callback](Player& player) {
-            if (auto target = weak.tryUnwrap<Player>()) {
-                callback(player, target);
+            if (auto target = weak.tryUnwrap<Mob>(); target && target->getEntityTypeId() == ActorType::Player) {
+                callback(player, *static_cast<Player*>(target.as_ptr()));
             }
         });
         return true;

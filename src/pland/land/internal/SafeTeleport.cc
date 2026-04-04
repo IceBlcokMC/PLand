@@ -13,6 +13,7 @@
 
 #include "mc/deps/ecs/WeakEntityRef.h"
 #include "mc/network/packet/SetTitlePacket.h"
+#include "mc/world/actor/ActorType.h"
 #include "mc/world/actor/player/Player.h"
 
 #include "mc/deps/ecs/WeakEntityRef.h"
@@ -179,7 +180,13 @@ public:
 
     TaskState getState() const { return mState; }
 
-    optional_ref<Player> getPlayer() const { return mWeakPlayer.tryUnwrap<Player>(); }
+    optional_ref<Player> getPlayer() const {
+        auto player = mWeakPlayer.tryUnwrap<Mob>();
+        if (!player || player->getEntityTypeId() != ActorType::Player) {
+            return nullptr;
+        }
+        return static_cast<Player*>(player.as_ptr());
+    }
 
     void updateState(TaskState state) { mState = state; }
 

@@ -26,7 +26,7 @@ inline void executeCommand(const std::string& cmd, Player& player) {
     CommandContext ctx = CommandContext(
         cmd,
         std::make_unique<PlayerCommandOrigin>(player.getLevel(), player.getOrCreateUniqueID()),
-        CommandVersion::CurrentVersion()
+        static_cast<int>(CurrentCmdVersion::Latest)
     );
     minecraftCommands->executeCommand(ctx, true);
 }

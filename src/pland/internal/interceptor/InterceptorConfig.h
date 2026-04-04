@@ -10,6 +10,16 @@
 
 namespace land::internal::interceptor {
 
+struct HashedStringHash {
+    size_t operator()(HashedString const& value) const noexcept { return value.getHash(); }
+};
+
+struct HashedStringEq {
+    bool operator()(HashedString const& lhs, HashedString const& rhs) const noexcept {
+        return lhs.getHash() == rhs.getHash() && lhs.getString() == rhs.getString();
+    }
+};
+
 struct InterceptorConfig {
     inline static int SchemaVersion = 3;
 
@@ -71,7 +81,7 @@ struct InterceptorConfig {
     struct Rules {
         using Mapping = std::unordered_map<std::string, std::string>; // TypeName -> Permission
         struct Mob {
-            using TypeNamesSet = std::unordered_set<HashedString>;
+            using TypeNamesSet = std::unordered_set<HashedString, HashedStringHash, HashedStringEq>;
             TypeNamesSet allowHostileDamage;
             TypeNamesSet allowFriendlyDamage;
             TypeNamesSet allowSpecialEntityDamage;

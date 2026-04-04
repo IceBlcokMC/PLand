@@ -12,6 +12,7 @@
 #include <ll/api/event/EventBus.h>
 
 #include "mc/deps/core/string/HashedString.h"
+#include "mc/world/actor/ActorType.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/BucketItem.h"
 #include "mc/world/item/FishingRodItem.h"
@@ -220,7 +221,7 @@ void EventInterceptor::setupLLPlayerListeners() {
             auto land = registry->getLandAt(pos, player.getDimensionId());
             if (hasPrivilege(land, uuid)) return;
 
-            if (target.isPlayer()) {
+            if (target.getEntityTypeId() == ActorType::Player) {
                 if (!hasMemberOrGuestPermission<&RolePerms::allowPvP>(land, uuid)) {
                     ev.cancel();
                     return;

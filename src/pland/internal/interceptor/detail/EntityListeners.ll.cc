@@ -70,7 +70,7 @@ void EventInterceptor::setupLLEntityListeners() {
             auto  land = registry->getLandAt(actor.getPosition(), actor.getDimensionId());
             if (hasPrivilege(land, uuid)) return;
 
-            if (actor.isPlayer()) {
+            if (actor.getEntityTypeId() == ActorType::Player) {
                 if (!hasMemberOrGuestPermission<&RolePerms::allowPvP>(land, uuid)) {
                     ev.cancel();
                     return;
