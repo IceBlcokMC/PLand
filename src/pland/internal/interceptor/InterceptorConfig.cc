@@ -11,6 +11,8 @@
 
 #include "mc/world/item/VanillaItemNames.h"
 
+#include <absl/container/flat_hash_map.h>
+
 namespace land::internal::interceptor {
 
 
@@ -27,11 +29,12 @@ void InterceptorConfig::save(std::filesystem::path configDir) {
     ll::config::saveConfig(cfg, path);
 }
 
-std::unordered_map<HashedString, RolePerms::Entry RolePerms::*, HashedStringHash, HashedStringEq> DynamicRuleMap = {};
+absl::flat_hash_map<HashedString, RolePerms::Entry RolePerms::*, HashedStringHash, HashedStringEq>
+    DynamicRuleMap = {};
 
 void InterceptorConfig::_buildDynamicRuleMap() {
 #define DECL_PERM_FIELD(T) {reflect::getTemplateInnerLeafName<&T>(), &T}
-    static std::unordered_map<std::string_view, RolePerms::Entry RolePerms::*> const PermStr2MemberPointer = {
+    static absl::flat_hash_map<std::string_view, RolePerms::Entry RolePerms::*> const PermStr2MemberPointer = {
         DECL_PERM_FIELD(RolePerms::allowDestroy),
         DECL_PERM_FIELD(RolePerms::allowPlace),
         DECL_PERM_FIELD(RolePerms::useBucket),
@@ -89,7 +92,7 @@ void InterceptorConfig::_buildDynamicRuleMap() {
     for (auto& [typeName, perm] : cfg.rules.item) {
         auto iter = PermStr2MemberPointer.find(perm);
         if (iter != PermStr2MemberPointer.end()) {
-            DynamicRuleMap.emplace(HashedString{typeName}, iter->second);
+            DynamicRuleMap.try_emplace(HashedString{typeName}, iter->second);
         } else {
             logger.warn("Unknown item permission: {} ({}: {})", perm, typeName, perm);
         }
@@ -97,7 +100,7 @@ void InterceptorConfig::_buildDynamicRuleMap() {
     for (auto& [typeName, perm] : cfg.rules.block) {
         auto iter = PermStr2MemberPointer.find(perm);
         if (iter != PermStr2MemberPointer.end()) {
-            DynamicRuleMap.emplace(HashedString{typeName}, iter->second);
+            DynamicRuleMap.try_emplace(HashedString{typeName}, iter->second);
         } else {
             logger.warn("Unknown block permission: {} ({}: {})", perm, typeName, perm);
         }
