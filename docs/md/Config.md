@@ -223,7 +223,6 @@
         // 如果您不知道某个 Hook 是做什么的，请不要关闭它
         // 提供的注释仅概括了大致作用，具体行为请查看源码
         // 当然，如果 Hook 导致游戏崩溃，您也可以选择关闭它
-        "MobHurtHook": true, // 生物受伤
         "FishingHookHitHook": true, // 钓鱼钩击中
         "LayEggGoalHook": true, // 海龟产卵
         "FireBlockBurnHook": true, // 火焰燃烧方块

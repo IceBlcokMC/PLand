@@ -183,7 +183,6 @@ void InterceptorConfig::tryMigrate(std::filesystem::path configDir) {
     }
     if (json.contains("hooks")) {
         auto& hooks                       = json["hooks"];
-        cfg.hooks.MobHurtHook             = hooks["registerMobHurtHook"].get<bool>();
         cfg.hooks.FishingHookHitHook      = hooks["registerFishingHookHitHook"].get<bool>();
         cfg.hooks.LayEggGoalHook          = hooks["registerLayEggGoalHook"].get<bool>();
         cfg.hooks.FireBlockBurnHook       = hooks["registerFireBlockBurnHook"].get<bool>();

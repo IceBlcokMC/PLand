@@ -37,59 +37,7 @@
 
 namespace land::internal::interceptor {
 
-// Fix [#140](https://github.com/engsr6982/PLand/issues/140)
-// 部分实体受伤情况不走LL的ActorHurtEvent，需要在子类Mob受伤逻辑处拦截
-LL_TYPE_INSTANCE_HOOK(
-    MobHurtHook,
-    HookPriority::Normal,
-    Mob,
-    &Mob::$_hurt,
-    ActorHurtResult,
-    ::ActorDamageSource const& source,
-    float                      damage,
-    bool                       knock,
-    bool                       ignite
-) {
-    if (source.getEntityType() != ActorType::Player) {
-        return origin(source, damage, knock, ignite);
-    }
 
-    auto player = this->getLevel().getPlayer(source.getEntityUniqueID());
-    if (!player) {
-        return origin(source, damage, knock, ignite);
-    }
-
-    auto& registry = PLand::getInstance().getLandRegistry();
-    auto& actor    = *this;
-    auto& uuid     = player->getUuid();
-    auto  land     = registry.getLandAt(actor.getPosition(), actor.getDimensionId());
-    if (hasPrivilege(land, uuid)) {
-        return origin(source, damage, knock, ignite);
-    }
-
-    if (actor.getEntityTypeId() == ActorType::Player) {
-        if (!hasMemberOrGuestPermission<&RolePerms::allowPvP>(land, uuid)) {
-            return {false, false};
-        }
-    }
-
-    HashedString typeName{actor.getTypeName()};
-    if (InterceptorConfig::cfg.rules.mob.allowFriendlyDamage.contains(typeName)) {
-        if (!hasMemberOrGuestPermission<&RolePerms::allowFriendlyDamage>(land, uuid)) {
-            return {false, false};
-        }
-    } else if (InterceptorConfig::cfg.rules.mob.allowHostileDamage.contains(typeName)) {
-        if (!hasMemberOrGuestPermission<&RolePerms::allowHostileDamage>(land, uuid)) {
-            return {false, false};
-        }
-    } else if (InterceptorConfig::cfg.rules.mob.allowSpecialEntityDamage.contains(typeName)) {
-        if (!hasMemberOrGuestPermission<&RolePerms::allowSpecialEntityDamage>(land, uuid)) {
-            return {false, false};
-        }
-    }
-
-    return origin(source, damage, knock, ignite);
-}
 // Fix [#56](https://github.com/engsr6982/PLand/issues/56)
 LL_TYPE_INSTANCE_HOOK(
     FishingHookHitHook,
@@ -415,7 +363,6 @@ LL_TYPE_INSTANCE_HOOK(
 
 void EventInterceptor::setupHooks() {
     auto& config = InterceptorConfig::cfg.hooks;
-    registerHookIf<MobHurtHook>(config.MobHurtHook);
     registerHookIf<FishingHookHitHook>(config.FishingHookHitHook);
     registerHookIf<LayEggGoalHook>(config.LayEggGoalHook);
     registerHookIf<FireBlockBurnHook>(config.FireBlockBurnHook);
