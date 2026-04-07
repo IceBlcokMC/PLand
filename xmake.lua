@@ -6,15 +6,15 @@ add_repositories("miracleforest-repo https://github.com/MiracleForest/xmake-repo
 
 
 -- LeviMc(LiteLDev)
-add_requires("levilamina a4344479267f2585f87d2b491a988fcdd9b9a9ac", {configs = {target_type = "server"}})
+add_requires("levilamina 26.10.0", {configs = {target_type = "server"}})
 add_requires("levibuildscript")
 
 -- MiracleForest
-add_requires("ilistenattentively 0.11.0")
+add_requires("ilistenattentively 0.12.0")
 
 -- IceBlockMC
-add_requires("ll-bstats main")
-add_requires("economy_bridge 0.2.0")
+add_requires("ll-bstats 0.3.0")
+add_requires("economy_bridge 0.3.0")
 
 -- xmake
 add_requires("exprtk 0.0.3")
