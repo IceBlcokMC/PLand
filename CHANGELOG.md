@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-04-08
+
+### 🧩 其他改动
+
+- 适配 Bedrock Sverver v1.26.10 (LeviLamina v26.10.x) @yangyangzhong82
+- 补充拦截器配置 @yangyangzhong82
+- 移除 MobHurtHook @yangyangzhong82
+
 ## [0.19.0-rc.1] - 2026-03-25
 
 ### 🐛 问题修复
