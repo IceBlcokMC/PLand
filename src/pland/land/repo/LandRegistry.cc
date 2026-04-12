@@ -444,6 +444,16 @@ LandRegistry::LandRegistry(PLand& mod) : impl(std::make_unique<Impl>()) {
 LandRegistry::~LandRegistry() {
     impl->mCoroAbort.store(true);
     impl->mInterruptableSleep.interrupt(true);
+    try {
+        save();
+    } catch (std::exception const& exception) {
+        PLand::getInstance().getSelf().getLogger().error(
+            "Failed to save land registry during shutdown: {}",
+            exception.what()
+        );
+    } catch (...) {
+        PLand::getInstance().getSelf().getLogger().error("Failed to save land registry during shutdown: unknown error");
+    }
 }
 
 void LandRegistry::createSnapshot(std::optional<std::string> const& dirName) {
