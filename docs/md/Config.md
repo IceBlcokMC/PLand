@@ -24,7 +24,16 @@
         "draw": {
             "enabled": false, // 是否启用领地绘制
             "range": 64, // 单次绘制范围 (以玩家为中心)
-            "backend": "DebugShape" // 绘制后端 DebugShape 或 DefaultParticle
+            "backend": "DebugShape", // 绘制后端 DebugShape 或 DefaultParticle
+
+            // 颜色配置，仅在绘制后端为 DebugShape 时有效
+            "color": {
+                "onSelectorConfirm": "#FF00FF",             // 选区确认后的颜色
+                "onResizeLandDrawOldRange": "#FF0000",      // 调整领地大小时绘制旧范围的颜色
+                "onCreateSubLandDrawParentLand": "#FFFF00", // 创建子领地时绘制父领地的颜色
+                "onUseCommandDrawCurrentLand": "#00FF00",   // 使用命令时绘制当前领地的颜色
+                "onUseCommandDrawNearLand": "#00FFFF",      // 使用命令时绘制附近领地的颜色
+            }
         },
         "notifications": {
             "enterLandTip": true, // 进入领地提示
@@ -174,7 +183,7 @@
 
 ## 拦截器配置 `InterceptorConfig.json`
 
-```jsonc
+```json
 {
     "version": 2, // 配置文件版本
     "listeners": {
