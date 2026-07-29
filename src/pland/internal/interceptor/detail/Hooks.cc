@@ -1,8 +1,10 @@
+#include "mc/world/level/block/Block.h"
 #include "pland/internal/interceptor/EventInterceptor.h"
 #include "pland/internal/interceptor/InterceptorConfig.h"
 #include "pland/internal/interceptor/helper/InterceptorHelper.h"
 
 #include "pland/PLand.h"
+#include "pland/land/repo/LandContext.h"
 #include "pland/land/repo/LandRegistry.h"
 
 #include "ll/api/event/EventBus.h"
@@ -365,6 +367,37 @@ LL_TYPE_INSTANCE_HOOK(
     origin(region, pos, entity);
 }
 
+// https://github.com/IceBlcokMC/PLand/issues/203
+LL_TYPE_INSTANCE_HOOK(
+    BlockOnFertilizedHook,
+    ll::memory::HookPriority::Normal,
+    Block,
+    &Block::onFertilized,
+    bool,
+    ::BlockSource&    region,
+    ::BlockPos const& pos,
+    ::Actor*          entity,
+    ::FertilizerType  fType
+) {
+    auto& registry = PLand::getInstance().getLandRegistry();
+
+    // TODO: 需要解决领地边缘使用骨粉导致影响领地内方块的问题
+    if (auto land = registry.getLandAt(pos, region.getDimensionId())) {
+        // 玩家使用骨粉触发
+        if (entity && entity->getEntityTypeId() == ActorType::Player) {
+            auto& player = static_cast<Player&>(*entity);
+            if (!hasRolePermission<&RolePerms::useBoneMeal>(land, player.getUuid())) {
+                return false;
+            }
+
+            // 其它实体使用骨粉(发射器)
+        } else if (!hasGuestPermission<&RolePerms::useBoneMeal>(land)) {
+            return false;
+        }
+    }
+    return origin(region, pos, entity, fType);
+}
+
 void EventInterceptor::setupHooks() {
     auto& config = InterceptorConfig::cfg.hooks;
     registerHookIf<FishingHookHitHook>(config.FishingHookHitHook);
@@ -383,6 +416,7 @@ void EventInterceptor::setupHooks() {
     registerHookIf<AbstractArrowPlayerTouchHook>(config.AbstractArrowPlayerTouchHook);
     registerHookIf<FarmChangeEventHook>(config.FarmChangeEventHook);
     registerHookIf<BigDripleafBlockHook>(config.BigDripleafBlockHook);
+    registerHookIf<BlockOnFertilizedHook>(config.BlockOnFertilizedHook);
 }
 
 } // namespace land::internal::interceptor

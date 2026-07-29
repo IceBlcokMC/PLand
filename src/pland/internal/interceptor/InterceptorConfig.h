@@ -22,7 +22,7 @@ struct HashedStringEq {
 };
 
 struct InterceptorConfig {
-    inline static constexpr int SchemaVersion = 4;
+    inline static constexpr int SchemaVersion = 5;
 
     int version = SchemaVersion;
     struct Listeners {
@@ -76,6 +76,7 @@ struct InterceptorConfig {
         bool AbstractArrowPlayerTouchHook{true};   // 拾取箭类投射物
         bool FarmChangeEventHook{true};            // 耕地踩踏/退化
         bool BigDripleafBlockHook{true};           // 大型垂滴叶
+        bool BlockOnFertilizedHook{true};          // 方块施肥
     } hooks;
 
     struct Rules {
