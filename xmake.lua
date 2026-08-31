@@ -16,6 +16,9 @@ add_requires("ilistenattentively 0.13.0")
 add_requires("ll-bstats 0.4.0")
 add_requires("economy_bridge 0.5.0")
 
+-- engsr6982
+add_requires("del 81867bf2a67459510162cd34097f8df59d669958", {configs = { with_editor = get_config("devtool")}})
+
 -- xmake
 add_requires("exprtk 0.0.3")
 add_requires("abseil 20250127.0")
@@ -97,7 +100,8 @@ target("PLand")
         add_packages(
             "imgui",
             "glew",
-            "imgui_color_text_edit"
+            "imgui_color_text_edit",
+            "del"
         )
         add_includedirs("src-devtool")
         add_files("src-devtool/**.cc")

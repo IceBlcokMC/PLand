@@ -1,5 +1,6 @@
 #include "WindowMenu.h"
 
+#include "menus/window/del_live_editor/DelLiveEditor.h"
 #include "menus/window/help/About.h"
 #include "menus/window/land/LandCacheViewer.h"
 
@@ -12,6 +13,7 @@ WindowMenu::WindowMenu() : IMenu("窗口") {}
 
 void WindowMenu::onAttached(WindowManager& wm) {
     registerElement<menus::LandCacheViewer>(wm);
+    registerElement<menus::DelLiveEditorMenuElement>(wm);
     registerElement<menus::About>(wm);
 }
 

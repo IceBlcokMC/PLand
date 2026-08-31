@@ -1,0 +1,20 @@
+{
+    "$schema": "../../src/pland/internal/import_framework/template.schema.v1.json",
+    "$version": 1,
+    "$source-loaders": {
+        "/relationship": {
+            "adapter": "json-file",
+            "path": "relationship.json"
+        },
+        "/data": {
+            "adapter": "json-file",
+            "path": "data.json"
+        }
+    },
+    "land": {
+        "$records": "@/relationship/Owner/{owner}[] as land_id",
+        "$source": "@/data/Lands/{land_id}",
+        "/version": "36",
+        "/mLandID": "-1"
+    }
+}

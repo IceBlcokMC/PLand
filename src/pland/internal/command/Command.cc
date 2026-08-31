@@ -10,6 +10,7 @@
 #include "pland/gui/NewLandGUI.h"
 #include "pland/gui/admin/OperatorManager.h"
 #include "pland/internal/command/CommandHelper.h"
+#include "pland/internal/import_framework/ImportProcesser.h"
 #include "pland/land/Config.h"
 #include "pland/land/Land.h"
 #include "pland/land/repo/LandRegistry.h"
@@ -400,6 +401,37 @@ bool LandCommand::setupAll() {
         );
 
     setupLeaseSubCommands(registrar, h);
+
+    // land import <tmp_path: string> <sources_dir: string> [clearDb: bool]
+    h.runtimeOverload()
+        .text("import")
+        .required("tmp_path", ll::command::ParamKind::String)
+        .required("sources_dir", ll::command::ParamKind::String)
+        .optional("clearDb", ll::command::ParamKind::Bool)
+        .execute(
+            wrapCommandHandler<LandCommandAcceptOrigin<CommandOriginType::DedicatedServer>>(
+                [](CommandOrigin const&, CommandOutput& out, ll::command::RuntimeCommand const& param) {
+                    auto template_path = std::get<std::string>(param["tmp_path"].value());
+                    auto sources_dir   = std::get<std::string>(param["sources_dir"].value());
+
+                    bool clearDb = false;
+                    if (auto& clearDbParam = param["clearDb"]) {
+                        clearDb = std::get<bool>(clearDbParam.value());
+                    }
+
+                    feedback_utils::sendText(
+                        out,
+                        "Please wait for the import to complete, this may take a while..."_tr()
+                    );
+
+                    if (auto exp = import_framework::ImportProcesser::process(template_path, sources_dir, clearDb)) {
+                        feedback_utils::sendText(out, "Import completed"_tr());
+                    } else {
+                        feedback_utils::sendError(out, exp.error());
+                    }
+                }
+            )
+        );
 
 #ifdef LD_DEVTOOL
     // pland devtool [on|off] 显示/隐藏开发者工具(省略 state 默认显示)
