@@ -28,8 +28,8 @@ struct ABSelector::Impl {
     std::optional<BlockPos> mPointA;
     std::optional<BlockPos> mPointB;
     drawer::GeoId           mRenderId{};
-    SetTitlePacket          mTitlePacket{SetTitlePacket::TitleType::Title};
-    SetTitlePacket          mSubTitlePacket{SetTitlePacket::TitleType::Subtitle};
+    SetTitlePacket          mTitlePacket{SetTitlePacketPayload{SetTitlePacketPayload::TitleType::Title, "", std::nullopt}};
+    SetTitlePacket          mSubTitlePacket{SetTitlePacketPayload{SetTitlePacketPayload::TitleType::Subtitle, "", std::nullopt}};
 
     ~Impl() { clearRender(); }
 
@@ -38,6 +38,8 @@ struct ABSelector::Impl {
     }
 
     void initTitlePackets(std::string const& locale) {
+        mTitlePacket.mType      = SetTitlePacket::TitleType::Title;
+        mSubTitlePacket.mType   = SetTitlePacket::TitleType::Subtitle;
         mTitlePacket.mTitleText    = "[ {}选区 ]"_trl(locale, mIs3D ? "3D" : "2D");
         mSubTitlePacket.mTitleText = "输入 /pland set a 或使用 '{}' 选择点 A"_trl(locale, Config::cfg.selector.alias);
     }

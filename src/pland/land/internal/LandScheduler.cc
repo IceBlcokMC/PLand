@@ -90,7 +90,8 @@ struct LandScheduler::Impl {
         auto& playerInfo = ll::service::PlayerInfo::getInstance();
         auto& registry   = PLand::getInstance().getLandRegistry();
 
-        SetTitlePacket pkt(SetTitlePacket::TitleType::Actionbar);
+        SetTitlePacket pkt{SetTitlePacketPayload{SetTitlePacketPayload::TitleType::Actionbar, "", std::nullopt}};
+        pkt.mType = SetTitlePacket::TitleType::Actionbar;
         for (auto& [player, landId] : mLandIdMap) {
             if (landId == INVALID_LAND_ID) {
                 continue;
@@ -173,8 +174,10 @@ LandScheduler::LandScheduler() : impl(std::make_unique<Impl>()) {
                 return;
             }
 
-            SetTitlePacket title(SetTitlePacket::TitleType::Title);
-            SetTitlePacket subTitle(SetTitlePacket::TitleType::Subtitle);
+            SetTitlePacket title{SetTitlePacketPayload{SetTitlePacketPayload::TitleType::Title, "", std::nullopt}};
+            SetTitlePacket subTitle{SetTitlePacketPayload{SetTitlePacketPayload::TitleType::Subtitle, "", std::nullopt}};
+            title.mType    = SetTitlePacket::TitleType::Title;
+            subTitle.mType = SetTitlePacket::TitleType::Subtitle;
 
             if (land->isOwner(player.getUuid())) {
                 title.mTitleText    = land->getName();
