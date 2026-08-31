@@ -64,17 +64,17 @@ TaskId getNextTaskId() {
 }
 
 class Task {
-    static inline constexpr short MaxCounter = 64;                                  // 最大计数器值
-    TaskId const                  mId;                                              // 任务ID
-    WeakRef<EntityContext>        mWeakPlayer;                                      // 玩家
-    WeakRef<Dimension>            mTargetDimension;                                 // 目标维度
-    ChunkPos                      mTargetChunkPos;                                  // 目标区块位置
-    DimensionPos const            mSourcePos;                                       // 原位置
-    DimensionPos                  mTargetPos;                                       // 目标位置
-    TaskState                     mState{TaskState::Pending};                       // 任务状态
-    short                         mCounter{0};                                      // 计数器
-    SetTitlePacket                mTipPacket{SetTitlePacket::TitleType::Actionbar}; // 提示包
-    std::atomic<bool>             mAbortFlag{false};                                // 终止标志
+    static inline constexpr short MaxCounter = 64;            // 最大计数器值
+    TaskId const                  mId;                        // 任务ID
+    WeakRef<EntityContext>        mWeakPlayer;                // 玩家
+    WeakRef<Dimension>            mTargetDimension;           // 目标维度
+    ChunkPos                      mTargetChunkPos;            // 目标区块位置
+    DimensionPos const            mSourcePos;                 // 原位置
+    DimensionPos                  mTargetPos;                 // 目标位置
+    TaskState                     mState{TaskState::Pending}; // 任务状态
+    short                         mCounter{0};                // 计数器
+    SetTitlePacket                mTipPacket{SetTitlePacketPayload{SetTitlePacketPayload::TitleType::Actionbar, "", std::nullopt}}; // 提示包
+    std::atomic<bool>             mAbortFlag{false};          // 终止标志
 
     void _findSafePos() {
         static auto const dangerousBlocks =
@@ -159,7 +159,7 @@ public:
     : mId(getNextTaskId()),
       mWeakPlayer(player.getEntityContext().getWeakRef()),
       mTargetDimension(player.getLevel().getDimension(targetPos.second)),
-      mTargetChunkPos(ChunkPos(targetPos.first)),
+      mTargetChunkPos(targetPos.first.x, targetPos.first.z),
       mSourcePos({player.getPosition(), player.getDimensionId()}),
       mTargetPos(targetPos) {
         mTargetPos.first.x += 0.5; // 方块中心
@@ -195,6 +195,7 @@ public:
     void sendWaitChunkLoadTip() {
         if (auto player = getPlayer()) {
             mTipPacket.mTitleText = "等待区块加载... ({}/{})"_trl(player->getLocaleCode(), mCounter, MaxCounter);
+            mTipPacket.mType      = SetTitlePacket::TitleType::Actionbar;
             mTipPacket.sendTo(*player);
         }
     }

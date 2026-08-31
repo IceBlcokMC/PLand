@@ -34,7 +34,12 @@ void EventInterceptor::setupIlaWorldListeners() {
 
             auto& explosion   = ev.explosion();
             auto& blockSource = explosion.mRegion;
-            auto  centerPos   = BlockPos{explosion.mPos};
+            auto const& explosionPos = explosion.mPos;
+            auto  centerPos = BlockPos{
+                static_cast<int>(explosionPos->x),
+                static_cast<int>(explosionPos->y),
+                static_cast<int>(explosionPos->z)
+            };
             auto  radius      = explosion.mRadius;
             auto  dimid       = blockSource.getDimensionId();
 
