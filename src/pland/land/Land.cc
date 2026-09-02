@@ -42,7 +42,10 @@ struct Land::Impl {
 };
 
 Land::Land() : impl(std::make_unique<Impl>()) {}
-Land::Land(LandContext ctx) : Land{} { impl->mContext = std::move(ctx); }
+Land::Land(LandContext ctx) : Land{} {
+    impl->mContext = std::move(ctx);
+    impl->initCache();
+}
 Land::Land(LandAABB const& pos, LandDimid dimid, bool is3D, mce::UUID const& owner, LandPermTable ptable) : Land{} {
     impl->mContext.mPos           = pos;
     impl->mContext.mLandDimid     = dimid;
@@ -260,13 +263,14 @@ bool Land::isCollision(BlockPos const& pos1, BlockPos const& pos2) const {
 }
 
 
-LandPermType Land::getPermType(mce::UUID const& uuid) const {
+LandPermType Land::getPermType(mce::UUID const& uuid) const { return getEffectiveRole(uuid); }
+LandRole     Land::getEffectiveRole(mce::UUID const& uuid) const {
     if (isLeaseFrozen()) {
-        return LandPermType::Actor;
+        return LandRole::Actor;
     }
-    if (isOwner(uuid)) return LandPermType::Owner;
-    if (isMember(uuid)) return LandPermType::Member;
-    return LandPermType::Actor;
+    if (isOwner(uuid)) return LandRole::Owner;
+    if (isMember(uuid)) return LandRole::Member;
+    return LandRole::Actor;
 }
 
 void Land::migrateOwner(mce::UUID const& ownerUUID) {

@@ -40,8 +40,9 @@ struct ABSelector::Impl {
     void initTitlePackets(std::string const& locale) {
         mTitlePacket.mType      = SetTitlePacket::TitleType::Title;
         mSubTitlePacket.mType   = SetTitlePacket::TitleType::Subtitle;
-        mTitlePacket.mTitleText    = "[ {}选区 ]"_trl(locale, mIs3D ? "3D" : "2D");
-        mSubTitlePacket.mTitleText = "输入 /pland set a 或使用 '{}' 选择点 A"_trl(locale, Config::cfg.selector.alias);
+        mTitlePacket.mTitleText = "[ {}选区 ]"_trl(locale, mIs3D ? "3D" : "2D");
+        mSubTitlePacket.mTitleText =
+            "输入 /pland set a 或使用 '{}' 选择点 A"_trl(locale, ConfigProvider::cfg.selector.alias);
     }
 
     void updateTitlePackets(std::string title, std::string subtitle) {
@@ -89,7 +90,7 @@ std::optional<LandAABB> ABSelector::newLandAABB() const {
     if (!isPointABSet()) return std::nullopt;
 
     auto aabb = LandAABB::make(LandPos::make(*impl->mPointA), LandPos::make(*impl->mPointB));
-    aabb.fix();
+    aabb.canonicalize();
     return aabb;
 }
 
@@ -148,7 +149,7 @@ void ABSelector::onPointASet() {
         feedback_utils::sendText(*player, "已选择点 A: {}"_trl(locale, *impl->mPointA));
 
         impl->mSubTitlePacket.mTitleText =
-            "输入 /pland set b 或使用 '{}' 选择点 B"_trl(locale, Config::cfg.selector.alias);
+            "输入 /pland set b 或使用 '{}' 选择点 B"_trl(locale, ConfigProvider::cfg.selector.alias);
     }
 }
 
@@ -177,7 +178,7 @@ void ABSelector::onPointABSet() {
     auto const& locale = player->getLocaleCode();
     impl->updateTitlePackets(
         "[ 选区完成 ]"_trl(locale),
-        "输入 /pland buy 呼出购买菜单"_trl(locale, Config::cfg.selector.alias)
+        "输入 /pland buy 呼出购买菜单"_trl(locale, ConfigProvider::cfg.selector.alias)
     );
 
     if (!is3D()) {
