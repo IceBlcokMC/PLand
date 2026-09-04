@@ -62,7 +62,29 @@ void EventInterceptor::setupLLPlayerListeners() {
                 TRACE_THIS_EVENT(ll::event::PlayerPlacingBlockEvent);
 
                 auto& player = ev.self();
-                auto  pos    = ev.pos().relative(ev.face(), 1);
+                auto  pos    = ev.pos();
+                switch (ev.face()) {
+                case 0:
+                    --pos.y;
+                    break;
+                case 1:
+                    ++pos.y;
+                    break;
+                case 2:
+                    --pos.z;
+                    break;
+                case 3:
+                    ++pos.z;
+                    break;
+                case 4:
+                    --pos.x;
+                    break;
+                case 5:
+                    ++pos.x;
+                    break;
+                default:
+                    break;
+                }
                 TRACE_LOG("player={}, pos={}", player.getRealName(), pos.toString());
 
                 auto land = registry->getLandAt(pos, player.getDimensionId());
@@ -87,7 +109,7 @@ void EventInterceptor::setupLLPlayerListeners() {
                 auto land = registry->getLandAt(pos, player.getDimensionId());
                 if (hasPrivilege(land, uuid)) return;
 
-                if (auto item = ev.item().getItem()) {
+                if (auto item = ev.item().mItem.get()) {
                     void** vftable = *reinterpret_cast<void** const*>(item);
                     if (vftable == BucketItem::$vftable()) {
                         if (!hasMemberOrGuestPermission<&RolePerms::useBucket>(land, uuid)) {
@@ -176,8 +198,10 @@ void EventInterceptor::setupLLPlayerListeners() {
                             ev.cancel();
                             return;
                         }
-                    } else if (vftable == BlastFurnaceBlock::$vftable() || vftable == FurnaceBlock::$vftable()
-                               || vftable == SmokerBlock::$vftable()) {
+                    } else if (
+                        vftable == BlastFurnaceBlock::$vftable() || vftable == FurnaceBlock::$vftable()
+                        || vftable == SmokerBlock::$vftable()
+                    ) {
                         if (!hasMemberOrGuestPermission<&RolePerms::useFurnaces>(land, uuid)) {
                             ev.cancel();
                             return;
@@ -273,7 +297,7 @@ void EventInterceptor::setupLLPlayerListeners() {
 
             auto& player    = ev.self();
             auto& itemStack = ev.item();
-            auto  item      = itemStack.getItem();
+            auto  item      = itemStack.mItem.get();
             if (!item) {
                 TRACE_LOG("item is nullptr");
                 return;
