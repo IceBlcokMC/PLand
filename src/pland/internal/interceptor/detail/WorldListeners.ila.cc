@@ -129,9 +129,23 @@ void EventInterceptor::setupIlaWorldListeners() {
 
     registerListenerIf<&InterceptorConfig::Listeners::BlockFallBeforeEvent>([bus, registry]() {
         return bus->emplaceListener<ila::mc::BlockFallBeforeEvent>([registry](ila::mc::BlockFallBeforeEvent& ev) {
+            TRACE_THIS_EVENT(ila::mc::BlockFallBeforeEvent);
+
             auto& blockSource = ev.blockSource();
             auto& blockPos    = ev.pos();
 
+            TRACE_LOG("blockPos={}", blockPos.toString());
+
+            // TODO: 此权限已逻辑损坏，需要修复
+            // blockPos 为方块开始下落的位置，不是最终下落的位置，下落过程中不触发事件。
+            // 因此，此处的查询存在逻辑问题：
+            // 1. 触发点在领地外 => getLandAt 没找到领地 => if 短路 => 权限放行
+            // 2. 触发点在领地内 => 找到领地 => isAboveLand 要求触发点在领地之上 =>
+            //    如果在领地之上，回到第一点，getLandAt 查不到领地 => 权限放行
+            //    反之在领地内，isAboveLand 返回 false => if 短路求值 => 权限放行
+            // 历史:
+            // 此问题在 v0.8.1 初版刚加入时就存在，仅领地内分支正常工作，领地外分支逻辑错误。
+            // v0.15.x 重构了代码，改为仅拦截领地外，导致只剩下这个逻辑错误的分支。
             auto land = registry->getLandAt(blockPos, blockSource.getDimensionId());
             if (land && land->getAABB().isAboveLand(blockPos)
                 && !hasEnvironmentPermission<&EnvironmentPerms::allowBlockFall>(land)) {
