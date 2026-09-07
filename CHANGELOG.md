@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🐛 问题修复
+
+- 修复重力方块掉落权限 [#242](https://github.com/IceBlcokMC/PLand/issues/242) @engsr6982
+
 ## [0.22.2] - 2026-09-02
 
 ### 🐛 问题修复
