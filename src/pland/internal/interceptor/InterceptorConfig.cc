@@ -260,7 +260,9 @@ void InterceptorConfig::tryMigrateLegacyConfig(std::filesystem::path configDir) 
         cfg.listeners.PlayerEditSignBeforeEvent         = listeners["PlayerEditSignBeforeEvent"].get<bool>();
         cfg.listeners.SpawnedMobEvent                   = listeners["SpawnedMobEvent"].get<bool>();
         cfg.listeners.PlayerInteractEntityBeforeEvent   = listeners["PlayerInteractEntityBeforeEvent"].get<bool>();
-        cfg.listeners.BlockFallBeforeEvent              = listeners["BlockFallBeforeEvent"].get<bool>();
+        // BlockFallBeforeEvent 事件监听已由 FallingBlockActorTickHook 替代 (issue #242), 旧配置重定向
+        // cfg.listeners.BlockFallBeforeEvent            = listeners["BlockFallBeforeEvent"].get<bool>();
+        cfg.hooks.FallingBlockActorTickHook             = listeners["BlockFallBeforeEvent"].get<bool>();
         cfg.listeners.ActorDestroyBlockEvent            = listeners["ActorDestroyBlockEvent"].get<bool>();
         cfg.listeners.MobPlaceBlockBeforeEvent          = listeners["MobPlaceBlockBeforeEvent"].get<bool>();
         cfg.listeners.MobTakeBlockBeforeEvent           = listeners["MobTakeBlockBeforeEvent"].get<bool>();

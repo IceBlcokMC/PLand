@@ -9,7 +9,7 @@
     "allowFarmDecay": "Вытаптывание грядок",
     "allowPistonPushOnBoundary": "Выталкивание поршнем на границе",
     "allowRedstoneUpdate": "Обновление редстоуна",
-    "allowBlockFall": "Падение блоков",
+    "allowBlockFall": "Падение блоков (только над территорией)",
     "allowWitherDestroy": "Разрушение визером",
     "allowMossGrowth": "Рост мха (распространение)",
     "allowLiquidFlow": "Течение жидкостей",

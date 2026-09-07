@@ -10,6 +10,7 @@
 #include "ll/api/memory/Hook.h"
 
 #include "mc/entity/components_json_legacy/HopperComponent.h"
+#include "mc/legacy/ActorUniqueID.h"
 #include "mc/server/ServerPlayer.h"
 #include "mc/world/actor/ActorDamageSource.h"
 #include "mc/world/actor/ActorHurtResult.h"
@@ -19,12 +20,14 @@
 #include "mc/world/actor/ai/goal/LayEggGoal.h"
 #include "mc/world/actor/global/LightningBolt.h"
 #include "mc/world/actor/item/ExperienceOrb.h"
+#include "mc/world/actor/item/FallingBlockActor.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/actor/projectile/AbstractArrow.h"
 #include "mc/world/actor/projectile/Arrow.h"
 #include "mc/world/actor/projectile/ThrownTrident.h"
 #include "mc/world/effect/OozingMobEffect.h"
 #include "mc/world/effect/WeavingMobEffect.h"
+#include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/block/BigDripleafBlock.h"
@@ -34,6 +37,8 @@
 #include "mc/world/level/block/actor/ChestBlockActor.h"
 #include "mc/world/level/block/block_events/BlockPlayerInteractEvent.h"
 #include <mc/deps/core/math/IRandom.h>
+
+#include <absl/container/flat_hash_map.h>
 
 namespace land::internal::interceptor {
 
@@ -365,6 +370,60 @@ LL_TYPE_INSTANCE_HOOK(
     origin(region, pos, entity);
 }
 
+// Fix [#242](https://github.com/IceBlcokMC/PLand/issues/242)
+// 仅拦截"自领地外坠入领地"的下落实体, 领地内起始的下落保持原版行为
+namespace {
+// key: ActorUniqueID::rawID -> value: 实体创建时的起始坐标
+absl::flat_hash_map<int64_t, BlockPos> sFallingBlockStartCache;
+} // namespace
+
+LL_TYPE_INSTANCE_HOOK(
+    FallingBlockActorTickHook,
+    ll::memory::HookPriority::Normal,
+    FallingBlockActor,
+    &FallingBlockActor::$normalTick,
+    void
+) {
+    auto blockPos = BlockPos{this->getPosition()};
+    auto uid      = this->getOrCreateUniqueID().rawID;
+
+    // 记录起始坐标
+    auto [iter, inserted] = sFallingBlockStartCache.try_emplace(uid, blockPos);
+    auto const& startPos  = iter->second;
+
+    auto& registry = PLand::getInstance().getLandRegistry();
+    // 实体处于领地内时判定下落来源
+    if (auto land = registry.getLandAt(blockPos, this->getDimensionId());
+        land && !land->getAABB().isAboveLand(blockPos)) {
+        auto const& aabb = land->getAABB();
+        // 下落是否起始于同一领地
+        bool startedInside = aabb.hasPos(startPos, land->is3D()) && !aabb.isAboveLand(startPos);
+        if (!startedInside && !hasEnvironmentPermission<&EnvironmentPerms::allowBlockFall>(land)) {
+            sFallingBlockStartCache.erase(uid);
+            this->breakBlock();
+            return;
+        }
+    }
+    origin();
+}
+LL_TYPE_INSTANCE_HOOK(FallingBlockActorRemoveHook, ll::memory::HookPriority::Normal, ::Actor, &::Actor::$remove, void) {
+    if (this->getEntityTypeId() == ActorType::FallingBlock) {
+        sFallingBlockStartCache.erase(this->getOrCreateUniqueID().rawID);
+    }
+    origin();
+}
+struct FallingBlockActorHooks {
+    static void hook() {
+        FallingBlockActorTickHook::hook();
+        FallingBlockActorRemoveHook::hook();
+    }
+    static void unhook() {
+        FallingBlockActorTickHook::unhook();
+        FallingBlockActorRemoveHook::unhook();
+        sFallingBlockStartCache.clear();
+    }
+};
+
 void EventInterceptor::setupHooks() {
     registerHookIf<&InterceptorConfig::Hooks::FishingHookHitHook, FishingHookHitHook>();
     registerHookIf<&InterceptorConfig::Hooks::LayEggGoalHook, LayEggGoalHook>();
@@ -382,6 +441,7 @@ void EventInterceptor::setupHooks() {
     registerHookIf<&InterceptorConfig::Hooks::AbstractArrowPlayerTouchHook, AbstractArrowPlayerTouchHook>();
     registerHookIf<&InterceptorConfig::Hooks::FarmChangeEventHook, FarmChangeEventHook>();
     registerHookIf<&InterceptorConfig::Hooks::BigDripleafBlockHook, BigDripleafBlockHook>();
+    registerHookIf<&InterceptorConfig::Hooks::FallingBlockActorTickHook, FallingBlockActorHooks>();
 }
 
 } // namespace land::internal::interceptor
