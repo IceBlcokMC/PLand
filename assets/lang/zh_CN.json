@@ -9,7 +9,7 @@
     "allowFarmDecay": "耕地退化",
     "allowPistonPushOnBoundary": "活塞推动边界方块",
     "allowRedstoneUpdate": "红石更新",
-    "allowBlockFall": "方块掉落",
+    "allowBlockFall": "重力方块下落（仅领地上方）",
     "allowWitherDestroy": "凋零破坏",
     "allowMossGrowth": "苔藓生长(蔓延)",
     "allowLiquidFlow": "流动液体",

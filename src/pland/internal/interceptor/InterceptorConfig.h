@@ -22,7 +22,7 @@ struct HashedStringEq {
 };
 
 struct InterceptorConfig {
-    inline static constexpr int SchemaVersion = 4;
+    inline static constexpr int SchemaVersion = 5;
 
     int version = SchemaVersion;
     struct Listeners {
@@ -49,7 +49,6 @@ struct InterceptorConfig {
         bool ExplosionBeforeEvent                 = true; // ILA (env)
         bool PistonPushBeforeEvent                = true; // ILA (env)
         bool RedstoneUpdateBeforeEvent            = true; // ILA (env)
-        bool BlockFallBeforeEvent                 = true; // ILA (env)
         bool WitherDestroyBeforeEvent             = true; // ILA (env)
         bool MossGrowthBeforeEvent                = true; // ILA (env)
         bool LiquidFlowBeforeEvent                = true; // ILA (env)
@@ -76,6 +75,7 @@ struct InterceptorConfig {
         bool AbstractArrowPlayerTouchHook{true};   // 拾取箭类投射物
         bool FarmChangeEventHook{true};            // 耕地踩踏/退化
         bool BigDripleafBlockHook{true};           // 大型垂滴叶
+        bool FallingBlockActorTickHook{true};      // 重力方块下落
     } hooks;
 
     struct Rules {

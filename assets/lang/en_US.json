@@ -9,7 +9,7 @@
     "allowFarmDecay": "Farmland Decay",
     "allowPistonPushOnBoundary": "Piston Push on Boundary",
     "allowRedstoneUpdate": "Redstone Update",
-    "allowBlockFall": "Block Fall",
+    "allowBlockFall": "Gravity Block Fall (Above Land Only)",
     "allowWitherDestroy": "Wither Destroy",
     "allowMossGrowth": "Moss Growth (Spread)",
     "allowLiquidFlow": "Liquid Flow",
