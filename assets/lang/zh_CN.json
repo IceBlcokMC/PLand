@@ -12,7 +12,7 @@
     "allowBlockFall": "重力方块下落（仅领地上方）",
     "allowWitherDestroy": "凋零破坏",
     "allowMossGrowth": "苔藓生长(蔓延)",
-    "allowLiquidFlow": "流动液体",
+    "allowLiquidFlow": "允许领地外液体流入",
     "allowDragonEggTeleport": "龙蛋传送",
     "allowSculkBlockGrowth": "幽匿尖啸体生长",
     "allowSculkSpread": "幽匿蔓延",

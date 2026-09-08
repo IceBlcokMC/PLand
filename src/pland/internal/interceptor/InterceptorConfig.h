@@ -76,6 +76,7 @@ struct InterceptorConfig {
         bool FarmChangeEventHook{true};            // 耕地踩踏/退化
         bool BigDripleafBlockHook{true};           // 大型垂滴叶
         bool FallingBlockActorTickHook{true};      // 重力方块下落
+        bool DispenserLiquidDispenseHook{true};    // 发射器倾倒液体(边界)
     } hooks;
 
     struct Rules {

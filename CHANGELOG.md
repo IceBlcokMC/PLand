@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🐛 问题修复
 
 - 修复重力方块掉落权限 [#242](https://github.com/IceBlcokMC/PLand/issues/242) @engsr6982
+- 修复领地边缘使用发射器可以无视权限向领地内放置流体 [#231](https://github.com/IceBlcokMC/PLand/issues/231) @engsr6982
 
 ## [0.22.2] - 2026-09-02
 

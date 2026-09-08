@@ -12,7 +12,7 @@
     "allowBlockFall": "Падение блоков (только над территорией)",
     "allowWitherDestroy": "Разрушение визером",
     "allowMossGrowth": "Рост мха (распространение)",
-    "allowLiquidFlow": "Течение жидкостей",
+    "allowLiquidFlow": "Разрешить приток жидкости извне",
     "allowDragonEggTeleport": "Телепортация яйца дракона",
     "allowSculkBlockGrowth": "Рост скалковых блоков",
     "allowSculkSpread": "Распространение скалка",
