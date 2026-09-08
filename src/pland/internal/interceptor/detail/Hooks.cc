@@ -419,14 +419,6 @@ LL_TYPE_INSTANCE_HOOK(FallingBlockActorRemoveHook, ll::memory::HookPriority::Nor
 
 
 // Fix [#231](https://github.com/IceBlcokMC/PLand/issues/231)
-// Fix: 发射器向领地内倾倒液体 (水/岩浆/细雪桶) 时, 液体(方块)的初始放置不经过 LiquidFlow 事件
-// (该事件仅覆盖后续"流动", 液体已在领地内, 后续均为领地内 => 领地内放行),
-// 导致领地无法阻止外部发射器注入液体。
-// 在发射器自身解决: DispenserBlock::dispenseFrom (发射入口, Dropper 覆盖了它不受影响) 做边界判定,
-// 判定与 LiquidFlowBeforeEvent 一致 (边界穿越): 目标领地禁止液体流动, 发射器紧贴领地外边界,
-// 发射目标位于领地内边界。命中后经同步调用栈标记传递至 DispenserBlockActor::getRandomSlot,
-// 在随机选出槽位后用 getItem(slot) 判定实际物品, 若为液体桶则返回 -1
-// (原版"无可用槽位"语义: 仅播放失败音效, 物品不消耗、不弹出)。
 namespace {
 thread_local bool tBlockCurrentDispense = false; // dispenseFrom -> getRandomSlot 同步调用栈内传递拦截标记
 
