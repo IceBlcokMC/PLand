@@ -27,16 +27,20 @@
 #include "mc/world/actor/projectile/ThrownTrident.h"
 #include "mc/world/effect/OozingMobEffect.h"
 #include "mc/world/effect/WeavingMobEffect.h"
+#include "mc/world/item/Item.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/block/BigDripleafBlock.h"
+#include "mc/world/level/block/DispenserBlock.h"
 #include "mc/world/level/block/FarmBlock.h"
 #include "mc/world/level/block/FireBlock.h"
 #include "mc/world/level/block/LecternBlock.h"
 #include "mc/world/level/block/actor/ChestBlockActor.h"
+#include "mc/world/level/block/actor/DispenserBlockActor.h"
 #include "mc/world/level/block/block_events/BlockPlayerInteractEvent.h"
 #include <mc/deps/core/math/IRandom.h>
+#include <mc/deps/core/math/Random.h>
 
 #include <absl/container/flat_hash_map.h>
 
@@ -412,17 +416,77 @@ LL_TYPE_INSTANCE_HOOK(FallingBlockActorRemoveHook, ll::memory::HookPriority::Nor
     }
     origin();
 }
-struct FallingBlockActorHooks {
-    static void hook() {
-        FallingBlockActorTickHook::hook();
-        FallingBlockActorRemoveHook::hook();
-    }
-    static void unhook() {
-        FallingBlockActorTickHook::unhook();
-        FallingBlockActorRemoveHook::unhook();
-        sFallingBlockStartCache.clear();
-    }
+
+
+// Fix [#231](https://github.com/IceBlcokMC/PLand/issues/231)
+// Fix: 发射器向领地内倾倒液体 (水/岩浆/细雪桶) 时, 液体(方块)的初始放置不经过 LiquidFlow 事件
+// (该事件仅覆盖后续"流动", 液体已在领地内, 后续均为领地内 => 领地内放行),
+// 导致领地无法阻止外部发射器注入液体。
+// 在发射器自身解决: DispenserBlock::dispenseFrom (发射入口, Dropper 覆盖了它不受影响) 做边界判定,
+// 判定与 LiquidFlowBeforeEvent 一致 (边界穿越): 目标领地禁止液体流动, 发射器紧贴领地外边界,
+// 发射目标位于领地内边界。命中后经同步调用栈标记传递至 DispenserBlockActor::getRandomSlot,
+// 在随机选出槽位后用 getItem(slot) 判定实际物品, 若为液体桶则返回 -1
+// (原版"无可用槽位"语义: 仅播放失败音效, 物品不消耗、不弹出)。
+namespace {
+thread_local bool tBlockCurrentDispense = false; // dispenseFrom -> getRandomSlot 同步调用栈内传递拦截标记
+
+struct BlockDispenseGuard {
+    BlockDispenseGuard() { tBlockCurrentDispense = true; }
+    ~BlockDispenseGuard() { tBlockCurrentDispense = false; }
 };
+
+inline bool isLiquidBucketItem(::ItemStack const& stack) {
+    if (auto item = stack.getItem()) {
+        return item->isBucket();
+    }
+    return false;
+}
+} // namespace
+
+LL_TYPE_INSTANCE_HOOK(
+    DispenserDispenseFromHook,
+    ll::memory::HookPriority::Normal,
+    DispenserBlock,
+    &DispenserBlock::$dispenseFrom,
+    void,
+    ::BlockSource&    region,
+    ::BlockPos const& pos
+) {
+    auto& registry = PLand::getInstance().getLandRegistry();
+    auto  dimid    = region.getDimensionId();
+
+    // 发射目标位置 (发射器前方一格), getDispensePosition 内部按方块朝向计算
+    auto targetPos = BlockPos{this->getDispensePosition(
+        region,
+        Vec3{static_cast<float>(pos.x), static_cast<float>(pos.y), static_cast<float>(pos.z)}
+    )};
+
+    if (
+        auto targetLand = registry.getLandAt(targetPos, dimid);
+        targetLand && !hasEnvironmentPermission<&EnvironmentPerms::allowLiquidFlow>(targetLand) // 禁止液体流动
+        && targetLand->getAABB().isOnOuterBoundary(pos)                                         // 发射器紧贴领地外
+        && targetLand->getAABB().isOnInnerBoundary(targetPos) // 发射目标位于领地内边界
+    ) {
+        BlockDispenseGuard guard;
+        origin(region, pos); // 具体是否拦截由 getRandomSlot 按选中的物品判定
+        return;
+    }
+    origin(region, pos);
+}
+LL_TYPE_INSTANCE_HOOK(
+    DispenserRandomSlotHook,
+    ll::memory::HookPriority::Normal,
+    DispenserBlockActor,
+    &DispenserBlockActor::getRandomSlot,
+    int,
+    ::Random& random
+) {
+    auto slot = origin(random);
+    if (slot >= 0 && tBlockCurrentDispense && isLiquidBucketItem(this->getItem(slot))) {
+        return -1; // 随机选中的是液体桶: 以"无可用槽位"语义取消本次发射
+    }
+    return slot;
+}
 
 void EventInterceptor::setupHooks() {
     registerHookIf<&InterceptorConfig::Hooks::FishingHookHitHook, FishingHookHitHook>();
@@ -441,7 +505,14 @@ void EventInterceptor::setupHooks() {
     registerHookIf<&InterceptorConfig::Hooks::AbstractArrowPlayerTouchHook, AbstractArrowPlayerTouchHook>();
     registerHookIf<&InterceptorConfig::Hooks::FarmChangeEventHook, FarmChangeEventHook>();
     registerHookIf<&InterceptorConfig::Hooks::BigDripleafBlockHook, BigDripleafBlockHook>();
-    registerHookIf<&InterceptorConfig::Hooks::FallingBlockActorTickHook, FallingBlockActorHooks>();
+    registerHookIf<
+        &InterceptorConfig::Hooks::FallingBlockActorTickHook,
+        FallingBlockActorTickHook,
+        FallingBlockActorRemoveHook>([]() { sFallingBlockStartCache.clear(); });
+    registerHookIf<
+        &InterceptorConfig::Hooks::DispenserLiquidDispenseHook,
+        DispenserDispenseFromHook,
+        DispenserRandomSlotHook>();
 }
 
 } // namespace land::internal::interceptor

@@ -12,7 +12,7 @@
     "allowBlockFall": "Gravity Block Fall (Above Land Only)",
     "allowWitherDestroy": "Wither Destroy",
     "allowMossGrowth": "Moss Growth (Spread)",
-    "allowLiquidFlow": "Liquid Flow",
+    "allowLiquidFlow": "Allow Liquid Inflow from Outside",
     "allowDragonEggTeleport": "Dragon Egg Teleport",
     "allowSculkBlockGrowth": "Sculk Block Growth",
     "allowSculkSpread": "Sculk Spread",

@@ -83,7 +83,8 @@ PLand 通过**拦截游戏事件**来强制领地权限（比如：非领地成�
         "AbstractArrowPlayerTouchHook": true, // 箭类投射物拾取
         "FarmChangeEventHook": true, // 农田踩踏/退化
         "BigDripleafBlockHook": true, // 大型垂滴叶
-        "FallingBlockActorTickHook": true // 重力方块下落 (进入禁止掉落的领地时转为掉落物)
+        "FallingBlockActorTickHook": true, // 重力方块下落 (进入禁止掉落的领地时转为掉落物)
+        "DispenserLiquidDispenseHook": true // 发射器倾倒液体 (禁止液体流动的领地边界不受发射器倾倒)
     },
     "rules": {
         "mob": {
