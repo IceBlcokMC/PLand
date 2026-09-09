@@ -77,6 +77,7 @@ struct InterceptorConfig {
         bool BigDripleafBlockHook{true};           // 大型垂滴叶
         bool FallingBlockActorTickHook{true};      // 重力方块下落
         bool DispenserLiquidDispenseHook{true};    // 发射器倾倒液体(边界)
+        bool KineticDamageHook{true};              // 矛冲刺命中(动能伤害)
     } hooks;
 
     struct Rules {

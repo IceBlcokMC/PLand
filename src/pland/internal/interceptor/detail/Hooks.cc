@@ -9,7 +9,10 @@
 #include "ll/api/event/entity/ActorHurtEvent.h"
 #include "ll/api/memory/Hook.h"
 
+#include "mc/entity/components/ActorOwnerComponent.h"
+#include "mc/entity/components/DealKineticDamageComponent.h"
 #include "mc/entity/components_json_legacy/HopperComponent.h"
+#include "mc/entity/systems/DealKineticDamageSystem.h"
 #include "mc/legacy/ActorUniqueID.h"
 #include "mc/server/ServerPlayer.h"
 #include "mc/world/actor/ActorDamageSource.h"
@@ -28,6 +31,7 @@
 #include "mc/world/effect/OozingMobEffect.h"
 #include "mc/world/effect/WeavingMobEffect.h"
 #include "mc/world/item/Item.h"
+#include "mc/world/item/enchanting/EnchantUtils.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
@@ -39,6 +43,7 @@
 #include "mc/world/level/block/actor/ChestBlockActor.h"
 #include "mc/world/level/block/actor/DispenserBlockActor.h"
 #include "mc/world/level/block/block_events/BlockPlayerInteractEvent.h"
+#include "mc/world/phys/AABB.h"
 #include <mc/deps/core/math/IRandom.h>
 #include <mc/deps/core/math/Random.h>
 
@@ -480,6 +485,44 @@ LL_TYPE_INSTANCE_HOOK(
     return slot;
 }
 
+
+// Fix [#231](https://github.com/IceBlcokMC/PLand/issues/231)
+// TODO: 精确的命中查询 (HitDetection::MeleeTargeting::getHitResults) 为 MCNAPI 符号
+// https://github.com/LiteLDev/mcapi-requests/issues/236
+// https://github.com/LiteLDev/mcapi-requests/issues/237
+LL_STATIC_HOOK(
+    KineticDamageSystemHook,
+    ll::memory::HookPriority::Normal,
+    &DealKineticDamageSystem::tryApplyDamageOrEffects,
+    void,
+    ::entt::type_list<
+        ::Include<::ActorMovementTickNeededComponent, ::MobFlagComponent>,
+        ::Exclude<::IsDeadFlagComponent>> tag,
+    ::ActorOwnerComponent&                owner,
+    ::DealKineticDamageComponent&         component
+) {
+    auto& attacker = owner.getActor();
+    if (attacker.getEntityTypeId() == ActorType::Player) {
+        auto& player = static_cast<Player&>(attacker);
+        auto& uuid   = player.getUuid();
+
+        // 以攻击者为中心的宽松包围盒 (矛最大触及 7.5 + 眼高 + 命中边际), 判定冲刺触及范围
+        auto center = attacker.getPosition();
+        AABB box{
+            center - Vec3{12, 12, 12},
+            center + Vec3{12, 12, 12}
+        };
+        auto& region = attacker.getDimensionBlockSource();
+        for (auto& handle : region.fetchEntities(&attacker, box, false, false)) {
+            auto* entity = handle.get();
+            if (entity && !hasPlayerDamagePermission(*entity, uuid)) {
+                return; // 触及范围内存在受保护实体: 本次 sweep 整体不执行
+            }
+        }
+    }
+    origin(tag, owner, component);
+}
+
 void EventInterceptor::setupHooks() {
     registerHookIf<&InterceptorConfig::Hooks::FishingHookHitHook, FishingHookHitHook>();
     registerHookIf<&InterceptorConfig::Hooks::LayEggGoalHook, LayEggGoalHook>();
@@ -505,6 +548,7 @@ void EventInterceptor::setupHooks() {
         &InterceptorConfig::Hooks::DispenserLiquidDispenseHook,
         DispenserDispenseFromHook,
         DispenserRandomSlotHook>();
+    registerHookIf<&InterceptorConfig::Hooks::KineticDamageHook, KineticDamageSystemHook>();
 }
 
 } // namespace land::internal::interceptor

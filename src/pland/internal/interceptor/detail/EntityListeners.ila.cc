@@ -133,55 +133,23 @@ void EventInterceptor::setupIlaEntityListeners() {
         });
     });
 
-    registerListenerIf<&InterceptorConfig::Listeners::MobHurtEffectBeforeEvent>([bus, registry]() {
-        return bus->emplaceListener<ila::mc::MobHurtEffectBeforeEvent>(
-            [registry](ila::mc::MobHurtEffectBeforeEvent& ev) {
-                TRACE_THIS_EVENT(ila::mc::MobHurtEffectBeforeEvent);
+    registerListenerIf<&InterceptorConfig::Listeners::MobHurtEffectBeforeEvent>([bus]() {
+        return bus->emplaceListener<ila::mc::MobHurtEffectBeforeEvent>([](ila::mc::MobHurtEffectBeforeEvent& ev) {
+            TRACE_THIS_EVENT(ila::mc::MobHurtEffectBeforeEvent);
 
-                auto& actor       = ev.self();
-                auto  sourceActor = ev.source();
+            auto& actor       = ev.self();
+            auto  sourceActor = ev.source();
 
-                if (!sourceActor || sourceActor->getEntityTypeId() != ActorType::Player) {
-                    TRACE_LOG("source is not player");
-                    return;
-                }
-                auto& player = static_cast<Player&>(sourceActor.value());
-
-                auto uuid = player.getUuid();
-                auto land = registry->getLandAt(actor.getPosition(), actor.getDimensionId());
-                if (hasPrivilege(land, uuid)) return;
-
-                if (actor.getEntityTypeId() == ActorType::Player) {
-                    if (!hasMemberOrGuestPermission<&RolePerms::allowPvP>(land, uuid)) {
-                        ev.cancel();
-                        return;
-                    }
-                }
-
-                HashedString typeName{actor.getTypeName()};
-
-                auto category = InterceptorConfig::lookupMobDynamicCategory(typeName);
-                switch (category) {
-                case InterceptorConfig::MobRecordCategory::Hostile:
-                    if (!hasMemberOrGuestPermission<&RolePerms::allowHostileDamage>(land, uuid)) {
-                        ev.cancel();
-                    }
-                    break;
-                case InterceptorConfig::MobRecordCategory::Friendly:
-                    if (!hasMemberOrGuestPermission<&RolePerms::allowFriendlyDamage>(land, uuid)) {
-                        ev.cancel();
-                    }
-                    break;
-                case InterceptorConfig::MobRecordCategory::SpecialEntity:
-                    if (!hasMemberOrGuestPermission<&RolePerms::allowSpecialEntityDamage>(land, uuid)) {
-                        ev.cancel();
-                    }
-                    break;
-                case InterceptorConfig::MobRecordCategory::Undefined:
-                    break;
-                };
+            if (!sourceActor || sourceActor->getEntityTypeId() != ActorType::Player) {
+                TRACE_LOG("source is not player");
+                return;
             }
-        );
+            auto& player = static_cast<Player&>(sourceActor.value());
+
+            if (!hasPlayerDamagePermission(actor, player.getUuid())) {
+                ev.cancel();
+            }
+        });
     });
 
     registerListenerIf<&InterceptorConfig::Listeners::ActorTriggerPressurePlateBeforeEvent>([bus, registry]() {

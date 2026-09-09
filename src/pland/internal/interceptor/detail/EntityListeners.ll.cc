@@ -48,8 +48,8 @@ void EventInterceptor::setupLLEntityListeners() {
         });
     });
 
-    registerListenerIf<&InterceptorConfig::Listeners::ActorHurtEvent>([bus, registry]() {
-        return bus->emplaceListener<ll::event::ActorHurtEvent>([registry](ll::event::ActorHurtEvent& ev) {
+    registerListenerIf<&InterceptorConfig::Listeners::ActorHurtEvent>([bus]() {
+        return bus->emplaceListener<ll::event::ActorHurtEvent>([](ll::event::ActorHurtEvent& ev) {
             TRACE_THIS_EVENT(ll::event::ActorHurtEvent);
 
             auto& actor  = ev.self();
@@ -66,38 +66,9 @@ void EventInterceptor::setupLLEntityListeners() {
             }
 
             auto& uuid = player->getUuid();
-            auto  land = registry->getLandAt(actor.getPosition(), actor.getDimensionId());
-            if (hasPrivilege(land, uuid)) return;
-
-            if (actor.getEntityTypeId() == ActorType::Player) {
-                if (!hasMemberOrGuestPermission<&RolePerms::allowPvP>(land, uuid)) {
-                    ev.cancel();
-                    return;
-                }
+            if (!hasPlayerDamagePermission(actor, uuid)) {
+                ev.cancel();
             }
-
-            HashedString typeName{actor.getTypeName()};
-
-            auto category = InterceptorConfig::lookupMobDynamicCategory(typeName);
-            switch (category) {
-            case InterceptorConfig::MobRecordCategory::Hostile:
-                if (!hasMemberOrGuestPermission<&RolePerms::allowHostileDamage>(land, uuid)) {
-                    ev.cancel();
-                }
-                break;
-            case InterceptorConfig::MobRecordCategory::Friendly:
-                if (!hasMemberOrGuestPermission<&RolePerms::allowFriendlyDamage>(land, uuid)) {
-                    ev.cancel();
-                }
-                break;
-            case InterceptorConfig::MobRecordCategory::SpecialEntity:
-                if (!hasMemberOrGuestPermission<&RolePerms::allowSpecialEntityDamage>(land, uuid)) {
-                    ev.cancel();
-                }
-                break;
-            case InterceptorConfig::MobRecordCategory::Undefined:
-                break;
-            };
         });
     });
 }

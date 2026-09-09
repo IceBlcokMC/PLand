@@ -1,9 +1,13 @@
 #pragma once
 #include "pland/PLand.h"
+#include "pland/internal/interceptor/InterceptorConfig.h"
 #include "pland/land/Config.h"
 #include "pland/land/Land.h"
 #include "pland/land/repo/LandRegistry.h"
 #include "pland/reflect/TypeName.h"
+
+#include "mc/world/actor/Actor.h"
+#include "mc/world/actor/ActorType.h"
 
 #include "EventTrace.h"
 
@@ -122,6 +126,46 @@ inline bool hasRolePermission(std::shared_ptr<Land> const& land, mce::UUID const
     TRACE_ADD_SCOPE(reflect::extractFunctionSignature(__FUNCSIG__));
     if (hasPrivilege(land, uuid)) return true;             // 领地不存在 / 管理员 / 主人 => 放行
     return hasMemberOrGuestPermission<Member>(land, uuid); // 成员 / 访客
+}
+
+/**
+ * 检查玩家是否能对 victim 造成伤害
+ * @param victim 受害者
+ * @param attackerUuid 攻击者玩家 UUID
+ * @return 是否允许伤害
+ */
+inline bool hasPlayerDamagePermission(::Actor const& victim, mce::UUID const& attackerUuid) {
+    TRACE_ADD_SCOPE(reflect::extractFunctionSignature(__FUNCSIG__));
+
+    auto& registry = PLand::getInstance().getLandRegistry();
+    auto  land     = registry.getLandAt(victim.getPosition(), victim.getDimensionId());
+    if (hasPrivilege(land, attackerUuid)) return true;
+
+    auto const& role = land->getPermTable().role;
+    if (victim.getEntityTypeId() == ActorType::Player) {
+        return hasMemberOrGuestPermission<&RolePerms::allowPvP>(land, attackerUuid);
+    }
+
+    // 快速路径：如果所有类别的伤害权限对 member 和 actor 都全开，
+    // 则无论 victim 属于哪一类，结果必定是允许伤害
+    if (role.allowHostileDamage.member && role.allowHostileDamage.actor && role.allowFriendlyDamage.member
+        && role.allowFriendlyDamage.actor && role.allowSpecialEntityDamage.member
+        && role.allowSpecialEntityDamage.actor) {
+        TRACE_LOG("all categories allowed, bypass");
+        return true;
+    }
+
+    switch (InterceptorConfig::lookupMobDynamicCategory(HashedString{victim.getTypeName()})) {
+    case InterceptorConfig::MobRecordCategory::Hostile:
+        return hasMemberOrGuestPermission<&RolePerms::allowHostileDamage>(land, attackerUuid);
+    case InterceptorConfig::MobRecordCategory::Friendly:
+        return hasMemberOrGuestPermission<&RolePerms::allowFriendlyDamage>(land, attackerUuid);
+    case InterceptorConfig::MobRecordCategory::SpecialEntity:
+        return hasMemberOrGuestPermission<&RolePerms::allowSpecialEntityDamage>(land, attackerUuid);
+    default:
+        TRACE_LOG("unknown category, bypass");
+        return true; // 未分类生物不限制伤害
+    }
 }
 
 /**

@@ -176,8 +176,10 @@ void EventInterceptor::setupLLPlayerListeners() {
                             ev.cancel();
                             return;
                         }
-                    } else if (vftable == BlastFurnaceBlock::$vftable() || vftable == FurnaceBlock::$vftable()
-                               || vftable == SmokerBlock::$vftable()) {
+                    } else if (
+                        vftable == BlastFurnaceBlock::$vftable() || vftable == FurnaceBlock::$vftable()
+                        || vftable == SmokerBlock::$vftable()
+                    ) {
                         if (!hasMemberOrGuestPermission<&RolePerms::useFurnaces>(land, uuid)) {
                             ev.cancel();
                             return;
@@ -205,49 +207,23 @@ void EventInterceptor::setupLLPlayerListeners() {
         );
     });
 
-    registerListenerIf<&InterceptorConfig::Listeners::PlayerAttackEvent>([bus, registry]() {
-        return bus->emplaceListener<ll::event::PlayerAttackEvent>([registry](ll::event::PlayerAttackEvent& ev) {
+    registerListenerIf<&InterceptorConfig::Listeners::PlayerAttackEvent>([bus]() {
+        return bus->emplaceListener<ll::event::PlayerAttackEvent>([](ll::event::PlayerAttackEvent& ev) {
             TRACE_THIS_EVENT(ll::event::PlayerAttackEvent);
 
-            auto&    player = ev.self();
-            auto&    target = ev.target();
-            BlockPos pos    = target.getPosition();
-            auto&    uuid   = player.getUuid();
+            auto& player = ev.self();
+            auto& target = ev.target();
 
-            TRACE_LOG("player={}, target={}, pos={}", player.getRealName(), target.getTypeName(), pos.toString());
+            TRACE_LOG(
+                "player={}, target={}, pos={}",
+                player.getRealName(),
+                target.getTypeName(),
+                target.getPosition().toString()
+            );
 
-            auto land = registry->getLandAt(pos, player.getDimensionId());
-            if (hasPrivilege(land, uuid)) return;
-
-            if (target.getEntityTypeId() == ActorType::Player) {
-                if (!hasMemberOrGuestPermission<&RolePerms::allowPvP>(land, uuid)) {
-                    ev.cancel();
-                    return;
-                }
+            if (!hasPlayerDamagePermission(target, player.getUuid())) {
+                ev.cancel();
             }
-
-            HashedString typeName{target.getTypeName()};
-
-            auto category = InterceptorConfig::lookupMobDynamicCategory(typeName);
-            switch (category) {
-            case InterceptorConfig::MobRecordCategory::Hostile:
-                if (!hasMemberOrGuestPermission<&RolePerms::allowHostileDamage>(land, uuid)) {
-                    ev.cancel();
-                }
-                break;
-            case InterceptorConfig::MobRecordCategory::Friendly:
-                if (!hasMemberOrGuestPermission<&RolePerms::allowFriendlyDamage>(land, uuid)) {
-                    ev.cancel();
-                }
-                break;
-            case InterceptorConfig::MobRecordCategory::SpecialEntity:
-                if (!hasMemberOrGuestPermission<&RolePerms::allowSpecialEntityDamage>(land, uuid)) {
-                    ev.cancel();
-                }
-                break;
-            case InterceptorConfig::MobRecordCategory::Undefined:
-                break;
-            };
         });
     });
     registerListenerIf<&InterceptorConfig::Listeners::PlayerPickUpItemEvent>([bus, registry]() {
