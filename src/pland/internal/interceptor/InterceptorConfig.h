@@ -31,7 +31,8 @@ struct InterceptorConfig {
         bool PlayerInteractBlockEvent             = true; // LL
         bool PlayerAttackEvent                    = true; // LL
         bool PlayerPickUpItemEvent                = true; // LL
-        bool SpawnedMobEvent                      = true; // LL (env)
+        bool SpawningMobEvent                     = true; // LL (env)
+        bool SpawnedMobEvent                      = true; // LL (env) 非自然生成的后置拦截
         bool ActorHurtEvent                       = true; // LL
         bool FireSpreadEvent                      = true; // LL (env)
         bool ActorDestroyBlockEvent               = true; // ILA (env)
