@@ -4,8 +4,13 @@
 #include "pland/internal/interceptor/helper/InterceptorHelper.h"
 
 #include "mc/server/ServerPlayer.h"
+#include "mc/util/NamedMolangScript.h"
+#include "mc/world/actor/ActorDefinition.h"
+#include "mc/world/actor/ActorDefinitionGroup.h"
 #include "mc/world/actor/ActorType.h"
+#include "mc/world/actor/spawn_category/Type.h"
 #include "mc/world/level/Level.h"
+
 
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/entity/ActorHurtEvent.h"
@@ -18,9 +23,76 @@ void EventInterceptor::setupLLEntityListeners() {
     auto registry = &PLand::getInstance().getLandRegistry();
     auto bus      = &ll::event::EventBus::getInstance();
 
+    // 依据实体定义的 vanilla 生成分组 (spawn rule 的 population_control => SpawnCategory),
+    registerListenerIf<&InterceptorConfig::Listeners::SpawningMobEvent>([bus, registry]() {
+        return bus->emplaceListener<ll::event::SpawningMobEvent>([registry](ll::event::SpawningMobEvent& ev) {
+            TRACE_THIS_EVENT(ll::event::SpawningMobEvent);
+
+            if (!ev.naturalSpawn()) {
+                TRACE_LOG("not natural spawn");
+                return; // 非自然生成 (刷怪笼/指令/组件骑手等) 不走 population 管线, 由 SpawnedMobEvent 兜底
+            }
+
+            auto* group = ev.blockSource().getLevel().getEntityDefinitions();
+            if (!group) {
+                TRACE_LOG("no entity definitions");
+                return;
+            }
+
+            // getFullName() 携带事件后缀 ("minecraft:spider<>"), 定义表的键不含事件部分
+            auto defName = std::string_view{ev.identifier().getFullName()};
+            defName      = defName.substr(0, defName.find('<'));
+
+            auto def = group->tryGetDefinition(std::string{defName});
+            if (!def.mPtr) {
+                TRACE_LOG("no definition for {}", defName);
+                return;
+            }
+
+            auto category = def.mPtr->mDescription->mSpawnCategoryDescription->mSpawnCategory;
+            TRACE_LOG("identifier={}, category={}", ev.identifier().getFullName(), magic_enum::enum_name(category));
+
+            auto land = registry->getLandAt(ev.pos(), ev.blockSource().getDimensionId());
+            if (!land) {
+                TRACE_LOG("no land at {}", ev.pos());
+                return; // 领地外 => 放行
+            }
+
+            using SpawnCategory::Type;
+            switch (category) {
+            case Type::Monster:
+                if (!hasEnvironmentPermission<&EnvironmentPerms::allowMonsterSpawn>(land)) {
+                    ev.cancel(); // 生成前取消, 不产生实体
+                }
+                break;
+            case Type::Creature:
+            case Type::WaterCreature:
+            case Type::Axolotls:
+            case Type::UndergroundWaterCreature:
+            case Type::WaterAmbient:
+                if (!hasEnvironmentPermission<&EnvironmentPerms::allowAnimalSpawn>(land)) {
+                    ev.cancel();
+                }
+                break;
+            default: // Ambient / Misc: 现有权限模型未覆盖, 放行
+                TRACE_LOG(
+                    "category not covered: {}, mob={}",
+                    magic_enum::enum_name(category),
+                    ev.identifier().getFullName()
+                );
+                break;
+            }
+        });
+    });
+
+    // 兜底层: 非自然生成 (刷怪笼/组件骑手等) 的后置拦截
     registerListenerIf<&InterceptorConfig::Listeners::SpawnedMobEvent>([bus, registry]() {
         return bus->emplaceListener<ll::event::SpawnedMobEvent>([registry](ll::event::SpawnedMobEvent& ev) {
             TRACE_THIS_EVENT(ll::event::SpawnedMobEvent);
+
+            if (ev.naturalSpawn()) {
+                return; // 自然生成由 SpawningMobEvent 层负责
+            }
 
             auto mob = ev.mob();
             if (!mob) {
