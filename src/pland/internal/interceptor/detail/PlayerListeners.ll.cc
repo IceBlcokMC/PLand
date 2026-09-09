@@ -23,9 +23,11 @@
 #include "mc/world/item/Item.h"
 #include "mc/world/item/ItemTag.h"
 #include "mc/world/item/ShovelItem.h"
+#include "mc/world/level/BlockSource.h"
 #include "mc/world/level/block/BeaconBlock.h"
 #include "mc/world/level/block/BedBlock.h"
 #include "mc/world/level/block/BlastFurnaceBlock.h"
+#include "mc/world/level/block/BlockType.h"
 #include "mc/world/level/block/FurnaceBlock.h"
 #include "mc/world/level/block/HangingSignBlock.h"
 #include "mc/world/level/block/ShulkerBoxBlock.h"
@@ -68,6 +70,19 @@ void EventInterceptor::setupLLPlayerListeners() {
                 auto land = registry->getLandAt(pos, player.getDimensionId());
                 if (!hasRolePermission<&RolePerms::allowPlace>(land, player.getUuid())) {
                     ev.cancel();
+                    return;
+                }
+
+                // https://github.com/IceBlcokMC/PLand/issues/244
+                // Fix [#244]: 放置到可替换方块 (草/雪层/水等非固体) 时, 目标位置是点击位置本身
+                // 而非 face relative 位, 领地边缘内侧的可替换方块可被越权替换, 需同样校验
+                auto& clickedBlock = player.getDimensionBlockSource().getBlock(ev.pos());
+                if (!clickedBlock.getBlockType().mSolid) {
+                    TRACE_LOG("replaceable clicked block at {}", ev.pos().toString());
+                    auto clickedLand = registry->getLandAt(ev.pos(), player.getDimensionId());
+                    if (!hasRolePermission<&RolePerms::allowPlace>(clickedLand, player.getUuid())) {
+                        ev.cancel();
+                    }
                 }
             }
         );
