@@ -127,10 +127,41 @@ void EventInterceptor::setupLLEntityListeners() {
             auto& actor  = ev.self();
             auto& source = ev.source();
 
+            TRACE_LOG(
+                "actor={}, source={}, cause={}",
+                actor.getTypeName(),
+                magic_enum::enum_name(source.getEntityType()),
+                magic_enum::enum_name(source.getCause())
+            );
+
             if (source.getEntityType() != ActorType::Player) {
                 TRACE_LOG("source is not player");
+
+                // Fix [#245](https://github.com/IceBlcokMC/PLand/issues/245)
+                // 焰火火箭爆炸的范围伤害, 其 ActorDamageByActorSource 将"攻击者"归属为
+                // 火箭实体本身 (cause=Fireworks) 而非发射玩家, 归因回发射者后逐受害者拦截
+                if (source.getCause() == ::SharedTypes::Legacy::ActorDamageCause::Fireworks) {
+                    TRACE_LOG("source is firework rocket, checking source owner");
+                    auto* rocket = actor.getLevel().fetchEntity(source.getEntityUniqueID(), false);
+                    if (rocket) {
+                        TRACE_LOG("rocket found, checking rocket owner, rocket={}", rocket->getTypeName());
+                        // TODO: 这里获取不到 Owner
+                        auto* owner = rocket->getOwner();
+                        if (owner && owner->getEntityTypeId() == ActorType::Player) {
+                            auto& shooter = static_cast<Player&>(*owner);
+                            TRACE_LOG(
+                                "rocket owner is player, checking player damage permission, player={}",
+                                shooter.getRealName()
+                            );
+                            if (!hasPlayerDamagePermission(actor, shooter.getUuid())) {
+                                ev.cancel();
+                            }
+                        }
+                    }
+                }
                 return;
             }
+
             auto player = actor.getLevel().getPlayer(source.getEntityUniqueID());
             if (!player) {
                 TRACE_LOG("source player not found");
