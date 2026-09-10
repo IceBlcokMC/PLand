@@ -79,6 +79,7 @@ struct InterceptorConfig {
         bool FallingBlockActorTickHook{true};      // 重力方块下落
         bool DispenserLiquidDispenseHook{true};    // 发射器倾倒液体(边界)
         bool KineticDamageHook{true};              // 矛冲刺命中(动能伤害)
+        bool FireworksDamageSourceHook{true};      // 焰火火箭伤害归因
     } hooks;
 
     struct Rules {

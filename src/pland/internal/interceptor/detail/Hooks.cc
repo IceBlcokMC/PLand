@@ -15,6 +15,7 @@
 #include "mc/entity/systems/DealKineticDamageSystem.h"
 #include "mc/legacy/ActorUniqueID.h"
 #include "mc/server/ServerPlayer.h"
+#include "mc/world/actor/ActorDamageByActorSource.h"
 #include "mc/world/actor/ActorDamageSource.h"
 #include "mc/world/actor/ActorHurtResult.h"
 #include "mc/world/actor/ActorType.h"
@@ -24,6 +25,7 @@
 #include "mc/world/actor/global/LightningBolt.h"
 #include "mc/world/actor/item/ExperienceOrb.h"
 #include "mc/world/actor/item/FallingBlockActor.h"
+#include "mc/world/actor/item/FireworksRocketActor.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/actor/projectile/AbstractArrow.h"
 #include "mc/world/actor/projectile/Arrow.h"
@@ -46,6 +48,7 @@
 #include "mc/world/phys/AABB.h"
 #include <mc/deps/core/math/IRandom.h>
 #include <mc/deps/core/math/Random.h>
+
 
 #include <absl/container/flat_hash_map.h>
 
@@ -523,6 +526,34 @@ LL_STATIC_HOOK(
     origin(tag, owner, component);
 }
 
+// Fix [#245](https://github.com/IceBlcokMC/PLand/issues/245)
+// 焰火火箭爆炸的范围伤害, 其 ActorDamageByActorSource 将"攻击者"归属为火箭实体本身
+// (cause=Fireworks) 而非发射玩家, ActorHurtEvent 的玩家归属检查被绕过。
+// https://bugs.mojang.com/browse/MCPE/issues/MCPE-237202
+LL_TYPE_INSTANCE_HOOK(
+    FireworksDamageSourceHook,
+    ll::memory::HookPriority::Normal,
+    ActorDamageByActorSource,
+    &ActorDamageByActorSource::$ctor,
+    void*,
+    ::Actor const&                          actor,
+    ::SharedTypes::Legacy::ActorDamageCause cause
+) {
+    auto ret = origin(actor, cause);
+
+    void** vftable = *reinterpret_cast<void** const*>(&actor);
+    if (vftable == FireworksRocketActor::$vftable()) {
+        auto* owner = actor.getOwner();
+        if (owner && owner->getEntityTypeId() == ActorType::Player) {
+            auto& player         = static_cast<Player&>(*owner);
+            this->mEntityID      = player.getOrCreateUniqueID();
+            this->mEntityType    = ActorType::Player;
+            this->mEntityNameTag = player.getRealName();
+        }
+    }
+    return ret;
+}
+
 void EventInterceptor::setupHooks() {
     registerHookIf<&InterceptorConfig::Hooks::FishingHookHitHook, FishingHookHitHook>();
     registerHookIf<&InterceptorConfig::Hooks::LayEggGoalHook, LayEggGoalHook>();
@@ -549,6 +580,7 @@ void EventInterceptor::setupHooks() {
         DispenserDispenseFromHook,
         DispenserRandomSlotHook>();
     registerHookIf<&InterceptorConfig::Hooks::KineticDamageHook, KineticDamageSystemHook>();
+    registerHookIf<&InterceptorConfig::Hooks::FireworksDamageSourceHook, FireworksDamageSourceHook>();
 }
 
 } // namespace land::internal::interceptor
