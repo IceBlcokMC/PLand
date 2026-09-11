@@ -15,10 +15,12 @@
 #include "pland/land/LandTemplatePermTable.h"
 #include "pland/land/observer/LandEventPublisher.h"
 #include "pland/land/repo/LandContext.h"
+#include "pland/land/repo/PlayerSettings.h"
 #include "pland/land/validator/LandCreateValidator.h"
 #include "pland/reflect/SerializeType.h"
 #include "pland/utils/JsonUtil.h"
 #include "pland/utils/TimeUtils.h"
+
 
 #include "ll/api/Expected.h"
 #include "ll/api/coro/CoroTask.h"
@@ -633,6 +635,8 @@ PlayerSettings& LandRegistry::getOrCreatePlayerSettings(mce::UUID const& uuid) {
     }
     return iter->second;
 }
+
+void LandRegistry::savePlayerSettings() { impl->notifyMetaDirty(); }
 
 LandTemplatePermTable& LandRegistry::getLandTemplatePermTable() const { return *impl->mLandTemplatePermTable; }
 

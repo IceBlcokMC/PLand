@@ -3,6 +3,7 @@
 #include "pland/enums/LandRole.h"
 
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -19,11 +20,7 @@ class Land;
 struct LandContext;
 class PLand;
 
-struct PlayerSettings {
-    bool showEnterLandTitle{true};     // 是否显示进入领地提示
-    bool showBottomContinuedTip{true}; // 是否持续显示底部提示
-};
-
+struct PlayerSettings;
 class LandTemplatePermTable;
 
 class LandRegistry final {
@@ -59,6 +56,8 @@ public:
     LDNDAPI std::vector<mce::UUID> getOperators() const;
 
     LDNDAPI PlayerSettings& getOrCreatePlayerSettings(mce::UUID const& uuid);
+
+    LDAPI void savePlayerSettings();
 
     LDNDAPI LandTemplatePermTable& getLandTemplatePermTable() const;
 

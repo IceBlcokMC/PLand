@@ -6,10 +6,10 @@ class Player;
 
 namespace land {
 struct LandPermTable;
-namespace gui {
+namespace gui ::inline legacy {
 
-struct PermTableEditor {
-    PermTableEditor() = delete;
+struct LegacyPermTableEditor {
+    LegacyPermTableEditor() = delete;
 
     using Callback = std::function<void(Player& player, LandPermTable newTable)>;
 
@@ -20,5 +20,5 @@ private:
     struct Impl;
 };
 
-} // namespace gui
+} // namespace gui::inline legacy
 } // namespace land
