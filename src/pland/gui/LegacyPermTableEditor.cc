@@ -1,4 +1,4 @@
-#include "PermTableEditor.h"
+#include "LegacyPermTableEditor.h"
 #include "utils/BackUtils.h"
 
 #include "pland/land/repo/LandContext.h"
@@ -10,9 +10,9 @@
 #include <nlohmann/json.hpp>
 
 namespace land {
-namespace gui {
+namespace gui ::inline legacy {
 
-struct PermTableEditor::Impl : std::enable_shared_from_this<Impl> {
+struct LegacyPermTableEditor::Impl : std::enable_shared_from_this<Impl> {
     enum class EditType : uint8_t { Environment, Member, Actor };
     Callback      mCallback;
     LandPermTable mTable;
@@ -107,7 +107,7 @@ struct PermTableEditor::Impl : std::enable_shared_from_this<Impl> {
     }
 };
 
-void PermTableEditor::sendTo(
+void LegacyPermTableEditor::sendTo(
     Player&                              player,
     LandPermTable const&                 table,
     Callback                             callback,
@@ -143,5 +143,5 @@ void PermTableEditor::sendTo(
     f.sendTo(player);
 }
 
-} // namespace gui
+} // namespace gui::inline legacy
 } // namespace land
