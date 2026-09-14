@@ -39,8 +39,9 @@ void EventInterceptor::setupLLEntityListeners() {
                 return;
             }
 
-            // getFullName() 携带事件后缀 ("minecraft:spider<>"), 定义表的键不含事件部分
-            auto defName = std::string_view{ev.identifier().getFullName()};
+            // mFullName 携带事件后缀 ("minecraft:spider<>"), 定义表的键不含事件部分
+            auto const& fullName = ev.identifier().mFullName.get();
+            auto        defName  = std::string_view{fullName};
             defName      = defName.substr(0, defName.find('<'));
 
             auto def = group->tryGetDefinition(std::string{defName});
@@ -50,7 +51,7 @@ void EventInterceptor::setupLLEntityListeners() {
             }
 
             auto category = def.mPtr->mDescription->mSpawnCategoryDescription->mSpawnCategory;
-            TRACE_LOG("identifier={}, category={}", ev.identifier().getFullName(), magic_enum::enum_name(category));
+            TRACE_LOG("identifier={}, category={}", fullName, magic_enum::enum_name(category));
 
             auto land = registry->getLandAt(ev.pos(), ev.blockSource().getDimensionId());
             if (!land) {
@@ -78,7 +79,7 @@ void EventInterceptor::setupLLEntityListeners() {
                 TRACE_LOG(
                     "category not covered: {}, mob={}",
                     magic_enum::enum_name(category),
-                    ev.identifier().getFullName()
+                    fullName
                 );
                 break;
             }
