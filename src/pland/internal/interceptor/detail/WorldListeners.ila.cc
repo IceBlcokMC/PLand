@@ -172,18 +172,11 @@ void EventInterceptor::setupIlaWorldListeners() {
         return bus->emplaceListener<ila::mc::MossGrowthBeforeEvent>([registry](ila::mc::MossGrowthBeforeEvent& ev) {
             auto& blockSource = ev.blockSource();
             auto& blockPos    = ev.pos();
-            int   rx          = ev.xRadius();
-            int   rz          = ev.zRadius();
 
-            auto minPos = Vec3(blockPos.x - rx, blockPos.y - 1, blockPos.z - rz);
-            auto maxPos = Vec3(blockPos.x + rx, blockPos.y + 1, blockPos.z + rz);
-
-            auto lds = registry->getLandAt(minPos, maxPos, blockSource.getDimensionId());
-            for (auto const& land : lds) {
-                if (!hasEnvironmentPermission<&EnvironmentPerms::allowMossGrowth>(land)) {
-                    ev.cancel();
-                    return;
-                }
+            // IListenAttentively 0.14 no longer exposes the patch radii.
+            auto land = registry->getLandAt(blockPos, blockSource.getDimensionId());
+            if (!hasEnvironmentPermission<&EnvironmentPerms::allowMossGrowth>(land)) {
+                ev.cancel();
             }
         });
     });

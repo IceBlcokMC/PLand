@@ -26,10 +26,14 @@
 #include "mc/world/level/block/BeaconBlock.h"
 #include "mc/world/level/block/BedBlock.h"
 #include "mc/world/level/block/BlastFurnaceBlock.h"
+#include "mc/world/level/block/ButtonBlock.h"
+#include "mc/world/level/block/DoorBlock.h"
+#include "mc/world/level/block/FenceGateBlock.h"
 #include "mc/world/level/block/FurnaceBlock.h"
 #include "mc/world/level/block/HangingSignBlock.h"
 #include "mc/world/level/block/ShulkerBoxBlock.h"
 #include "mc/world/level/block/SmokerBlock.h"
+#include "mc/world/level/block/TrapDoorBlock.h"
 #include "pland/internal/interceptor/helper/VanillaItemTags.h"
 
 
@@ -158,17 +162,17 @@ void EventInterceptor::setupLLPlayerListeners() {
                 if (auto block = ev.block()) {
                     auto&  legacyBlock = block->getBlockType();
                     void** vftable     = *reinterpret_cast<void** const*>(&legacyBlock);
-                    if (legacyBlock.isButtonBlock()) {
+                    if (vftable == ButtonBlock::$vftable()) {
                         if (!hasMemberOrGuestPermission<&RolePerms::useButton>(land, uuid)) {
                             ev.cancel();
                             return;
                         }
-                    } else if (legacyBlock.isDoorBlock()) {
+                    } else if (vftable == DoorBlock::$vftable()) {
                         if (!hasMemberOrGuestPermission<&RolePerms::useDoor>(land, uuid)) {
                             ev.cancel();
                             return;
                         }
-                    } else if (legacyBlock.isFenceGateBlock()) {
+                    } else if (vftable == FenceGateBlock::$vftable()) {
                         if (!hasMemberOrGuestPermission<&RolePerms::useFenceGate>(land, uuid)) {
                             ev.cancel();
                             return;
@@ -178,7 +182,7 @@ void EventInterceptor::setupLLPlayerListeners() {
                             ev.cancel();
                             return;
                         }
-                    } else if (legacyBlock.mIsTrapdoor) {
+                    } else if (vftable == TrapDoorBlock::$vftable()) {
                         if (!hasMemberOrGuestPermission<&RolePerms::useTrapdoor>(land, uuid)) {
                             ev.cancel();
                             return;
