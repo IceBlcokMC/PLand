@@ -2,24 +2,19 @@
   "format_version": 3,
   "format_uuid": "289f771f-2c9a-4d73-9f3f-8492495a924d",
   "tooth": "github.com/engsr6982/PLand",
-  "version": "0.22.2",
+  "version": "0.23.0",
   "info": {
     "name": "PLand",
     "description": "基于 LeviLamina 的领地系统 / A land system based on LeviLamina",
-    "tags": [
-      "type:mod",
-      "platform:levilamina",
-      "land",
-      "pland"
-    ],
+    "tags": ["type:mod", "platform:levilamina", "land", "pland"],
     "avatar_url": ""
   },
   "variants": [
     {
       "platform": "win-x64",
       "dependencies": {
-        "github.com/LiteLDev/LeviLamina": ">=26.20.7",
-        "github.com/MiracleForest/iListenAttentively-Release": "0.13.*"
+        "github.com/LiteLDev/LeviLamina": ">=26.40.0",
+        "github.com/LiteLDev/iListenAttentively": "0.14.*"
       },
       "assets": [
         {
@@ -41,8 +36,8 @@
       "label": "headless",
       "platform": "win-x64",
       "dependencies": {
-        "github.com/LiteLDev/LeviLamina": ">=26.20.7",
-        "github.com/MiracleForest/iListenAttentively-Release": "0.13.*"
+        "github.com/LiteLDev/LeviLamina": ">=26.40.0",
+        "github.com/LiteLDev/iListenAttentively": "0.14.*"
       },
       "assets": [
         {
