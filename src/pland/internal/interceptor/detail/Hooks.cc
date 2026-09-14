@@ -30,7 +30,7 @@
 #include "mc/world/actor/projectile/ThrownTrident.h"
 #include "mc/world/effect/OozingMobEffect.h"
 #include "mc/world/effect/WeavingMobEffect.h"
-#include "mc/world/item/Item.h"
+#include "mc/world/item/BucketItem.h"
 #include "mc/world/item/enchanting/EnchantUtils.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
@@ -41,7 +41,6 @@
 #include "mc/world/level/block/FireBlock.h"
 #include "mc/world/level/block/LecternBlock.h"
 #include "mc/world/level/block/actor/ChestBlockActor.h"
-#include "mc/world/level/block/actor/DispenserBlockActor.h"
 #include "mc/world/level/block/block_events/BlockPlayerInteractEvent.h"
 #include "mc/world/phys/AABB.h"
 #include <mc/deps/core/math/IRandom.h>
@@ -425,19 +424,13 @@ LL_TYPE_INSTANCE_HOOK(FallingBlockActorRemoveHook, ll::memory::HookPriority::Nor
 
 // Fix [#231](https://github.com/IceBlcokMC/PLand/issues/231)
 namespace {
-thread_local bool tBlockCurrentDispense = false; // dispenseFrom -> getRandomSlot 同步调用栈内传递拦截标记
+thread_local bool tBlockCurrentDispense = false; // dispenseFrom -> BucketItem::$dispense 同步调用栈内传递拦截标记
 
 struct BlockDispenseGuard {
     BlockDispenseGuard() { tBlockCurrentDispense = true; }
     ~BlockDispenseGuard() { tBlockCurrentDispense = false; }
 };
 
-inline bool isLiquidBucketItem(::ItemStack const& stack) {
-    if (auto item = stack.getItem()) {
-        return item->isBucket();
-    }
-    return false;
-}
 } // namespace
 
 LL_TYPE_INSTANCE_HOOK(
@@ -465,24 +458,27 @@ LL_TYPE_INSTANCE_HOOK(
         && targetLand->getAABB().isOnInnerBoundary(targetPos) // 发射目标位于领地内边界
     ) {
         BlockDispenseGuard guard;
-        origin(region, pos); // 具体是否拦截由 getRandomSlot 按选中的物品判定
+        origin(region, pos); // 具体是否拦截由 BucketItem::$dispense 按选中的物品判定
         return;
     }
     origin(region, pos);
 }
 LL_TYPE_INSTANCE_HOOK(
-    DispenserRandomSlotHook,
+    BucketDispenseHook,
     ll::memory::HookPriority::Normal,
-    DispenserBlockActor,
-    &DispenserBlockActor::getRandomSlot,
-    int,
-    ::Random& random
+    BucketItem,
+    &BucketItem::$dispense,
+    bool,
+    ::BlockSource& region,
+    ::Container&   container,
+    int            slot,
+    ::Vec3 const&  pos,
+    uchar          face
 ) {
-    auto slot = origin(random);
-    if (slot >= 0 && tBlockCurrentDispense && isLiquidBucketItem(this->getItem(slot))) {
-        return -1; // 随机选中的是液体桶: 以"无可用槽位"语义取消本次发射
+    if (tBlockCurrentDispense) {
+        return false;
     }
-    return slot;
+    return origin(region, container, slot, pos, face);
 }
 
 
@@ -501,19 +497,19 @@ LL_STATIC_HOOK(
     ::ActorOwnerComponent&                owner,
     ::DealKineticDamageComponent&         component
 ) {
-    auto& attacker = owner.getActor();
-    if (attacker.getEntityTypeId() == ActorType::Player) {
-        auto& player = static_cast<Player&>(attacker);
+    auto* attacker = owner.mActor.get();
+    if (attacker && attacker->getEntityTypeId() == ActorType::Player) {
+        auto& player = static_cast<Player&>(*attacker);
         auto& uuid   = player.getUuid();
 
         // 以攻击者为中心的宽松包围盒 (矛最大触及 7.5 + 眼高 + 命中边际), 判定冲刺触及范围
-        auto center = attacker.getPosition();
+        auto center = attacker->getPosition();
         AABB box{
             center - Vec3{12, 12, 12},
             center + Vec3{12, 12, 12}
         };
-        auto& region = attacker.getDimensionBlockSource();
-        for (auto& handle : region.fetchEntities(&attacker, box, false, false)) {
+        auto& region = attacker->getDimensionBlockSource();
+        for (auto& handle : region.fetchEntities(attacker, box, false, false)) {
             auto* entity = handle.get();
             if (entity && !hasPlayerDamagePermission(*entity, uuid)) {
                 return; // 触及范围内存在受保护实体: 本次 sweep 整体不执行
@@ -547,7 +543,7 @@ void EventInterceptor::setupHooks() {
     registerHookIf<
         &InterceptorConfig::Hooks::DispenserLiquidDispenseHook,
         DispenserDispenseFromHook,
-        DispenserRandomSlotHook>();
+        BucketDispenseHook>();
     registerHookIf<&InterceptorConfig::Hooks::KineticDamageHook, KineticDamageSystemHook>();
 }
 
