@@ -12,14 +12,13 @@
 #include "ila/event/minecraft/world/RedstoneUpdateEvent.h"
 #include "ila/event/minecraft/world/SculkBlockGrowthEvent.h"
 #include "ila/event/minecraft/world/WitherDestroyEvent.h"
-#include "ila/event/minecraft/world/level/block/BlockFallEvent.h"
 #include "ila/event/minecraft/world/level/block/DragonEggBlockTeleportEvent.h"
 #include "ila/event/minecraft/world/level/block/LiquidFlowEvent.h"
 #include "ila/event/minecraft/world/level/block/MossGrowthEvent.h"
-#include "ila/event/minecraft/world/level/block/SculkCatalystAbsorbExperienceEvent.h"
 #include "ila/event/minecraft/world/level/block/SculkSpreadEvent.h"
 
 #include "mc/world/level/Explosion.h"
+#include "mc/world/level/dimension/DimensionType.h"
 #include "mc/world/phys/AABB.h"
 
 namespace land::internal::interceptor {
@@ -130,19 +129,6 @@ void EventInterceptor::setupIlaWorldListeners() {
                 }
             }
         );
-    });
-
-    registerListenerIf<&InterceptorConfig::Listeners::BlockFallBeforeEvent>([bus, registry]() {
-        return bus->emplaceListener<ila::mc::BlockFallBeforeEvent>([registry](ila::mc::BlockFallBeforeEvent& ev) {
-            auto& blockSource = ev.blockSource();
-            auto& blockPos    = ev.pos();
-
-            auto land = registry->getLandAt(blockPos, blockSource.getDimensionId());
-            if (land && land->getAABB().isAboveLand(blockPos)
-                && !hasEnvironmentPermission<&EnvironmentPerms::allowBlockFall>(land)) {
-                ev.cancel();
-            }
-        });
     });
 
     registerListenerIf<&InterceptorConfig::Listeners::WitherDestroyBeforeEvent>([bus, registry]() {
