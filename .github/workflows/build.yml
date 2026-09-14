@@ -64,3 +64,21 @@ jobs:
           name: ${{ github.event.repository.name }}-windows-x64-${{ matrix.devtool == 'y' && 'devtool' || 'headless' }}-${{ github.sha }}
           path: |
             bin/
+
+  build-gate:
+    name: build-gate
+    needs: [changes, build]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Validate build status
+        run: |
+          SRC_CHANGE=${{ needs.changes.outputs.src }}
+          EVENT=${{ github.event_name }}
+          if [[ "$SRC_CHANGE" == "true" || "$EVENT" == "workflow_dispatch" ]]; then
+            if [[ "${{ needs.build.result }}" != "success" ]]; then
+              echo "❌ Build matrix failed/cancelled"
+              exit 1
+            fi
+          fi
+          echo "✅ Check passed: no source changes or build succeeded"
