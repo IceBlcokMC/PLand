@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-09-14
+
 ### 🐛 问题修复
 
 - 修复重力方块掉落权限 [#242](https://github.com/IceBlcokMC/PLand/issues/242) @engsr6982
@@ -17,7 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🧩 其他改动
 
-- 改进生物生成拦截判定 @engsr6982
+- 适配 Bedrock Sverver v1.26.40 (LeviLamina v26.40.x) @yangyangzhong82
+- 改进生物生成拦截判定 @engsr6982 
+- 改正tooth.json的仓库链接错误  [#246](https://github.com/IceBlcokMC/PLand/pull/246)@ShrBox
 
 ## [0.22.2] - 2026-09-02
 
