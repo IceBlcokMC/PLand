@@ -21,7 +21,7 @@ namespace land::drawer::detail {
 
 class ParticleSpawner {
     GeoId                                  mId;
-    std::vector<SpawnParticleEffectPacket> mPackets;
+    std::vector<std::unique_ptr<SpawnParticleEffectPacket>> mPackets;
 
     static GeoId getNextGeoId() {
         static uint64 id{1};
@@ -32,7 +32,12 @@ class ParticleSpawner {
         auto points = aabb.getBorder();
         mPackets.reserve(points.size());
         for (auto& point : points) {
-            mPackets.emplace_back(Vec3{point.x + 0.5, point.y + 0.5, point.z + 0.5}, particle, dimId, std::nullopt);
+            mPackets.emplace_back(std::make_unique<SpawnParticleEffectPacket>(
+                Vec3{point.x + 0.5, point.y + 0.5, point.z + 0.5},
+                particle,
+                dimId,
+                std::nullopt
+            ));
         }
     }
 
@@ -54,7 +59,7 @@ public:
 
     void tick(Player& player) {
         for (auto& packet : mPackets) {
-            packet.sendTo(player);
+            packet->sendTo(player);
         }
     }
 };

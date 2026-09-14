@@ -2,19 +2,16 @@ add_rules("mode.debug", "mode.release")
 
 add_repositories("liteldev-repo https://github.com/LiteLDev/xmake-repo.git")
 add_repositories("iceblcokmc https://github.com/IceBlcokMC/xmake-repo.git")
-add_repositories("miracleforest-repo https://github.com/MiracleForest/xmake-repo.git")
 add_repositories("engsr6982-repo https://github.com/engsr6982/xmake-repo.git")
 
 -- LeviMc(LiteLDev)
-add_requires("levilamina 26.20.7", {configs = {target_type = "server"}})
+add_requires("levilamina 72475af862e197d0683a054a4384083959d3c778", {configs = {target_type = "server"}})
 add_requires("levibuildscript")
-
--- MiracleForest
-add_requires("ilistenattentively 0.13.0")
+add_requires("ilistenattentively 0.14.0")
 
 -- IceBlockMC
-add_requires("ll-bstats 0.5.0")
-add_requires("economy_bridge 0.5.0")
+add_requires("ll-bstats 0.6.0")
+add_requires("economy_bridge 0.6.0")
 
 -- xmake
 add_requires("exprtk 0.0.3")

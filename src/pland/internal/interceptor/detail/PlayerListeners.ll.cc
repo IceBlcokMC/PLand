@@ -27,11 +27,14 @@
 #include "mc/world/level/block/BeaconBlock.h"
 #include "mc/world/level/block/BedBlock.h"
 #include "mc/world/level/block/BlastFurnaceBlock.h"
-#include "mc/world/level/block/BlockType.h"
+#include "mc/world/level/block/ButtonBlock.h"
+#include "mc/world/level/block/DoorBlock.h"
+#include "mc/world/level/block/FenceGateBlock.h"
 #include "mc/world/level/block/FurnaceBlock.h"
 #include "mc/world/level/block/HangingSignBlock.h"
 #include "mc/world/level/block/ShulkerBoxBlock.h"
 #include "mc/world/level/block/SmokerBlock.h"
+#include "mc/world/level/block/TrapDoorBlock.h"
 #include "pland/internal/interceptor/helper/VanillaItemTags.h"
 
 
@@ -64,7 +67,29 @@ void EventInterceptor::setupLLPlayerListeners() {
                 TRACE_THIS_EVENT(ll::event::PlayerPlacingBlockEvent);
 
                 auto& player = ev.self();
-                auto  pos    = ev.pos().relative(ev.face(), 1);
+                auto  pos    = ev.pos();
+                switch (ev.face()) {
+                case 0:
+                    --pos.y;
+                    break;
+                case 1:
+                    ++pos.y;
+                    break;
+                case 2:
+                    --pos.z;
+                    break;
+                case 3:
+                    ++pos.z;
+                    break;
+                case 4:
+                    --pos.x;
+                    break;
+                case 5:
+                    ++pos.x;
+                    break;
+                default:
+                    break;
+                }
                 TRACE_LOG("player={}, pos={}", player.getRealName(), pos.toString());
 
                 auto land = registry->getLandAt(pos, player.getDimensionId());
@@ -102,7 +127,7 @@ void EventInterceptor::setupLLPlayerListeners() {
                 auto land = registry->getLandAt(pos, player.getDimensionId());
                 if (hasPrivilege(land, uuid)) return;
 
-                if (auto item = ev.item().getItem()) {
+                if (auto item = ev.item().mItem.get()) {
                     void** vftable = *reinterpret_cast<void** const*>(item);
                     if (vftable == BucketItem::$vftable()) {
                         if (!hasMemberOrGuestPermission<&RolePerms::useBucket>(land, uuid)) {
@@ -151,17 +176,17 @@ void EventInterceptor::setupLLPlayerListeners() {
                 if (auto block = ev.block()) {
                     auto&  legacyBlock = block->getBlockType();
                     void** vftable     = *reinterpret_cast<void** const*>(&legacyBlock);
-                    if (legacyBlock.isButtonBlock()) {
+                    if (vftable == ButtonBlock::$vftable()) {
                         if (!hasMemberOrGuestPermission<&RolePerms::useButton>(land, uuid)) {
                             ev.cancel();
                             return;
                         }
-                    } else if (legacyBlock.isDoorBlock()) {
+                    } else if (vftable == DoorBlock::$vftable()) {
                         if (!hasMemberOrGuestPermission<&RolePerms::useDoor>(land, uuid)) {
                             ev.cancel();
                             return;
                         }
-                    } else if (legacyBlock.isFenceGateBlock()) {
+                    } else if (vftable == FenceGateBlock::$vftable()) {
                         if (!hasMemberOrGuestPermission<&RolePerms::useFenceGate>(land, uuid)) {
                             ev.cancel();
                             return;
@@ -171,7 +196,7 @@ void EventInterceptor::setupLLPlayerListeners() {
                             ev.cancel();
                             return;
                         }
-                    } else if (legacyBlock.mIsTrapdoor) {
+                    } else if (vftable == TrapDoorBlock::$vftable()) {
                         if (!hasMemberOrGuestPermission<&RolePerms::useTrapdoor>(land, uuid)) {
                             ev.cancel();
                             return;
@@ -264,7 +289,7 @@ void EventInterceptor::setupLLPlayerListeners() {
 
             auto& player    = ev.self();
             auto& itemStack = ev.item();
-            auto  item      = itemStack.getItem();
+            auto  item      = itemStack.mItem.get();
             if (!item) {
                 TRACE_LOG("item is nullptr");
                 return;
