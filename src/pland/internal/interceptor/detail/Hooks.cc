@@ -9,7 +9,11 @@
 #include "ll/api/event/entity/ActorHurtEvent.h"
 #include "ll/api/memory/Hook.h"
 
+#include "mc/entity/components/ActorOwnerComponent.h"
+#include "mc/entity/components/DealKineticDamageComponent.h"
 #include "mc/entity/components_json_legacy/HopperComponent.h"
+#include "mc/entity/systems/DealKineticDamageSystem.h"
+#include "mc/legacy/ActorUniqueID.h"
 #include "mc/server/ServerPlayer.h"
 #include "mc/world/actor/ActorDamageSource.h"
 #include "mc/world/actor/ActorHurtResult.h"
@@ -19,21 +23,30 @@
 #include "mc/world/actor/ai/goal/LayEggGoal.h"
 #include "mc/world/actor/global/LightningBolt.h"
 #include "mc/world/actor/item/ExperienceOrb.h"
+#include "mc/world/actor/item/FallingBlockActor.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/actor/projectile/AbstractArrow.h"
 #include "mc/world/actor/projectile/Arrow.h"
 #include "mc/world/actor/projectile/ThrownTrident.h"
 #include "mc/world/effect/OozingMobEffect.h"
 #include "mc/world/effect/WeavingMobEffect.h"
+#include "mc/world/item/BucketItem.h"
+#include "mc/world/item/enchanting/EnchantUtils.h"
+#include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/block/BigDripleafBlock.h"
+#include "mc/world/level/block/DispenserBlock.h"
 #include "mc/world/level/block/FarmBlock.h"
 #include "mc/world/level/block/FireBlock.h"
 #include "mc/world/level/block/LecternBlock.h"
 #include "mc/world/level/block/actor/ChestBlockActor.h"
 #include "mc/world/level/block/block_events/BlockPlayerInteractEvent.h"
+#include "mc/world/phys/AABB.h"
 #include <mc/deps/core/math/IRandom.h>
+#include <mc/deps/core/math/Random.h>
+
+#include <absl/container/flat_hash_map.h>
 
 namespace land::internal::interceptor {
 
@@ -365,6 +378,147 @@ LL_TYPE_INSTANCE_HOOK(
     origin(region, pos, entity);
 }
 
+// Fix [#242](https://github.com/IceBlcokMC/PLand/issues/242)
+// 仅拦截"自领地外坠入领地"的下落实体, 领地内起始的下落保持原版行为
+namespace {
+// key: ActorUniqueID::rawID -> value: 实体创建时的起始坐标
+absl::flat_hash_map<int64_t, BlockPos> sFallingBlockStartCache;
+} // namespace
+
+LL_TYPE_INSTANCE_HOOK(
+    FallingBlockActorTickHook,
+    ll::memory::HookPriority::Normal,
+    FallingBlockActor,
+    &FallingBlockActor::$normalTick,
+    void
+) {
+    auto blockPos = BlockPos{this->getPosition()};
+    auto uid      = this->getOrCreateUniqueID().rawID;
+
+    // 记录起始坐标
+    auto [iter, inserted] = sFallingBlockStartCache.try_emplace(uid, blockPos);
+    auto const& startPos  = iter->second;
+
+    auto& registry = PLand::getInstance().getLandRegistry();
+    // 实体处于领地内时判定下落来源
+    if (auto land = registry.getLandAt(blockPos, this->getDimensionId());
+        land && !land->getAABB().isAboveLand(blockPos)) {
+        auto const& aabb = land->getAABB();
+        // 下落是否起始于同一领地
+        bool startedInside = aabb.hasPos(startPos, land->is3D()) && !aabb.isAboveLand(startPos);
+        if (!startedInside && !hasEnvironmentPermission<&EnvironmentPerms::allowBlockFall>(land)) {
+            sFallingBlockStartCache.erase(uid);
+            this->breakBlock();
+            return;
+        }
+    }
+    origin();
+}
+LL_TYPE_INSTANCE_HOOK(FallingBlockActorRemoveHook, ll::memory::HookPriority::Normal, ::Actor, &::Actor::$remove, void) {
+    if (this->getEntityTypeId() == ActorType::FallingBlock) {
+        sFallingBlockStartCache.erase(this->getOrCreateUniqueID().rawID);
+    }
+    origin();
+}
+
+
+// Fix [#231](https://github.com/IceBlcokMC/PLand/issues/231)
+namespace {
+thread_local bool tBlockCurrentDispense = false; // dispenseFrom -> BucketItem::$dispense 同步调用栈内传递拦截标记
+
+struct BlockDispenseGuard {
+    BlockDispenseGuard() { tBlockCurrentDispense = true; }
+    ~BlockDispenseGuard() { tBlockCurrentDispense = false; }
+};
+
+} // namespace
+
+LL_TYPE_INSTANCE_HOOK(
+    DispenserDispenseFromHook,
+    ll::memory::HookPriority::Normal,
+    DispenserBlock,
+    &DispenserBlock::$dispenseFrom,
+    void,
+    ::BlockSource&    region,
+    ::BlockPos const& pos
+) {
+    auto& registry = PLand::getInstance().getLandRegistry();
+    auto  dimid    = region.getDimensionId();
+
+    // 发射目标位置 (发射器前方一格), getDispensePosition 内部按方块朝向计算
+    auto targetPos = BlockPos{this->getDispensePosition(
+        region,
+        Vec3{static_cast<float>(pos.x), static_cast<float>(pos.y), static_cast<float>(pos.z)}
+    )};
+
+    if (
+        auto targetLand = registry.getLandAt(targetPos, dimid);
+        targetLand && !hasEnvironmentPermission<&EnvironmentPerms::allowLiquidFlow>(targetLand) // 禁止液体流动
+        && targetLand->getAABB().isOnOuterBoundary(pos)                                         // 发射器紧贴领地外
+        && targetLand->getAABB().isOnInnerBoundary(targetPos) // 发射目标位于领地内边界
+    ) {
+        BlockDispenseGuard guard;
+        origin(region, pos); // 具体是否拦截由 BucketItem::$dispense 按选中的物品判定
+        return;
+    }
+    origin(region, pos);
+}
+LL_TYPE_INSTANCE_HOOK(
+    BucketDispenseHook,
+    ll::memory::HookPriority::Normal,
+    BucketItem,
+    &BucketItem::$dispense,
+    bool,
+    ::BlockSource& region,
+    ::Container&   container,
+    int            slot,
+    ::Vec3 const&  pos,
+    uchar          face
+) {
+    if (tBlockCurrentDispense) {
+        return false;
+    }
+    return origin(region, container, slot, pos, face);
+}
+
+
+// Fix [#231](https://github.com/IceBlcokMC/PLand/issues/231)
+// TODO: 精确的命中查询 (HitDetection::MeleeTargeting::getHitResults) 为 MCNAPI 符号
+// https://github.com/LiteLDev/mcapi-requests/issues/236
+// https://github.com/LiteLDev/mcapi-requests/issues/237
+LL_STATIC_HOOK(
+    KineticDamageSystemHook,
+    ll::memory::HookPriority::Normal,
+    &DealKineticDamageSystem::tryApplyDamageOrEffects,
+    void,
+    ::entt::type_list<
+        ::Include<::ActorMovementTickNeededComponent, ::MobFlagComponent>,
+        ::Exclude<::IsDeadFlagComponent>> tag,
+    ::ActorOwnerComponent&                owner,
+    ::DealKineticDamageComponent&         component
+) {
+    auto* attacker = owner.mActor.get();
+    if (attacker && attacker->getEntityTypeId() == ActorType::Player) {
+        auto& player = static_cast<Player&>(*attacker);
+        auto& uuid   = player.getUuid();
+
+        // 以攻击者为中心的宽松包围盒 (矛最大触及 7.5 + 眼高 + 命中边际), 判定冲刺触及范围
+        auto center = attacker->getPosition();
+        AABB box{
+            center - Vec3{12, 12, 12},
+            center + Vec3{12, 12, 12}
+        };
+        auto& region = attacker->getDimensionBlockSource();
+        for (auto& handle : region.fetchEntities(attacker, box, false, false)) {
+            auto* entity = handle.get();
+            if (entity && !hasPlayerDamagePermission(*entity, uuid)) {
+                return; // 触及范围内存在受保护实体: 本次 sweep 整体不执行
+            }
+        }
+    }
+    origin(tag, owner, component);
+}
+
 void EventInterceptor::setupHooks() {
     registerHookIf<&InterceptorConfig::Hooks::FishingHookHitHook, FishingHookHitHook>();
     registerHookIf<&InterceptorConfig::Hooks::LayEggGoalHook, LayEggGoalHook>();
@@ -382,6 +536,15 @@ void EventInterceptor::setupHooks() {
     registerHookIf<&InterceptorConfig::Hooks::AbstractArrowPlayerTouchHook, AbstractArrowPlayerTouchHook>();
     registerHookIf<&InterceptorConfig::Hooks::FarmChangeEventHook, FarmChangeEventHook>();
     registerHookIf<&InterceptorConfig::Hooks::BigDripleafBlockHook, BigDripleafBlockHook>();
+    registerHookIf<
+        &InterceptorConfig::Hooks::FallingBlockActorTickHook,
+        FallingBlockActorTickHook,
+        FallingBlockActorRemoveHook>([]() { sFallingBlockStartCache.clear(); });
+    registerHookIf<
+        &InterceptorConfig::Hooks::DispenserLiquidDispenseHook,
+        DispenserDispenseFromHook,
+        BucketDispenseHook>();
+    registerHookIf<&InterceptorConfig::Hooks::KineticDamageHook, KineticDamageSystemHook>();
 }
 
 } // namespace land::internal::interceptor

@@ -12,11 +12,8 @@
 #include <mc/server/commands/CommandOutput.h>
 #include <mc/world/actor/player/Player.h>
 
-inline ToastRequestPacket::ToastRequestPacket()               = default;
-inline ToastRequestPacketPayload::ToastRequestPacketPayload() = default;
-
-inline SetTitlePacket::SetTitlePacket()               = default;
-inline SetTitlePacketPayload::SetTitlePacketPayload() = default;
+// LeviLamina exposes these constructors in headers but does not export their
+// definitions on the server target.
 
 namespace land ::feedback_utils {
 
@@ -64,7 +61,7 @@ void sendTextTip(Player& p, std::string_view fmt, Args&&... args) {
 // ActionBar 提示 (物品栏上方)
 template <typename... Args>
 void sendActionBar(Player& p, std::string_view fmt, Args&&... args) {
-    SetTitlePacket pkt{};
+    SetTitlePacket pkt{SetTitlePacketPayload{SetTitlePacketPayload::TitleType::Actionbar, "", std::nullopt}};
     pkt.mType      = SetTitlePacket::TitleType::Actionbar;
     pkt.mTitleText = fmt_str(fmt, std::forward<Args>(args)...);
     pkt.sendTo(p);
@@ -73,7 +70,7 @@ void sendActionBar(Player& p, std::string_view fmt, Args&&... args) {
 // Toast 弹窗 (成就消息)
 template <typename... Args>
 inline void sendToast(Player& p, std::string_view fmt, Args&&... args) {
-    ToastRequestPacket pkt{};
+    ToastRequestPacket pkt{ToastRequestPacketPayload{}};
     pkt.mTitle   = "§b[PLand]§r";
     pkt.mContent = fmt_str(fmt, std::forward<Args>(args)...);
     pkt.sendTo(p);
@@ -81,7 +78,7 @@ inline void sendToast(Player& p, std::string_view fmt, Args&&... args) {
 
 // Title 大字 (大标题、小标题)
 inline void sendTitle(Player& p, std::string const& mainTitle, std::string const& subTitle = "") {
-    SetTitlePacket pkt{};
+    SetTitlePacket pkt{SetTitlePacketPayload{SetTitlePacketPayload::TitleType::Title, "", std::nullopt}};
     pkt.mType      = SetTitlePacket::TitleType::Title;
     pkt.mTitleText = mainTitle;
     pkt.sendTo(p);
