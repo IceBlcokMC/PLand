@@ -64,6 +64,9 @@
 - 返回值: 玩家设置 JSON 字符串（UUID 无效返回空字符串）
 - 返回值类型: `String`
 
+:::info 玩家设置字段定义请查看 [PlayerSettings.h](https://github.com/IceBlcokMC/PLand/blob/develop/src/pland/land/repo/PlayerSettings.h)
+:::
+
 ## 判断是否已存在指定领地
 
 `LandRegistry_hasLand(id)`

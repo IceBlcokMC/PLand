@@ -164,6 +164,12 @@
 - 返回值: 权限表 JSON 字符串（领地不存在返回空字符串），可用 `JSON.parse` 解析
 - 返回值类型: `String`
 
+:::info 权限表完整字段定义请查看仓库 [`LandPermTable`](https://github.com/IceBlcokMC/PLand/blob/main/src/pland/land/repo/LandContext.h)
+:::
+
+:::warning `LandPermTable` 内权限字段不同版本下可能不同，PLand 不保证任意字段永远存在，访问前请自行判空
+:::
+
 ## 设置权限表
 
 `Land_setPermTable(landId, permTable)`
