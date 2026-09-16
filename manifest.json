@@ -13,9 +13,6 @@
             "name": "LegacyMoney"
         },
         {
-            "name": "BedrockServerClientInterface"
-        },
-        {
             "name": "DebugShape"
         }
     ]

@@ -13,8 +13,8 @@
     {
       "platform": "win-x64",
       "dependencies": {
-        "github.com/LiteLDev/LeviLamina": ">=26.40.0",
-        "github.com/LiteLDev/iListenAttentively": "0.14.*"
+        "github.com/LiteLDev/LeviLamina": ">=26.40.4",
+        "github.com/LiteLDev/iListenAttentively": "0.16.*"
       },
       "assets": [
         {
@@ -36,8 +36,8 @@
       "label": "headless",
       "platform": "win-x64",
       "dependencies": {
-        "github.com/LiteLDev/LeviLamina": ">=26.40.0",
-        "github.com/LiteLDev/iListenAttentively": "0.14.*"
+        "github.com/LiteLDev/LeviLamina": ">=26.40.4",
+        "github.com/LiteLDev/iListenAttentively": "0.16.*"
       },
       "assets": [
         {
