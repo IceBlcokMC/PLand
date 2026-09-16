@@ -1,18 +1,9 @@
 #pragma once
 #include <string_view>
 
+#include "pland/_version.h" // auto generated
+
 namespace land {
-
-// clang-format off
-#define PLAND_BUILD_MODE        "${mode}"        // e.g. debug / release
-#define PLAND_BUILD_GIT_COMMIT  "${GIT_COMMIT}"  // e.g. "a1b2c3d4"
-#define PLAND_BUILD_GIT_BRANCH  "${GIT_BRANCH}"  // e.g. "main"
-#define PLAND_BUILD_GIT_TAG     "${GIT_TAG}"     // e.g. "v1.2.3"
-
-#define GEN_GIT_COMMIT  PLAND_BUILD_GIT_COMMIT // deprecated
-#define GEN_GIT_BRANCH  PLAND_BUILD_GIT_BRANCH // depeccated
-#define GEN_GIT_TAG     PLAND_BUILD_GIT_TAG    // depeccated
-// clang-format on
 
 struct BuildInfo {
     BuildInfo() = delete;
@@ -22,6 +13,13 @@ struct BuildInfo {
     static constexpr std::string_view kBuildCommit = PLAND_BUILD_GIT_COMMIT;
     static constexpr std::string_view kBuildBranch = PLAND_BUILD_GIT_BRANCH;
     static constexpr std::string_view kBuildTag    = PLAND_BUILD_GIT_TAG;
+
+    static constexpr std::string_view kBuildVariant = PLAND_BUILD_VARIANT;
+    static constexpr bool             kHeadless     = PLAND_BUILD_HEADLESS;
+
+    static constexpr int kVersionMajor = PLAND_VERSION_MAJOR;
+    static constexpr int kVersionMinor = PLAND_VERSION_MINOR;
+    static constexpr int kVersionPatch = PLAND_VERSION_PATCH;
 
     // commit hash (e.g. "a1b2c3d4")
     [[deprecated("Use kBuildCommit instead")]] static constexpr std::string_view Commit = kBuildCommit;

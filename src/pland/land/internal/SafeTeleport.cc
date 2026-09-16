@@ -73,8 +73,10 @@ class Task {
     DimensionPos                  mTargetPos;                 // 目标位置
     TaskState                     mState{TaskState::Pending}; // 任务状态
     short                         mCounter{0};                // 计数器
-    SetTitlePacket                mTipPacket{SetTitlePacketPayload{SetTitlePacketPayload::TitleType::Actionbar, "", std::nullopt}}; // 提示包
-    std::atomic<bool>             mAbortFlag{false};          // 终止标志
+    SetTitlePacket                mTipPacket{
+        SetTitlePacketPayload{SetTitlePacketPayload::TitleType::Actionbar, "", std::nullopt}
+    };                                   // 提示包
+    std::atomic<bool> mAbortFlag{false}; // 终止标志
 
     void _findSafePos() {
         static auto const dangerousBlocks =
@@ -101,7 +103,7 @@ class Task {
 
         _tryApplyDimensionFixPatch(heightRange); // 尝试应用维度修复补丁
 
-#ifdef DEBUG
+#ifdef PLAND_DEBUG
         auto& logger = land::PLand::getInstance().getSelf().getLogger();
 #endif
 
@@ -113,7 +115,7 @@ class Task {
                 legBlock  = block;
             }
 
-#ifdef DEBUG
+#ifdef PLAND_DEBUG
             logger.debug("[TPR] Y: {}  Block: {}", y, block->getTypeName());
 #endif
 

@@ -1,0 +1,37 @@
+#pragma once
+// clang-format off
+
+// PLAND_DEBUG is defined in debug builds
+
+#define PLAND_BUILD_MODE       "${mode}"       // e.g. debug / release
+#define PLAND_BUILD_GIT_COMMIT "${GIT_COMMIT}" // e.g. "a1b2c3d4"
+#define PLAND_BUILD_GIT_BRANCH "${GIT_BRANCH}" // e.g. "main"
+#define PLAND_BUILD_GIT_TAG    "${GIT_TAG}"    // e.g. "v1.2.3"
+
+#define PLAND_BUILD_VARIANT "${BUILD_VARIANT}" // e.g. devtool / headless
+#define PLAND_BUILD_HEADLESS ${HEADLESS}       // true / false
+
+#define PLAND_VERSION_MAJOR ${PLAND_VERSION_MAJOR}
+#define PLAND_VERSION_MINOR ${PLAND_VERSION_MINOR}
+#define PLAND_VERSION_PATCH ${PLAND_VERSION_PATCH}
+
+${define PLAND_VERSION_PRERELEASE}
+
+// --------------- Process Windows DLL PE file version info
+#ifdef PLAND_DEBUG // Debug / Release
+#  define PLAND_FILEFLAG_DEBUG VS_FF_DEBUG
+#else
+#  define PLAND_FILEFLAG_DEBUG 0x0
+#endif
+
+#ifdef PLAND_VERSION_PRERELEASE // Prerelease
+#  define PLAND_FILEFLAG_PRERELEASE VS_FF_PRERELEASE
+#else
+#  define PLAND_FILEFLAG_PRERELEASE 0x0
+#endif
+
+#define PLAND_FILE_VERSION_FLAG (PLAND_FILEFLAG_DEBUG | PLAND_FILEFLAG_PRERELEASE)
+
+
+#define PLAND_FULL_VERSION_STRING PLAND_BUILD_GIT_TAG "-" PLAND_BUILD_VARIANT
+

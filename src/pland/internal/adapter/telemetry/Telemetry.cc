@@ -10,8 +10,7 @@
 #include <magic_enum.hpp>
 
 
-namespace land::internal {
-namespace adapter {
+namespace land::internal::adapter {
 
 Telemetry::Telemetry() : ll_bstats::Telemetry(27389, std::string{BuildInfo::kBuildTag}) {}
 
@@ -19,6 +18,7 @@ void Telemetry::initConstant() {
     ll_bstats::Telemetry::initConstant();
 
     payload.addCustomChart(bstats::bukkit::SimplePie{"levilamina_version", {ll::getLoaderVersion().to_string()}});
+    payload.addCustomChart(bstats::bukkit::SimplePie{"variant", {BuildInfo::kBuildVariant.data()}});
 }
 void Telemetry::collect() {
     ll_bstats::Telemetry::collect();
@@ -56,5 +56,4 @@ void Telemetry::collect() {
 }
 
 
-} // namespace adapter
-} // namespace land::internal
+} // namespace land::internal::adapter

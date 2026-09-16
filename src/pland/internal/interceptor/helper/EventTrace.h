@@ -57,7 +57,7 @@ struct EventTraceScope {
     }
 };
 
-#ifdef DEBUG
+#ifdef PLAND_DEBUG
 
 #define TRACE_THIS_EVENT(EVENT) EventTrace __EventTrace_Stack__(#EVENT)
 #define TRACE_LOG(...)                                                                                                 \

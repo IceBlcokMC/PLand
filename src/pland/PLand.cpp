@@ -73,13 +73,14 @@ bool PLand::load() {
     logger.info("PLand - Open-source project based on AGPL v3 license");
     logger.info("Repository: https://github.com/IceBlcokMC/PLand");
     logger.info("Issues:     https://github.com/IceBlcokMC/PLand/issues");
-    logger.info("Copyright (C) 2024-2026 IceBlcokMC Team and contributors");
+    logger.info("Copyright (C) 2024-present IceBlcokMC Team and contributors");
 
     logger.info(
-        "Build: {} (Branch: {}, Commit: {})",
+        "Build: {} (Branch: {}, Commit: {}, Variant: {})",
         BuildInfo::kBuildTag,
         BuildInfo::kBuildBranch,
-        BuildInfo::kBuildCommit
+        BuildInfo::kBuildCommit,
+        BuildInfo::kBuildVariant
     );
 
     if (!ensureStableVersion()) {
@@ -116,7 +117,7 @@ bool PLand::load() {
         return false;
     }
 
-#ifdef DEBUG
+#ifdef PLAND_DEBUG
     logger.warn("Debug Mode");
     logger.setLevel(ll::io::LogLevel::Trace);
 #endif

@@ -42,7 +42,6 @@ option_end()
 
 target("PLand")
     add_rules("@levibuildscript/linkrule")
-    add_rules("@levibuildscript/modpacker")
     add_rules("plugin.compile_commands.autoupdate")
     set_kind("shared")
     set_languages("c++20")
@@ -82,15 +81,21 @@ target("PLand")
         "abseil"
     )
 
-    add_configfiles("src/BuildInfo.h.in")
+    set_configvar("BUILD_VARIANT", get_config("devtool") and "devtool" or "headless")
+    set_configvar("HEADLESS", get_config("devtool") and "true" or "false")
+    add_configfiles("src/_version.h.in")
     set_configdir("src/pland")
 
     if is_mode("debug") then
-        add_defines("DEBUG")
+        add_defines("PLAND_DEBUG")
         -- add_defines("PLAND_I18N_COLLECT_STRINGS", "LL_I18N_COLLECT_STRINGS", "LL_I18N_COLLECT_STRINGS_CUSTOM")
     end
 
-    if has_config("devtool") then
+    if is_plat("windows") then
+        add_files("src/BinaryMeta.win.rc")
+    end
+
+    if get_config("devtool") then
         add_packages(
             "imgui",
             "glew",
@@ -100,6 +105,34 @@ target("PLand")
         add_files("src-devtool/**.cc")
         add_defines("LD_DEVTOOL")
     end
+
+    on_load(function (target)
+        local tag = os.iorun("git describe --tags --abbrev=0 --always")
+        local major, minor, patch, suffix = tag:match("v(%d+)%.(%d+)%.(%d+)(.*)")
+        if not major then
+            print("Failed to parse version tag, using 0.0.0")
+            major, minor, patch = 0, 0, 0
+        end
+        local versionStr =  major.."."..minor.."."..patch
+        if suffix then
+            prerelease = suffix:match("-(.*)")
+            if prerelease then
+                prerelease = prerelease:gsub("\n", "")
+            end
+            if prerelease then
+                target:set("configvar", "PLAND_VERSION_PRERELEASE", prerelease)
+                versionStr = versionStr.."-"..prerelease
+            end
+        end
+        target:set("configvar", "PLAND_VERSION_MAJOR", major)
+        target:set("configvar", "PLAND_VERSION_MINOR", minor)
+        target:set("configvar", "PLAND_VERSION_PATCH", patch)
+
+        target:add("rules", "@levibuildscript/modpacker",{
+            modName = target:basename(),
+            modVersion = versionStr
+        })
+    end)
 
     after_build(function (target)
         local bindir = path.join(os.projectdir(), "bin")
