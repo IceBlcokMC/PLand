@@ -2,13 +2,25 @@
 
 PLand 有两种安装方式，请根据你的情况选择：
 
-| 方式 | 适合人群 | 难度 | 说明 |
-|:----|:-------|:----:|:----|
-| [Lip 一键安装](#使用-lip-安装推荐) | **绝大多数服主（推荐）** | ⭐ | 自动下载并处理全部依赖，一条命令搞定 |
-| [手动安装](#手动安装) | 熟悉插件结构的进阶用户 | ⭐⭐⭐ | 手动下载并放置插件与前置组件 |
+| 方式                               | 适合人群                 |  难度  | 说明                                 |
+| :--------------------------------- | :----------------------- | :----: | :----------------------------------- |
+| [Lip 一键安装](#使用-lip-安装推荐) | **绝大多数服主（推荐）** |   ⭐   | 自动下载并处理全部依赖，一条命令搞定 |
+| [手动安装](#手动安装)              | 熟悉插件结构的进阶用户   | ⭐⭐⭐ | 手动下载并放置插件与前置组件         |
 
-::: tip 想先体验一下？
-安装完成后，可以跟着 [快速上手](/user_guide/QuickStart) 教程，5 分钟学会圈地和管理领地。
+:::info 无头版本
+
+从 v0.23.0 开始，PLand 提供了无头版本，无头版本不包含任何图形依赖，可以在 windows server no gui 等环境下运行。
+
+| 版本变体 |             文件名             |                           说明                            |
+| :------: | :----------------------------: | :-------------------------------------------------------: |
+| headless | PLand-windows-x64-headless.zip |     无头版本，适用于无图形环境、无显示器等环境下使用      |
+| devtool  | PLand-windows-x64-devtool.zip  | 包含图形管线依赖，需要完整 GUI 环境和可用的监视器(显示器) |
+
+如果您主要在服务器上运行(通过远程连接、VNC、RDP 等方式)，或家用服务器(显示器经常关闭、断开)，建议使用无头版本。
+
+:::
+
+:::tip 默认安装的是 `devtool` 版本，如果需要无头版本，请在下载(安装)时选择 `headless` 版本。
 :::
 
 ## 使用 Lip 安装（推荐）
@@ -25,6 +37,14 @@ lip install github.com/IceBlcokMC/PLand
 
 ```bash
 lip install github.com/IceBlcokMC/PLand@v1.0.0
+```
+
+### 安装无头版本
+
+```bash
+lip install github.com/IceBlcokMC/PLand#headless # 最新的无头版本
+
+lip install github.com/IceBlcokMC/PLand#headless@1.0.0 # 并指定版本
 ```
 
 ### 更新 PLand
@@ -49,15 +69,19 @@ lip install --upgrade github.com/IceBlcokMC/PLand
 
 ### 前置组件
 
-| 前置组件                     | 项目地址                                                              | 依赖等级 | 备注                                        |
-| :--------------------------- | :-------------------------------------------------------------------- | :------: |:------------------------------------------|
-| LeviLamina                   | [GitHub](https://github.com/LiteLDev/LeviLamina)                      |   必须   | Mod 框架                                    |
-| iListenAttentively           | [GitHub](https://github.com/MiracleForest/iListenAttentively-Release) |   必须   | 事件库                                       |
-| LegacyMoney                  | [GitHub](https://github.com/LiteLDev/LegacyMoney)                     |   可选   | `economy.kit` 为 `LegacyMoney` 时需要         |
-| DebugShape                   | [Github](https://github.com/IceBlcokMC/DebugShape)                     |   可选   | `features.draw.backend == DebugShape` 时需要 |
+| 前置组件           | 项目地址                                                                                                                                                                            | 依赖等级 | 备注                                         |
+| :----------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------: | :------------------------------------------- |
+| LeviLamina         | [GitHub](https://github.com/LiteLDev/LeviLamina)                                                                                                                                    |   必须   | Mod 框架                                     |
+| iListenAttentively | [v0.23.x 以后的版本 -> Github](https://github.com/LiteLDev/iListenAttentively/releases) [v0.23.x 以前的版本 -> GitHub](https://github.com/MiracleForest/iListenAttentively-Release) |   必须   | 事件库                                       |
+| LegacyMoney        | [GitHub](https://github.com/LiteLDev/LegacyMoney)                                                                                                                                   |   可选   | `economy.kit` 为 `LegacyMoney` 时需要        |
+| DebugShape         | [Github](https://github.com/IceBlcokMC/DebugShape)                                                                                                                                  |   可选   | `features.draw.backend == DebugShape` 时需要 |
 
-> 在下载前置组件时，请确保版本与 PLand 兼容。  
-> 如果你不确定，**强烈建议改用 Lip 安装**，由 Lip 自动处理依赖。
+:::warning 版本兼容性
+
+在下载前置组件时，请确保版本与 PLand 兼容。  
+如果你不确定，**强烈建议改用 Lip 安装**，由 Lip 自动处理依赖。
+
+:::
 
 ### 安装步骤
 

@@ -1,11 +1,6 @@
 import { defineConfig } from "vitepress";
 import { withMermaid } from "vitepress-plugin-mermaid";
 
-const getCurrentYear = () => {
-  const date = new Date();
-  return date.getFullYear();
-};
-
 // https://vitepress.dev/reference/site-config
 export default withMermaid(
   defineConfig({
@@ -16,7 +11,7 @@ export default withMermaid(
 
     // 移除主页，将站点根路径重写到安装指南
     rewrites: {
-      "user_guide/QuickStart.md": "index.md",
+      "user_guide/Install.md": "index.md",
     },
 
     themeConfig: {
@@ -33,7 +28,6 @@ export default withMermaid(
         {
           text: "用户指南",
           items: [
-            { text: "快速上手", link: "/user_guide/QuickStart.md" },
             { text: "安装指南", link: "/user_guide/Install.md" },
             { text: "指令列表", link: "/user_guide/CommandList.md" },
             { text: "领地配置文件", link: "/user_guide/Config.md" },
@@ -187,7 +181,7 @@ export default withMermaid(
 
       footer: {
         message: "AGPL-3.0 Licensed",
-        copyright: `Copyright © 2024-${getCurrentYear()} PLand Contributors`,
+        copyright: `Copyright (C) 2024-present IceBlcokMC Team and contributors`,
       },
     },
   }),
