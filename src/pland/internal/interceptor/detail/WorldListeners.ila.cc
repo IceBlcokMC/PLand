@@ -7,15 +7,15 @@
 
 #include "ll/api/event/EventBus.h"
 
-#include "ila/event/minecraft/world/ExplosionEvent.h"
-#include "ila/event/minecraft/world/PistonPushEvent.h"
-#include "ila/event/minecraft/world/RedstoneUpdateEvent.h"
-#include "ila/event/minecraft/world/SculkBlockGrowthEvent.h"
-#include "ila/event/minecraft/world/WitherDestroyEvent.h"
-#include "ila/event/minecraft/world/level/block/DragonEggBlockTeleportEvent.h"
-#include "ila/event/minecraft/world/level/block/LiquidFlowEvent.h"
-#include "ila/event/minecraft/world/level/block/MossGrowthEvent.h"
-#include "ila/event/minecraft/world/level/block/SculkSpreadEvent.h"
+#include "ila/event/world/ExplosionEvent.h"
+#include "ila/event/world/PistonPushEvent.h"
+#include "ila/event/world/RedstoneUpdateEvent.h"
+#include "ila/event/world/SculkBlockGrowthEvent.h"
+#include "ila/event/world/WitherDestroyEvent.h"
+#include "ila/event/world/level/block/DragonEggBlockTeleportEvent.h"
+#include "ila/event/world/level/block/LiquidFlowEvent.h"
+#include "ila/event/world/level/block/MossGrowthEvent.h"
+#include "ila/event/world/level/block/SculkSpreadEvent.h"
 
 #include "mc/world/level/Explosion.h"
 #include "mc/world/level/dimension/DimensionType.h"
@@ -31,16 +31,16 @@ void EventInterceptor::setupIlaWorldListeners() {
         return bus->emplaceListener<ila::mc::ExplosionBeforeEvent>([registry](ila::mc::ExplosionBeforeEvent& ev) {
             TRACE_THIS_EVENT(ila::mc::ExplosionBeforeEvent);
 
-            auto& explosion   = ev.explosion();
-            auto& blockSource = explosion.mRegion;
+            auto&       explosion    = ev.explosion();
+            auto&       blockSource  = explosion.mRegion;
             auto const& explosionPos = explosion.mPos;
-            auto  centerPos = BlockPos{
+            auto        centerPos    = BlockPos{
                 static_cast<int>(explosionPos->x),
                 static_cast<int>(explosionPos->y),
                 static_cast<int>(explosionPos->z)
             };
-            auto  radius      = explosion.mRadius;
-            auto  dimid       = blockSource.getDimensionId();
+            auto radius = explosion.mRadius;
+            auto dimid  = blockSource.getDimensionId();
 
             TRACE_LOG("centerPos={}, radius={}", centerPos.toString(), radius);
 

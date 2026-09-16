@@ -5,12 +5,12 @@
 
 #include <ll/api/event/EventBus.h>
 
-#include "ila/event/minecraft/world/actor/ArmorStandSwapItemEvent.h"
-#include "ila/event/minecraft/world/actor/player/PlayerAttackBlockEvent.h"
-#include "ila/event/minecraft/world/actor/player/PlayerDropItemEvent.h"
-#include "ila/event/minecraft/world/actor/player/PlayerEditSignEvent.h"
-#include "ila/event/minecraft/world/actor/player/PlayerInteractEntityEvent.h"
-#include "ila/event/minecraft/world/actor/player/PlayerOperatedItemFrameEvent.h"
+#include "ila/event/world/actor/ArmorStandSwapItemEvent.h"
+#include "ila/event/world/actor/player/PlayerAttackBlockEvent.h"
+#include "ila/event/world/actor/player/PlayerDropItemEvent.h"
+#include "ila/event/world/actor/player/PlayerEditSignEvent.h"
+#include "ila/event/world/actor/player/PlayerInteractEntityEvent.h"
+#include "ila/event/world/actor/player/PlayerOperatedItemFrameEvent.h"
 
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/block/Block.h"
