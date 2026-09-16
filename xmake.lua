@@ -7,7 +7,7 @@ add_repositories("engsr6982-repo https://github.com/engsr6982/xmake-repo.git")
 -- LeviMc(LiteLDev)
 add_requires("levilamina 72475af862e197d0683a054a4384083959d3c778", {configs = {target_type = "server"}})
 add_requires("levibuildscript")
-add_requires("ilistenattentively 0.14.0")
+add_requires("ilistenattentively 0.16.0")
 
 -- IceBlockMC
 add_requires("ll-bstats 0.6.0")
