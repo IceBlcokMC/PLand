@@ -56,7 +56,6 @@ PLand 通过**拦截游戏事件**来强制领地权限（比如：非领地成�
         "PistonPushBeforeEvent": true, // 活塞推动事件
         "RedstoneUpdateBeforeEvent": true, // 红石更新事件
         "WitherDestroyBeforeEvent": true, // 凋落破坏事件
-        "MossGrowthBeforeEvent": true, // 苔藓生长事件
         "LiquidFlowBeforeEvent": true, // 液体流动事件
         "DragonEggBlockTeleportBeforeEvent": true, // 龙蛋方块传送事件
         "SculkBlockGrowthBeforeEvent": true, // 藤蔓生长事件
@@ -85,7 +84,8 @@ PLand 通过**拦截游戏事件**来强制领地权限（比如：非领地成�
         "BigDripleafBlockHook": true, // 大型垂滴叶
         "FallingBlockActorTickHook": true, // 重力方块下落 (进入禁止掉落的领地时转为掉落物)
         "DispenserLiquidDispenseHook": true, // 发射器倾倒液体 (禁止液体流动的领地边界不受发射器倾倒)
-        "KineticDamageHook": true // 矛冲刺命中 (动能伤害不绕过领地伤害拦截)
+        "KineticDamageHook": true, // 矛冲刺命中
+        "VegetationPatchPlaceHook": true // 苔藓生长
     },
     "rules": {
         "mob": {

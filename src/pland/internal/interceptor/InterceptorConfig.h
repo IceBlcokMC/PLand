@@ -51,7 +51,6 @@ struct InterceptorConfig {
         bool PistonPushBeforeEvent                = true; // ILA (env)
         bool RedstoneUpdateBeforeEvent            = true; // ILA (env)
         bool WitherDestroyBeforeEvent             = true; // ILA (env)
-        bool MossGrowthBeforeEvent                = true; // ILA (env)
         bool LiquidFlowBeforeEvent                = true; // ILA (env)
         bool DragonEggBlockTeleportBeforeEvent    = true; // ILA (env)
         bool SculkBlockGrowthBeforeEvent          = true; // ILA (env)
@@ -79,6 +78,7 @@ struct InterceptorConfig {
         bool FallingBlockActorTickHook{true};      // 重力方块下落
         bool DispenserLiquidDispenseHook{true};    // 发射器倾倒液体(边界)
         bool KineticDamageHook{true};              // 矛冲刺命中(动能伤害)
+        bool VegetationPatchPlaceHook{true};       // 苔藓生长(植被斑块面积检查)
     } hooks;
 
     struct Rules {

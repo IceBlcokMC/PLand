@@ -14,7 +14,6 @@
 #include "ila/event/world/WitherDestroyEvent.h"
 #include "ila/event/world/level/block/DragonEggBlockTeleportEvent.h"
 #include "ila/event/world/level/block/LiquidFlowEvent.h"
-#include "ila/event/world/level/block/MossGrowthEvent.h"
 #include "ila/event/world/level/block/SculkSpreadEvent.h"
 
 #include "mc/world/level/Explosion.h"
@@ -152,19 +151,6 @@ void EventInterceptor::setupIlaWorldListeners() {
                 }
             }
         );
-    });
-
-    registerListenerIf<&InterceptorConfig::Listeners::MossGrowthBeforeEvent>([bus, registry]() {
-        return bus->emplaceListener<ila::mc::MossGrowthBeforeEvent>([registry](ila::mc::MossGrowthBeforeEvent& ev) {
-            auto& blockSource = ev.blockSource();
-            auto& blockPos    = ev.pos();
-
-            // IListenAttentively 0.14 no longer exposes the patch radii.
-            auto land = registry->getLandAt(blockPos, blockSource.getDimensionId());
-            if (!hasEnvironmentPermission<&EnvironmentPerms::allowMossGrowth>(land)) {
-                ev.cancel();
-            }
-        });
     });
 
     registerListenerIf<&InterceptorConfig::Listeners::LiquidFlowBeforeEvent>([bus, registry]() {

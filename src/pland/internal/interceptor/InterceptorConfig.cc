@@ -251,9 +251,11 @@ void InterceptorConfig::tryMigrateLegacyConfig(std::filesystem::path configDir) 
         cfg.listeners.PlayerOperatedItemFrameBeforeEvent = listeners["PlayerOperatedItemFrameBeforeEvent"].get<bool>();
         cfg.listeners.ActorTriggerPressurePlateBeforeEvent =
             listeners["ActorTriggerPressurePlateBeforeEvent"].get<bool>();
-        cfg.listeners.RedstoneUpdateBeforeEvent       = listeners["RedstoneUpdateBeforeEvent"].get<bool>();
-        cfg.listeners.WitherDestroyBeforeEvent        = listeners["WitherDestroyBeforeEvent"].get<bool>();
-        cfg.listeners.MossGrowthBeforeEvent           = listeners["MossGrowthBeforeEvent"].get<bool>();
+        cfg.listeners.RedstoneUpdateBeforeEvent = listeners["RedstoneUpdateBeforeEvent"].get<bool>();
+        cfg.listeners.WitherDestroyBeforeEvent  = listeners["WitherDestroyBeforeEvent"].get<bool>();
+        // MossGrowthBeforeEvent 事件监听已由 VegetationPatchPlaceHook 替代 (ILA 0.14 起丢失 patch 半径), 旧配置重定向
+        // cfg.listeners.MossGrowthBeforeEvent           = listeners["MossGrowthBeforeEvent"].get<bool>();
+        cfg.hooks.VegetationPatchPlaceHook            = listeners["MossGrowthBeforeEvent"].get<bool>();
         cfg.listeners.LiquidFlowBeforeEvent           = listeners["LiquidFlowBeforeEvent"].get<bool>();
         cfg.listeners.SculkBlockGrowthBeforeEvent     = listeners["SculkBlockGrowthBeforeEvent"].get<bool>();
         cfg.listeners.SculkSpreadBeforeEvent          = listeners["SculkSpreadBeforeEvent"].get<bool>();
