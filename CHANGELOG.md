@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.23.0] - 2026-09-14
+## [0.23.0] - 2026-09-18
+
+### ⚠ 已知问题
+
+- KineticDamageSystemHook 在 26.40 版本下引发崩溃 (默认关闭) [#231](https://github.com/IceBlcokMC/PLand/issues/231)  
+  此 Hook 失效导致矛冲锋可对实体造成伤害
 
 ### 🐛 问题修复
 
