@@ -48,8 +48,8 @@
 #include "mc/world/level/levelgen/feature/VegetationPatchFeature.h"
 #include "mc/world/phys/AABB.h"
 #include <mc/deps/core/math/IRandom.h>
-
 #include <mc/deps/core/math/Random.h>
+
 
 #include <absl/container/flat_hash_map.h>
 
@@ -495,6 +495,9 @@ LL_TYPE_INSTANCE_HOOK(
 // TODO: 精确的命中查询 (HitDetection::MeleeTargeting::getHitResults) 为 MCNAPI 符号
 // https://github.com/LiteLDev/mcapi-requests/issues/236
 // https://github.com/LiteLDev/mcapi-requests/issues/237
+// TODO: 此 Hook 在 v26.40 版本下已损坏
+// 问题表现为：右键长矛发起冲锋引发崩溃
+// 初步定位问题是解引用 ActorOwnerComponent::mActor 后崩溃
 LL_STATIC_HOOK(
     KineticDamageSystemHook,
     ll::memory::HookPriority::Normal,
