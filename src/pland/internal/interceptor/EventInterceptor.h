@@ -5,6 +5,8 @@
 #include "InterceptorConfig.h"
 
 #include <ll/api/event/ListenerBase.h>
+#include <memory>
+#include <type_traits>
 
 namespace land::internal::interceptor {
 
@@ -29,12 +31,21 @@ public:
         }
     }
 
-    template <bool InterceptorConfig::Hooks::* E, Hookable T>
-    void registerHookIf() {
+    template <bool InterceptorConfig::Hooks::* E, Hookable... Ts>
+        requires(sizeof...(Ts) >= 1)
+    void registerHookIf(IHookGuard::Cleanup finalizer = nullptr) {
+        auto resolve = [&]() -> std::unique_ptr<IHookGuard> {
+            if constexpr (sizeof...(Ts) == 1) {
+                return std::make_unique<HookGuardImpl<Ts...>>(finalizer);
+            } else {
+                return std::make_unique<MultiHookGuardImpl<Ts...>>(finalizer);
+            }
+        };
+
         auto enabled    = InterceptorConfig::cfg.hooks.*E;
         auto registered = isHookAlreadyRegistered(E);
         if (enabled && !registered) {
-            _registerHook(E, std::make_unique<HookGuardImpl<T>>());
+            _registerHook(E, std::move(resolve()));
         } else if (!enabled && registered) {
             _unregisterHook(E);
         }

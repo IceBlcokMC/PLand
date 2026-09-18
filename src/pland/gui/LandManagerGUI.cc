@@ -1,7 +1,7 @@
 #include "pland/gui/LandManagerGUI.h"
 #include "LandTeleportGUI.h"
-#include "PermTableEditor.h"
 #include "common/OnlinePlayerPicker.h"
+#include "common/PermEditorRouter.h"
 #include "common/SimpleInputForm.h"
 
 #include "ll/api/form/CustomForm.h"
@@ -10,6 +10,8 @@
 #include "ll/api/form/SimpleForm.h"
 #include "ll/api/service/PlayerInfo.h"
 
+#include "mc/deps/ecs/WeakEntityRef.h"
+#include "mc/server/ServerPlayer.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/Level.h"
 
@@ -248,12 +250,21 @@ void LandManagerGUI::confirmRenewDuration(Player& player, std::shared_ptr<Land> 
     confirm.sendTo(player);
 }
 void LandManagerGUI::sendEditLandPermGUI(Player& player, std::shared_ptr<Land> const& ptr) {
-    PermTableEditor::sendTo(
+    auto saved = std::make_shared<bool>(false);
+    auto ref   = player.getEntityContext().getWeakRef();
+
+    PermEditorRouter::open(
         player,
         ptr->getPermTable(),
-        [ptr](Player& self, LandPermTable newTable) {
-            ptr->setPermTable(newTable);
-            feedback_utils::sendText(self, "权限表已更新"_trl(self.getLocaleCode()));
+        [ptr, saved, ref](LandPermTable const& table) {
+            ptr->setPermTable(table);
+            if (*saved) {
+                return;
+            }
+            *saved = true;
+            if (auto* sp = ref.tryUnwrap<ServerPlayer>().as_ptr()) {
+                feedback_utils::sendText(*sp, "权限表已更新"_trl(sp->getLocaleCode()));
+            }
         },
         back_utils::wrapCallback<sendMainMenu>(ptr)
     );

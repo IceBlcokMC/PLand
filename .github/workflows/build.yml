@@ -32,6 +32,7 @@ jobs:
     strategy:
       matrix:
         devtool: ["y", "n"]
+      fail-fast: false
     name: build-${{ matrix.devtool == 'y' && 'devtool' || 'headless' }}
     steps:
       - uses: actions/checkout@v4
@@ -49,6 +50,11 @@ jobs:
           key: xmake-${{ hashFiles('xmake.lua') }}
           restore-keys: |
             xmake-
+  
+      - name: Setup LLVM
+        uses: ZhongRuoyu/setup-llvm@v0
+        with:
+          llvm-version: 22
 
       - run: |
           xmake repo -u

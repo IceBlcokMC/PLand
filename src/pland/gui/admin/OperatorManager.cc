@@ -3,13 +3,16 @@
 #include "LandOwnerPicker.h"
 #include "pland/PLand.h"
 #include "pland/gui/LandManagerGUI.h"
-#include "pland/gui/PermTableEditor.h"
+#include "pland/gui/common/PermEditorRouter.h"
 #include "pland/gui/common/AdvancedLandPicker.h"
 #include "pland/land/Land.h"
 #include "pland/land/LandTemplatePermTable.h"
 #include "pland/land/repo/LandContext.h"
 #include "pland/land/repo/LandRegistry.h"
 #include "pland/utils/FeedbackUtils.h"
+
+#include "mc/deps/ecs/WeakEntityRef.h"
+#include "mc/server/ServerPlayer.h"
 
 #include "ll/api/service/PlayerInfo.h"
 #include "pland/gui/common/SimpleInputForm.h"
@@ -48,12 +51,21 @@ void OperatorManager::sendMainMenu(Player& player) {
         sendLandSelectModeMenu(self);
     });
     fm.appendButton("编辑默认权限"_trl(localeCode), "textures/ui/icon_map", "path", [](Player& self) {
-        gui::PermTableEditor::sendTo(
+        auto saved = std::make_shared<bool>(false);
+        auto ref   = self.getEntityContext().getWeakRef();
+
+        PermEditorRouter::open(
             self,
             PLand::getInstance().getLandRegistry().getLandTemplatePermTable().get(),
-            [](Player& self, LandPermTable newTable) {
-                PLand::getInstance().getLandRegistry().getLandTemplatePermTable().set(newTable);
-                feedback_utils::sendText(self, "权限表已更新"_trl(self.getLocaleCode()));
+            [saved, ref](LandPermTable const& table) {
+                PLand::getInstance().getLandRegistry().getLandTemplatePermTable().set(table);
+                if (*saved) {
+                    return;
+                }
+                *saved = true;
+                if (auto* sp = ref.tryUnwrap<ServerPlayer>().as_ptr()) {
+                    feedback_utils::sendText(*sp, "权限表已更新"_trl(sp->getLocaleCode()));
+                }
             },
             sendMainMenu
         );

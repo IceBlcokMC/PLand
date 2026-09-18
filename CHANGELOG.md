@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-09-18
+
+### ⚠ 已知问题
+
+- KineticDamageSystemHook 在 26.40 版本下引发崩溃 (默认关闭) [#231](https://github.com/IceBlcokMC/PLand/issues/231)  
+  此 Hook 失效导致矛冲锋可对实体造成伤害
+
+### 🐛 问题修复
+
+- 修复重力方块掉落权限 [#242](https://github.com/IceBlcokMC/PLand/issues/242) @engsr6982
+- 修复领地边缘使用发射器可以无视权限向领地内放置流体 [#231](https://github.com/IceBlcokMC/PLand/issues/231) @engsr6982
+- 修复领地内玩家使用长矛冲锋对实体造成伤害 [#231](https://github.com/IceBlcokMC/PLand/issues/231) @engsr6982
+- 尝试修复动物+怪物骑士生成 [#185](https://github.com/IceBlcokMC/PLand/issues/185) @engsr6982
+- 修复在领地边缘有概率无权限放置木门 [#244](https://github.com/IceBlcokMC/PLand/issues/244) @engsr6982
+
+### 🧩 其他改动
+
+- 适配 Bedrock Sverver v1.26.40 (LeviLamina v26.40.x) @yangyangzhong82
+- 改进生物生成拦截判定 @engsr6982 
+- 改正tooth.json的仓库链接错误  [#246](https://github.com/IceBlcokMC/PLand/pull/246)@ShrBox
+
 ## [0.22.2] - 2026-09-02
 
 ### 🐛 问题修复

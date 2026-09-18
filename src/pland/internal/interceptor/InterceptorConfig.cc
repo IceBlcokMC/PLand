@@ -183,7 +183,7 @@ RolePerms::Entry RolePerms::* InterceptorConfig::lookupDynamicRule(HashedString 
     TRACE_LOG("lookup typename: {}", typeName.c_str());
     auto iter = DynamicRuleMap.find(typeName);
     if (iter != DynamicRuleMap.end()) {
-#ifdef DEBUG
+#ifdef PLAND_DEBUG
         if (cfg.rules.item.contains(typeName)) {
             TRACE_LOG(
                 "In the {} table, find the permissions {} mapped to {}",
@@ -251,16 +251,20 @@ void InterceptorConfig::tryMigrateLegacyConfig(std::filesystem::path configDir) 
         cfg.listeners.PlayerOperatedItemFrameBeforeEvent = listeners["PlayerOperatedItemFrameBeforeEvent"].get<bool>();
         cfg.listeners.ActorTriggerPressurePlateBeforeEvent =
             listeners["ActorTriggerPressurePlateBeforeEvent"].get<bool>();
-        cfg.listeners.RedstoneUpdateBeforeEvent         = listeners["RedstoneUpdateBeforeEvent"].get<bool>();
-        cfg.listeners.WitherDestroyBeforeEvent          = listeners["WitherDestroyBeforeEvent"].get<bool>();
-        cfg.listeners.MossGrowthBeforeEvent             = listeners["MossGrowthBeforeEvent"].get<bool>();
-        cfg.listeners.LiquidFlowBeforeEvent             = listeners["LiquidFlowBeforeEvent"].get<bool>();
-        cfg.listeners.SculkBlockGrowthBeforeEvent       = listeners["SculkBlockGrowthBeforeEvent"].get<bool>();
-        cfg.listeners.SculkSpreadBeforeEvent            = listeners["SculkSpreadBeforeEvent"].get<bool>();
-        cfg.listeners.PlayerEditSignBeforeEvent         = listeners["PlayerEditSignBeforeEvent"].get<bool>();
-        cfg.listeners.SpawnedMobEvent                   = listeners["SpawnedMobEvent"].get<bool>();
-        cfg.listeners.PlayerInteractEntityBeforeEvent   = listeners["PlayerInteractEntityBeforeEvent"].get<bool>();
-        cfg.listeners.BlockFallBeforeEvent              = listeners["BlockFallBeforeEvent"].get<bool>();
+        cfg.listeners.RedstoneUpdateBeforeEvent = listeners["RedstoneUpdateBeforeEvent"].get<bool>();
+        cfg.listeners.WitherDestroyBeforeEvent  = listeners["WitherDestroyBeforeEvent"].get<bool>();
+        // MossGrowthBeforeEvent 事件监听已由 VegetationPatchPlaceHook 替代 (ILA 0.14 起丢失 patch 半径), 旧配置重定向
+        // cfg.listeners.MossGrowthBeforeEvent           = listeners["MossGrowthBeforeEvent"].get<bool>();
+        cfg.hooks.VegetationPatchPlaceHook            = listeners["MossGrowthBeforeEvent"].get<bool>();
+        cfg.listeners.LiquidFlowBeforeEvent           = listeners["LiquidFlowBeforeEvent"].get<bool>();
+        cfg.listeners.SculkBlockGrowthBeforeEvent     = listeners["SculkBlockGrowthBeforeEvent"].get<bool>();
+        cfg.listeners.SculkSpreadBeforeEvent          = listeners["SculkSpreadBeforeEvent"].get<bool>();
+        cfg.listeners.PlayerEditSignBeforeEvent       = listeners["PlayerEditSignBeforeEvent"].get<bool>();
+        cfg.listeners.SpawnedMobEvent                 = listeners["SpawnedMobEvent"].get<bool>();
+        cfg.listeners.PlayerInteractEntityBeforeEvent = listeners["PlayerInteractEntityBeforeEvent"].get<bool>();
+        // BlockFallBeforeEvent 事件监听已由 FallingBlockActorTickHook 替代 (issue #242), 旧配置重定向
+        // cfg.listeners.BlockFallBeforeEvent            = listeners["BlockFallBeforeEvent"].get<bool>();
+        cfg.hooks.FallingBlockActorTickHook             = listeners["BlockFallBeforeEvent"].get<bool>();
         cfg.listeners.ActorDestroyBlockEvent            = listeners["ActorDestroyBlockEvent"].get<bool>();
         cfg.listeners.MobPlaceBlockBeforeEvent          = listeners["MobPlaceBlockBeforeEvent"].get<bool>();
         cfg.listeners.MobTakeBlockBeforeEvent           = listeners["MobTakeBlockBeforeEvent"].get<bool>();

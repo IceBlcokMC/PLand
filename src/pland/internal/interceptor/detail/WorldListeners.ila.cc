@@ -7,19 +7,17 @@
 
 #include "ll/api/event/EventBus.h"
 
-#include "ila/event/minecraft/world/ExplosionEvent.h"
-#include "ila/event/minecraft/world/PistonPushEvent.h"
-#include "ila/event/minecraft/world/RedstoneUpdateEvent.h"
-#include "ila/event/minecraft/world/SculkBlockGrowthEvent.h"
-#include "ila/event/minecraft/world/WitherDestroyEvent.h"
-#include "ila/event/minecraft/world/level/block/BlockFallEvent.h"
-#include "ila/event/minecraft/world/level/block/DragonEggBlockTeleportEvent.h"
-#include "ila/event/minecraft/world/level/block/LiquidFlowEvent.h"
-#include "ila/event/minecraft/world/level/block/MossGrowthEvent.h"
-#include "ila/event/minecraft/world/level/block/SculkCatalystAbsorbExperienceEvent.h"
-#include "ila/event/minecraft/world/level/block/SculkSpreadEvent.h"
+#include "ila/event/world/ExplosionEvent.h"
+#include "ila/event/world/PistonPushEvent.h"
+#include "ila/event/world/RedstoneUpdateEvent.h"
+#include "ila/event/world/SculkBlockGrowthEvent.h"
+#include "ila/event/world/WitherDestroyEvent.h"
+#include "ila/event/world/level/block/DragonEggBlockTeleportEvent.h"
+#include "ila/event/world/level/block/LiquidFlowEvent.h"
+#include "ila/event/world/level/block/SculkSpreadEvent.h"
 
 #include "mc/world/level/Explosion.h"
+#include "mc/world/level/dimension/DimensionType.h"
 #include "mc/world/phys/AABB.h"
 
 namespace land::internal::interceptor {
@@ -32,11 +30,16 @@ void EventInterceptor::setupIlaWorldListeners() {
         return bus->emplaceListener<ila::mc::ExplosionBeforeEvent>([registry](ila::mc::ExplosionBeforeEvent& ev) {
             TRACE_THIS_EVENT(ila::mc::ExplosionBeforeEvent);
 
-            auto& explosion   = ev.explosion();
-            auto& blockSource = explosion.mRegion;
-            auto  centerPos   = BlockPos{explosion.mPos};
-            auto  radius      = explosion.mRadius;
-            auto  dimid       = blockSource.getDimensionId();
+            auto&       explosion    = ev.explosion();
+            auto&       blockSource  = explosion.mRegion;
+            auto const& explosionPos = explosion.mPos;
+            auto        centerPos    = BlockPos{
+                static_cast<int>(explosionPos->x),
+                static_cast<int>(explosionPos->y),
+                static_cast<int>(explosionPos->z)
+            };
+            auto radius = explosion.mRadius;
+            auto dimid  = blockSource.getDimensionId();
 
             TRACE_LOG("centerPos={}, radius={}", centerPos.toString(), radius);
 
@@ -127,19 +130,6 @@ void EventInterceptor::setupIlaWorldListeners() {
         );
     });
 
-    registerListenerIf<&InterceptorConfig::Listeners::BlockFallBeforeEvent>([bus, registry]() {
-        return bus->emplaceListener<ila::mc::BlockFallBeforeEvent>([registry](ila::mc::BlockFallBeforeEvent& ev) {
-            auto& blockSource = ev.blockSource();
-            auto& blockPos    = ev.pos();
-
-            auto land = registry->getLandAt(blockPos, blockSource.getDimensionId());
-            if (land && land->getAABB().isAboveLand(blockPos)
-                && !hasEnvironmentPermission<&EnvironmentPerms::allowBlockFall>(land)) {
-                ev.cancel();
-            }
-        });
-    });
-
     registerListenerIf<&InterceptorConfig::Listeners::WitherDestroyBeforeEvent>([bus, registry]() {
         return bus->emplaceListener<ila::mc::WitherDestroyBeforeEvent>(
             [registry](ila::mc::WitherDestroyBeforeEvent& ev) {
@@ -161,26 +151,6 @@ void EventInterceptor::setupIlaWorldListeners() {
                 }
             }
         );
-    });
-
-    registerListenerIf<&InterceptorConfig::Listeners::MossGrowthBeforeEvent>([bus, registry]() {
-        return bus->emplaceListener<ila::mc::MossGrowthBeforeEvent>([registry](ila::mc::MossGrowthBeforeEvent& ev) {
-            auto& blockSource = ev.blockSource();
-            auto& blockPos    = ev.pos();
-            int   rx          = ev.xRadius();
-            int   rz          = ev.zRadius();
-
-            auto minPos = Vec3(blockPos.x - rx, blockPos.y - 1, blockPos.z - rz);
-            auto maxPos = Vec3(blockPos.x + rx, blockPos.y + 1, blockPos.z + rz);
-
-            auto lds = registry->getLandAt(minPos, maxPos, blockSource.getDimensionId());
-            for (auto const& land : lds) {
-                if (!hasEnvironmentPermission<&EnvironmentPerms::allowMossGrowth>(land)) {
-                    ev.cancel();
-                    return;
-                }
-            }
-        });
     });
 
     registerListenerIf<&InterceptorConfig::Listeners::LiquidFlowBeforeEvent>([bus, registry]() {
