@@ -43,6 +43,7 @@
 #include "mc/world/level/block/FireBlock.h"
 #include "mc/world/level/block/LecternBlock.h"
 #include "mc/world/level/block/actor/ChestBlockActor.h"
+#include "mc/world/level/block/actor/DispenserBlockActor.h"
 #include "mc/world/level/block/block_events/BlockPlayerInteractEvent.h"
 #include "mc/world/level/levelgen/feature/VegetationPatchFeature.h"
 #include "mc/world/phys/AABB.h"
