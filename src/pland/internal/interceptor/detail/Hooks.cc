@@ -31,6 +31,7 @@
 #include "mc/world/effect/OozingMobEffect.h"
 #include "mc/world/effect/WeavingMobEffect.h"
 #include "mc/world/item/BucketItem.h"
+#include "mc/world/item/ItemStack.h"
 #include "mc/world/item/enchanting/EnchantUtils.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
@@ -46,6 +47,7 @@
 #include "mc/world/level/levelgen/feature/VegetationPatchFeature.h"
 #include "mc/world/phys/AABB.h"
 #include <mc/deps/core/math/IRandom.h>
+
 #include <mc/deps/core/math/Random.h>
 
 #include <absl/container/flat_hash_map.h>
@@ -466,21 +468,25 @@ LL_TYPE_INSTANCE_HOOK(
     origin(region, pos);
 }
 LL_TYPE_INSTANCE_HOOK(
-    BucketDispenseHook,
+    DispenserGetItemHook,
     ll::memory::HookPriority::Normal,
-    BucketItem,
-    &BucketItem::$dispense,
-    bool,
-    ::BlockSource& region,
-    ::Container&   container,
-    int            slot,
-    ::Vec3 const&  pos,
-    uchar          face
+    DispenserBlockActor,
+    &DispenserBlockActor::$getItem,
+    ::ItemStack const&,
+    int slot
 ) {
-    if (tBlockCurrentDispense) {
-        return false;
+    auto& itemStack = origin(slot);
+    if (!itemStack.isNull() && tBlockCurrentDispense) {
+        if (auto item = itemStack.mItem.get(); item && item->isBucket()) {
+            return ItemStack::EMPTY_ITEM();
+        }
     }
-    return origin(region, container, slot, pos, face);
+    return itemStack;
+    // int getRandomSlot(Random& random); // v26.20
+    // if (slot >= 0 && tBlockCurrentDispense && isLiquidBucketItem(this->getItem(slot))) {
+    //     return -1; // 随机选中的是液体桶: 以"无可用槽位"语义取消本次发射
+    // }
+    // return slot;
 }
 
 
@@ -575,7 +581,7 @@ void EventInterceptor::setupHooks() {
     registerHookIf<
         &InterceptorConfig::Hooks::DispenserLiquidDispenseHook,
         DispenserDispenseFromHook,
-        BucketDispenseHook>();
+        DispenserGetItemHook>();
     registerHookIf<&InterceptorConfig::Hooks::KineticDamageHook, KineticDamageSystemHook>();
     registerHookIf<&InterceptorConfig::Hooks::VegetationPatchPlaceHook, VegetationPatchPlaceHook>();
 }
