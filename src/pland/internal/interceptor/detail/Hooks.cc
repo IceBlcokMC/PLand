@@ -490,24 +490,22 @@ LL_TYPE_INSTANCE_HOOK(
     // return slot;
 }
 
-
+using namespace ll::memory_literals;
 // Fix [#231](https://github.com/IceBlcokMC/PLand/issues/231)
 // TODO: 精确的命中查询 (HitDetection::MeleeTargeting::getHitResults) 为 MCNAPI 符号
 // https://github.com/LiteLDev/mcapi-requests/issues/236
 // https://github.com/LiteLDev/mcapi-requests/issues/237
-// TODO: 此 Hook 在 v26.40 版本下已损坏
-// 问题表现为：右键长矛发起冲锋引发崩溃
-// 初步定位问题是解引用 ActorOwnerComponent::mActor 后崩溃
+// The first arugument of DealKineticDamageSystem::tryApplyDamageOrEffects has been optimized by clang, so use symbol to
+// hook for ignoring the first argument. Fuck you clang!!!
 LL_STATIC_HOOK(
     KineticDamageSystemHook,
     ll::memory::HookPriority::Normal,
-    &DealKineticDamageSystem::tryApplyDamageOrEffects,
+    "?tryApplyDamageOrEffects@DealKineticDamageSystem@@YAXU?$type_list@U?$Include@UActorMovementTickNeededComponent@@"
+    "UMobFlagComponent@@@@U?$Exclude@UIsDeadFlagComponent@@@@@entt@@AEAVActorOwnerComponent@@"
+    "AEAUDealKineticDamageComponent@@@Z"_sym,
     void,
-    ::entt::type_list<
-        ::Include<::ActorMovementTickNeededComponent, ::MobFlagComponent>,
-        ::Exclude<::IsDeadFlagComponent>> tag,
-    ::ActorOwnerComponent&                owner,
-    ::DealKineticDamageComponent&         component
+    ::ActorOwnerComponent&        owner,
+    ::DealKineticDamageComponent& component
 ) {
     auto* attacker = owner.mActor.get();
     if (attacker && attacker->getEntityTypeId() == ActorType::Player) {
@@ -528,7 +526,7 @@ LL_STATIC_HOOK(
             }
         }
     }
-    origin(tag, owner, component);
+    origin(owner, component);
 }
 
 

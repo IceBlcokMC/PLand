@@ -5,7 +5,7 @@ add_repositories("iceblcokmc https://github.com/IceBlcokMC/xmake-repo.git")
 add_repositories("engsr6982-repo https://github.com/engsr6982/xmake-repo.git")
 
 -- LeviMc(LiteLDev)
-add_requires("levilamina 26.40.4", {configs = {target_type = "server"}})
+add_requires("levilamina 26.40.6", {configs = {target_type = "server"}})
 add_requires("levibuildscript")
 add_requires("ilistenattentively 0.16.0")
 
