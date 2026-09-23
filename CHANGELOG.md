@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-09-23
+
+### 🧩 其他改动
+
+- 添加繁体中文语言包 [#254](https://github.com/IceBlcokMC/PLand/pull/254) @Byjsmc145
+- 适配 Bedrock Server v26.51 (LeviLamina v26.51.x) @engsr6982
+
 ## [0.23.1] - 2026-09-20
 
 ### 🐛 问题修复
