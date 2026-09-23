@@ -2,7 +2,7 @@
   "format_version": 3,
   "format_uuid": "289f771f-2c9a-4d73-9f3f-8492495a924d",
   "tooth": "github.com/IceBlcokMC/PLand",
-  "version": "0.23.1",
+  "version": "0.24.0",
   "info": {
     "name": "PLand",
     "description": "基于 LeviLamina 的领地系统 / A land system based on LeviLamina",
@@ -13,8 +13,8 @@
     {
       "platform": "win-x64",
       "dependencies": {
-        "github.com/LiteLDev/LeviLamina": ">=26.40.4",
-        "github.com/LiteLDev/iListenAttentively": "0.16.*"
+        "github.com/LiteLDev/LeviLamina": "26.51.*",
+        "github.com/LiteLDev/iListenAttentively": "0.17.*"
       },
       "assets": [
         {
@@ -36,8 +36,8 @@
       "label": "headless",
       "platform": "win-x64",
       "dependencies": {
-        "github.com/LiteLDev/LeviLamina": ">=26.40.4",
-        "github.com/LiteLDev/iListenAttentively": "0.16.*"
+        "github.com/LiteLDev/LeviLamina": "26.51.*",
+        "github.com/LiteLDev/iListenAttentively": "0.17.*"
       },
       "assets": [
         {
