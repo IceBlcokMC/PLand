@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.1] - 2026-09-25
+
+### 🐛 问题修复
+
+- 修复 `DispenserDispenseFromHook` 引发的崩溃(发射器) [#258](https://github.com/IceBlcokMC/PLand/issues/258) @lwenk
+- 修复 `KineticDamageSystemHook` 启用失败(矛冲锋) [#257](https://github.com/IceBlcokMC/PLand/issues/257) @lwenk
+
 ## [0.24.0] - 2026-09-23
 
 ### 🧩 其他改动
