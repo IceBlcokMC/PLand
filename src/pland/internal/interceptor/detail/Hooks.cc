@@ -38,10 +38,12 @@
 #include "mc/world/level/Level.h"
 #include "mc/world/level/WorldBlockTarget.h"
 #include "mc/world/level/block/BigDripleafBlock.h"
+#include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/DispenserBlock.h"
 #include "mc/world/level/block/FarmBlock.h"
 #include "mc/world/level/block/FireBlock.h"
 #include "mc/world/level/block/LecternBlock.h"
+#include "mc/world/level/block/VanillaStates.h"
 #include "mc/world/level/block/actor/ChestBlockActor.h"
 #include "mc/world/level/block/actor/DispenserBlockActor.h"
 #include "mc/world/level/block/block_events/BlockPlayerInteractEvent.h"
@@ -450,11 +452,25 @@ LL_TYPE_INSTANCE_HOOK(
     auto& registry = PLand::getInstance().getLandRegistry();
     auto  dimid    = region.getDimensionId();
 
-    // 发射目标位置 (发射器前方一格), getDispensePosition 内部按方块朝向计算
-    auto targetPos = BlockPos{this->getDispensePosition(
-        region,
-        Vec3{static_cast<float>(pos.x), static_cast<float>(pos.y), static_cast<float>(pos.z)}
-    )};
+    // Do not call getDispensePosition here. Its Vec3-by-value ABI corrupts this
+    // hook's stack frame on BDS 26.51. Read the state directly and find the
+    // adjacent block the dispenser is facing instead.
+    auto facing = region.getBlock(pos).getState<int>(VanillaStates::FacingDirection());
+    if (!facing || *facing < 0 || *facing > 5) {
+        origin(region, pos);
+        return;
+    }
+
+    auto targetPos = pos;
+    switch (*facing) {
+    case 0: --targetPos.y; break; // down
+    case 1: ++targetPos.y; break; // up
+    case 2: --targetPos.z; break; // north
+    case 3: ++targetPos.z; break; // south
+    case 4: --targetPos.x; break; // west
+    case 5: ++targetPos.x; break; // east
+    default: break;
+    }
 
     if (
         auto targetLand = registry.getLandAt(targetPos, dimid);
@@ -490,19 +506,16 @@ LL_TYPE_INSTANCE_HOOK(
     // return slot;
 }
 
-using namespace ll::memory_literals;
 // Fix [#231](https://github.com/IceBlcokMC/PLand/issues/231)
 // TODO: 精确的命中查询 (HitDetection::MeleeTargeting::getHitResults) 为 MCNAPI 符号
 // https://github.com/LiteLDev/mcapi-requests/issues/236
 // https://github.com/LiteLDev/mcapi-requests/issues/237
-// The first arugument of DealKineticDamageSystem::tryApplyDamageOrEffects has been optimized by clang, so use symbol to
-// hook for ignoring the first argument. Fuck you clang!!!
+// In BDS 26.51 the EnTT query type is no longer an ABI parameter. Hook the
+// generated two-argument function directly instead of relying on a mangled symbol.
 LL_STATIC_HOOK(
     KineticDamageSystemHook,
     ll::memory::HookPriority::Normal,
-    "?tryApplyDamageOrEffects@DealKineticDamageSystem@@YAXU?$type_list@U?$Include@UActorMovementTickNeededComponent@@"
-    "UMobFlagComponent@@@@U?$Exclude@UIsDeadFlagComponent@@@@@entt@@AEAVActorOwnerComponent@@"
-    "AEAUDealKineticDamageComponent@@@Z"_sym,
+    &DealKineticDamageSystem::tryApplyDamageOrEffects,
     void,
     ::ActorOwnerComponent&        owner,
     ::DealKineticDamageComponent& component
