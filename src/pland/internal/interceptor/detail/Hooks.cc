@@ -503,13 +503,26 @@ LL_TYPE_INSTANCE_HOOK(
 
     auto targetPos = pos;
     switch (*facing) {
-    case 0: --targetPos.y; break; // down
-    case 1: ++targetPos.y; break; // up
-    case 2: --targetPos.z; break; // north
-    case 3: ++targetPos.z; break; // south
-    case 4: --targetPos.x; break; // west
-    case 5: ++targetPos.x; break; // east
-    default: break;
+    case 0:
+        --targetPos.y;
+        break; // down
+    case 1:
+        ++targetPos.y;
+        break; // up
+    case 2:
+        --targetPos.z;
+        break; // north
+    case 3:
+        ++targetPos.z;
+        break; // south
+    case 4:
+        --targetPos.x;
+        break; // west
+    case 5:
+        ++targetPos.x;
+        break; // east
+    default:
+        break;
     }
 
     if (
@@ -612,6 +625,62 @@ LL_TYPE_INSTANCE_HOOK(
     return origin(context);
 }
 
+namespace {
+
+thread_local Mob* tFrostWalker = nullptr;
+
+struct FrostWalkerGuard {
+    Mob* previous;
+
+    explicit FrostWalkerGuard(Mob& mob) : previous(tFrostWalker) { tFrostWalker = &mob; }
+    ~FrostWalkerGuard() { tFrostWalker = previous; }
+};
+
+using FrostWalkerSetBlockFn = bool (BlockSource::*)(
+    BlockPos const&,
+    Block const&,
+    int,
+    std::shared_ptr<BlockActor>,
+    ActorBlockSyncMessage const*,
+    BlockChangeContext const&
+);
+
+} // namespace
+
+
+LL_TYPE_INSTANCE_HOOK(FrostWalkerHook, ll::memory::HookPriority::Normal, Mob, &Mob::frostWalk, void) {
+    FrostWalkerGuard guard{*this};
+    origin();
+}
+
+LL_TYPE_INSTANCE_HOOK(
+    FrostWalkerSetBlockHook,
+    ll::memory::HookPriority::Normal,
+    BlockSource,
+    static_cast<FrostWalkerSetBlockFn>(&BlockSource::setBlock),
+    bool,
+    BlockPos const&              pos,
+    Block const&                 block,
+    int                          updateFlags,
+    std::shared_ptr<BlockActor>  blockActor,
+    ActorBlockSyncMessage const* syncMsg,
+    BlockChangeContext const&    changeSourceContext
+) {
+    if (tFrostWalker && block.getTypeName() == "minecraft:frosted_ice") {
+        auto& registry = PLand::getInstance().getLandRegistry();
+        auto  land     = registry.getLandAt(pos, this->getDimensionId());
+        if (tFrostWalker->getEntityTypeId() == ActorType::Player) {
+            auto& player = static_cast<Player&>(*tFrostWalker);
+            if (!hasRolePermission<&RolePerms::allowFrostWalker>(land, player.getUuid())) {
+                return false;
+            }
+        } else if (!hasGuestPermission<&RolePerms::allowFrostWalker>(land)) {
+            return false;
+        }
+    }
+    return origin(pos, block, updateFlags, std::move(blockActor), syncMsg, changeSourceContext);
+}
+
 void EventInterceptor::setupHooks() {
     registerHookIf<&InterceptorConfig::Hooks::ScaffoldingBlockPlaceHook, ScaffoldingBlockPlaceHook>();
     registerHookIf<&InterceptorConfig::Hooks::FishingHookHitHook, FishingHookHitHook>();
@@ -640,6 +709,7 @@ void EventInterceptor::setupHooks() {
         DispenserGetItemHook>();
     registerHookIf<&InterceptorConfig::Hooks::KineticDamageHook, KineticDamageSystemHook>();
     registerHookIf<&InterceptorConfig::Hooks::VegetationPatchPlaceHook, VegetationPatchPlaceHook>();
+    registerHookIf<&InterceptorConfig::Hooks::FrostWalkerHook, FrostWalkerHook, FrostWalkerSetBlockHook>();
 }
 
 } // namespace land::internal::interceptor
