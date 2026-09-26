@@ -22,7 +22,7 @@ struct HashedStringEq {
 };
 
 struct InterceptorConfig {
-    inline static constexpr int SchemaVersion = 7;
+    inline static constexpr int SchemaVersion = 8;
 
     int version = SchemaVersion;
     struct Listeners {
@@ -80,6 +80,7 @@ struct InterceptorConfig {
         bool DispenserLiquidDispenseHook{true};    // 发射器倾倒液体(边界)
         bool KineticDamageHook{true};              // 矛冲刺命中(动能伤害)
         bool VegetationPatchPlaceHook{true};       // 苔藓生长(植被斑块面积检查)
+        bool FrostWalkerHook{true};                // 冰霜行者冻结水
     } hooks;
 
     struct Rules {

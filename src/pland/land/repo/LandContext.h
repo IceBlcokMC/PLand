@@ -88,6 +88,7 @@ struct RolePerms final {
 
     // 新增权限(保持 ABI 稳定，不在前面插入字段，避免 LRCA 需要重新编译)
     Entry allowTriggerDripleaf{true, true}; // 允许触发垂滴叶
+    Entry allowFrostWalker{true, false};    // 允许冰霜行者冻结水
 };
 struct LandPermTable final {
     EnvironmentPerms environment{};
@@ -96,7 +97,7 @@ struct LandPermTable final {
 
 // ! 注意：如果 LandContext 有更改，则必须递增 LandSchemaVersion，否则导致加载异常
 // 对于字段变动、重命名，请注册对应的 migrator 转换数据
-inline constexpr int kLandSchemaVersion = 32;
+inline constexpr int kLandSchemaVersion = 33;
 struct LandContext {
     int                      version{kLandSchemaVersion};      // 版本号
     LandAABB                 mPos{};                           // 领地对角坐标

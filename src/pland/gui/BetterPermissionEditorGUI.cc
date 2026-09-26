@@ -115,6 +115,7 @@ constexpr std::array<GUI::RolePermField, ll::reflection::member_count_v<RolePerm
      GUI::MemberField<&RolePerms::editFlowerPot>{},
      GUI::MemberField<&RolePerms::allowUseRangedWeapon>{},
      GUI::MemberField<&RolePerms::allowTriggerDripleaf>{},
+     GUI::MemberField<&RolePerms::allowFrostWalker>{},
      }
 };
 

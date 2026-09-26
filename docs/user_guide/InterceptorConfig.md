@@ -29,7 +29,7 @@ PLand 通过**拦截游戏事件**来强制领地权限（比如：非领地成�
 
 ```json
 {
-    "version": 7, // 配置文件版本
+    "version": 8, // 配置文件版本
     "listeners": {
         // 事件监听器开关 true 为开启，false 为关闭
         "PlayerDestroyBlockEvent": true, // 玩家破坏方块事件
@@ -86,7 +86,8 @@ PLand 通过**拦截游戏事件**来强制领地权限（比如：非领地成�
         "FallingBlockActorTickHook": true, // 重力方块下落 (进入禁止掉落的领地时转为掉落物)
         "DispenserLiquidDispenseHook": true, // 发射器倾倒液体 (禁止液体流动的领地边界不受发射器倾倒)
         "KineticDamageHook": true, // 矛冲刺命中
-        "VegetationPatchPlaceHook": true // 苔藓生长
+        "VegetationPatchPlaceHook": true, // 苔藓生长
+        "FrostWalkerHook": true // 按实际冻结位置检查冰霜行者权限，防止跨领地冻结水
     },
     "rules": {
         "mob": {
@@ -232,6 +233,7 @@ PLand 使用 Hook 来**修补**一些事件监听器覆盖不到的越权问题�
 | `useBeeNest`               | 使用蜂巢(蜂箱)                                    |
 | `editFlowerPot`            | 编辑花盆                                        |
 | `allowUseRangedWeapon`     | 允许使用远程武器(弓/弩)                               |
+| `allowFrostWalker`         | 允许冰霜行者冻结水                                    |
 
 **示例**：
 默认情况下，`minecraft:flint_and_steel`（打火石）需要 `useFlintAndSteel` 权限。如果您想让它需要 `allowPlace` 权限，您可以这样修改：

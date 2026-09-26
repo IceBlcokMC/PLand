@@ -133,6 +133,7 @@ void InterceptorConfig::_buildDynamicRuleMap() {
             DECL_PERM_FIELD(RolePerms::useBeeNest),
             DECL_PERM_FIELD(RolePerms::editFlowerPot),
             DECL_PERM_FIELD(RolePerms::allowUseRangedWeapon),
+            DECL_PERM_FIELD(RolePerms::allowFrostWalker),
         };
 
 #undef DECL_PERM_FIELD
