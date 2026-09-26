@@ -7,8 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### 新增功能
+### ✨ 新增功能
 
+- 增加无主领地的功能 @yangyangzhong82
 - 新增冰霜行者冻结冰权限 `allowFrostWalker`。[#250](https://github.com/IceBlcokMC/PLand/issues/250) @yangyangzhong82
 
 ### 🐛 问题修复

@@ -7,6 +7,7 @@
 #include "pland/gui/LandTeleportGUI.h"
 #include "pland/land/Config.h"
 #include "pland/land/repo/LandRegistry.h"
+#include "pland/utils/LandPermissionUtils.h"
 #include "utils/BackUtils.h"
 
 #include <ll/api/form/SimpleForm.h>
@@ -30,7 +31,10 @@ void LandMainMenuGUI::sendTo(Player& player) {
         SimpleLandPicker::sendTo(
             pl,
             PLand::getInstance().getLandRegistry().getLands(pl.getUuid()),
-            LandManagerGUI::sendMainMenu,
+            [](Player& self, std::shared_ptr<Land> land) {
+                if (!permission_utils::checkLandManagement(self, *land)) return;
+                LandManagerGUI::sendMainMenu(self, land);
+            },
             gui::back_utils::wrapCallback<sendTo>()
         );
     });

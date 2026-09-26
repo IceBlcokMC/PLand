@@ -69,10 +69,15 @@ public:
      * - 如果底层存储的 Owner 仍是 XUID（旧数据），此函数会返回 `mce::UUID::EMPTY()`。
      * - 在玩家上线并完成 XUID → UUID 转换之前，`getOwner()` 可能不代表真实的主人(EMPTY)。
      * - 如果需要访问原始存储值（可能是 XUID 或 UUID 字符串），请使用 `getRawOwner()`。
+     * -
+     * 无主领地也返回 EMPTY，请用 `isOwnerless()` 区分无主领地和待迁移的 XUID 数据。
      */
     LDNDAPI mce::UUID const& getOwner() const;
 
     LDAPI void setOwner(mce::UUID const& uuid);
+
+    // 无主领地使用空 UUID 保存，与租赁回收的系统领地区分。
+    LDNDAPI bool isOwnerless() const;
 
     [[deprecated("Use getOwner() instead, this returns raw storage string (may be XUID or UUID).")]]
     LDNDAPI std::string const& getRawOwner() const;

@@ -24,7 +24,9 @@ void SimpleLandPicker::sendTo(
 
     for (auto& land : data) {
         std::string leaseContent = "";
-        if (land->isLeased()) {
+        if (land->isOwnerless()) {
+            leaseContent = " | 无主领地"_trl(localeCode);
+        } else if (land->isLeased()) {
             auto state = land->getLeaseState();
             if (state == LeaseState::Active) {
                 leaseContent = time_utils::formatRemaining(land->getLeaseEndAt());

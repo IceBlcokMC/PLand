@@ -35,6 +35,9 @@ struct LandOwnerPicker::Impl : std::enable_shared_from_this<Impl> {
         auto  lands = PLand::getInstance().getLandRegistry().getLandsByOwner();
         mEntries.reserve(lands.size());
         for (auto const& [owner, landSet] : lands) {
+            if (owner == mce::UUID::EMPTY()) {
+                continue; // 无主领地从管理员的专用入口管理，避免与待迁移的 XUID 领地混淆。
+            }
             if (owner == SYSTEM_ACCOUNT_UUID) {
                 mEntries.emplace_back(owner, "PLandSystem", landSet.size());
             } else {

@@ -47,6 +47,14 @@ void OperatorManager::sendMainMenu(Player& player) {
     fm.appendButton("管理玩家领地"_trl(localeCode), "textures/ui/FriendsIcon", "path", [](Player& self) {
         LandOwnerPicker::sendTo(self, static_cast<void (*)(Player&, mce::UUID)>(&sendAdvancedLandPicker), sendMainMenu);
     });
+    fm.appendButton("管理无主领地"_trl(localeCode), "textures/ui/lock", "path", [](Player& self) {
+        sendAdvancedLandPicker(
+            self,
+            PLand::getInstance().getLandRegistry().getLandsWhere([](std::shared_ptr<Land> const& land) {
+                return land->isOwnerless();
+            })
+        );
+    });
     fm.appendButton("管理指定领地"_trl(localeCode), "textures/ui/magnifyingGlass", "path", [](Player& self) {
         sendLandSelectModeMenu(self);
     });
