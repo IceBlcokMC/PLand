@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🐛 问题修复
+
+- 玩家从领地外点击脚手架延伸时，不再可绕过领地放置权限的问题；按最终放置位置校验权限。[#251](https://github.com/IceBlcokMC/PLand/issues/251) @yangyangzhong82
+
 ## [0.24.1] - 2026-09-25
 
 ### 🐛 问题修复
