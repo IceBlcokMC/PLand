@@ -22,7 +22,7 @@ struct HashedStringEq {
 };
 
 struct InterceptorConfig {
-    inline static constexpr int SchemaVersion = 6;
+    inline static constexpr int SchemaVersion = 7;
 
     int version = SchemaVersion;
     struct Listeners {
@@ -59,6 +59,7 @@ struct InterceptorConfig {
     } listeners;
 
     struct Hooks {
+        bool ScaffoldingBlockPlaceHook{true};      // 脚手架最终放置位置
         bool FishingHookHitHook{true};             // 钓鱼钩击中
         bool LayEggGoalHook{true};                 // 海龟产卵
         bool FireBlockBurnHook{true};              // 火焰蔓延

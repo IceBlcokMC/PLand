@@ -14,6 +14,7 @@
 #include "mc/entity/components_json_legacy/HopperComponent.h"
 #include "mc/entity/systems/DealKineticDamageSystem.h"
 #include "mc/legacy/ActorUniqueID.h"
+#include "mc/scripting/event_handlers/ScriptBlockGameplayHandler.h"
 #include "mc/server/ServerPlayer.h"
 #include "mc/world/actor/ActorDamageSource.h"
 #include "mc/world/actor/ActorHurtResult.h"
@@ -30,6 +31,7 @@
 #include "mc/world/actor/projectile/ThrownTrident.h"
 #include "mc/world/effect/OozingMobEffect.h"
 #include "mc/world/effect/WeavingMobEffect.h"
+#include "mc/world/events/BlockTryPlaceByPlayerEvent.h"
 #include "mc/world/item/BucketItem.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/item/enchanting/EnchantUtils.h"
@@ -56,6 +58,44 @@
 #include <absl/container/flat_hash_map.h>
 
 namespace land::internal::interceptor {
+
+
+// 脚手架会在交互后重定向放置位置，不能只校验点击面相邻的位置。
+// BlockTryPlaceByPlayerEvent 提供最终落点，且仍可在写入方块前取消。
+LL_TYPE_INSTANCE_HOOK(
+    ScaffoldingBlockPlaceHook,
+    ll::memory::HookPriority::High,
+    ::ScriptBlockGameplayHandler,
+    &::ScriptBlockGameplayHandler::$handleEvent,
+    GameplayHandlerResult<CoordinatorResult>,
+    ::BlockTryPlaceByPlayerEvent const& eventData
+) {
+    if (eventData.mPermutationToPlace.getTypeName() != "minecraft:scaffolding") {
+        return origin(eventData);
+    }
+
+    auto actor = eventData.mPlayer->tryUnwrap();
+    if (!actor || actor->getEntityTypeId() != ActorType::Player) {
+        return origin(eventData);
+    }
+
+    auto& player   = static_cast<Player&>(actor.value());
+    auto& registry = PLand::getInstance().getLandRegistry();
+    auto  land     = registry.getLandAt(eventData.mPos.get(), player.getDimensionId());
+    auto& uuid     = player.getUuid();
+    bool  allowed  = hasRolePermission<&RolePerms::allowPlace>(land, uuid);
+    PLand::getInstance().getSelf().getLogger().debug(
+        "[ScaffoldingBlockPlaceHook] player={}, dimension={}, target={}, decision={}",
+        player.getRealName(),
+        static_cast<int>(player.getDimensionId()),
+        eventData.mPos->toString(),
+        allowed ? "ALLOW" : "DENY"
+    );
+    if (!allowed) {
+        return {HandlerResult::BypassListeners, CoordinatorResult::Cancel};
+    }
+    return origin(eventData);
+}
 
 
 // Fix [#56](https://github.com/engsr6982/PLand/issues/56)
@@ -573,6 +613,7 @@ LL_TYPE_INSTANCE_HOOK(
 }
 
 void EventInterceptor::setupHooks() {
+    registerHookIf<&InterceptorConfig::Hooks::ScaffoldingBlockPlaceHook, ScaffoldingBlockPlaceHook>();
     registerHookIf<&InterceptorConfig::Hooks::FishingHookHitHook, FishingHookHitHook>();
     registerHookIf<&InterceptorConfig::Hooks::LayEggGoalHook, LayEggGoalHook>();
     registerHookIf<&InterceptorConfig::Hooks::FireBlockBurnHook, FireBlockBurnHook>();
