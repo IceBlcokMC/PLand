@@ -85,7 +85,7 @@
     "§bPLand§r - §c操作失败": "§bPLand§r - §cOperation Failed",
     "§a重试": "§aRetry",
     "§c放弃/取消": "§cAbort/Cancel",
-    "无权限访问此表单": "No permission to access this form",
+    "无权限访问此表单": "Land OP is a separate permission. Run /pland admin add <player name> from the server console to grant it.",
     "[PLand] | 领地管理": "[PLand] | Land Management",
     "请选择您要进行的操作": "Please select the operation you want to perform",
     "管理脚下领地": "Manage Land Underfoot",
