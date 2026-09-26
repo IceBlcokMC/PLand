@@ -38,6 +38,7 @@ enum class DeletePolicy : uint8_t {
     TransferChildren, // 删除当前，子领地转移
 };
 
+// 玩家操作权限由命令、GUI 等调用方校验；服务负责业务规则和数据变更。
 class LandManagementService {
     struct Impl;
     std::unique_ptr<Impl> impl;
@@ -108,6 +109,8 @@ public:
     LDNDAPI ll::Expected<> deleteLand(Player& player, std::shared_ptr<Land> ptr, DeletePolicy policy);
 
     LDNDAPI ll::Expected<> setLandName(Player& player, std::shared_ptr<Land> const& land, std::string name);
+
+    LDNDAPI ll::Expected<> setLandOwnerless(Player& player, std::shared_ptr<Land> const& land);
 
     LDNDAPI ll::Expected<> transferLand(Player& player, std::shared_ptr<Land> const& land, Player& target);
     LDNDAPI ll::Expected<> transferLand(Player& player, std::shared_ptr<Land> const& land, mce::UUID const& target);

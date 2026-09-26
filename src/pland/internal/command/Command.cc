@@ -18,6 +18,7 @@
 #include "pland/service/LandManagementService.h"
 #include "pland/service/ServiceLocator.h"
 #include "pland/utils/FeedbackUtils.h"
+#include "pland/utils/LandPermissionUtils.h"
 
 
 #include "ll/api/command/Command.h"
@@ -139,8 +140,14 @@ void new_land(CommandOrigin const& ori, CommandOutput& /* out */, NewLandParam c
     }
 
     case NewLandParam::NewType::SubLand: {
-        auto expected =
-            PLand::getInstance().getServiceLocator().getLandManagementService().requestCreateSubLand(player);
+        auto& mod  = PLand::getInstance();
+        auto  land = mod.getLandRegistry().getLandAt(player.getPosition(), player.getDimensionId());
+        if (!land) {
+            feedback_utils::sendErrorText(player, "操作失败, 当前位置没有领地"_trl(player.getLocaleCode()));
+            return;
+        }
+        if (!permission_utils::checkLandManagement(player, *land)) return;
+        auto expected = mod.getServiceLocator().getLandManagementService().requestCreateSubLand(player, land);
         if (!expected) {
             feedback_utils::sendError(player, expected.error());
             return;
@@ -269,6 +276,7 @@ void land_set_teleport_pos(CommandOrigin const& ori, CommandOutput& out) {
         return;
     }
 
+    if (!permission_utils::checkLandManagement(player, *land)) return;
     auto& service = mod.getServiceLocator().getLandManagementService();
     if (auto res = service.setLandTeleportPos(player, land, point)) {
         feedback_utils::notifySuccess(player, "传送点已更新为: {}"_trl(localeCode, point.toString()));

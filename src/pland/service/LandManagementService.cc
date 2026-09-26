@@ -85,6 +85,27 @@ LandManagementService::~LandManagementService() {
     ll::event::EventBus::getInstance().removeListener(impl->mLegacyOwnerMigrationListener);
 }
 
+ll::Expected<> LandManagementService::setLandOwnerless(Player& player, std::shared_ptr<Land> const& land) {
+    if (land->isOwnerless()) return {};
+
+    auto event = event::PlayerTransferLandBeforeEvent{player, land, mce::UUID::EMPTY()};
+    ll::event::EventBus::getInstance().publish(event);
+    if (event.isCancelled()) {
+        return ll::makeStringError("操作失败，请求被取消"_trl(player.getLocaleCode()));
+    }
+
+    // 无主领地不参与租赁回收；调度器会跳过已转为买断的领地。
+    land->setHoldType(LandHoldType::Bought);
+    land->setLeaseState(LeaseState::None);
+    land->setLeaseStartAt(0);
+    land->setLeaseEndAt(0);
+    land->clearMembers();
+    land->setOwner(mce::UUID::EMPTY());
+
+    ll::event::EventBus::getInstance().publish(event::PlayerTransferLandAfterEvent{player, land, mce::UUID::EMPTY()});
+    return {};
+}
+
 
 ll::Expected<> LandManagementService::requestCreateOrdinaryLand(Player& player, bool is3D) const {
     if (!Config::ensureDimensionAllowed(player.getDimensionId())) {
@@ -113,9 +134,6 @@ ll::Expected<> LandManagementService::requestCreateSubLand(Player& player, std::
     }
     if (!Config::ensureDimensionAllowed(player.getDimensionId())) {
         return ll::makeStringError("你所在的维度无法购买领地"_trl(player.getLocaleCode()));
-    }
-    if (!land->isOwner(player.getUuid())) {
-        return ll::makeStringError("操作失败, 您不是当前领地主人"_trl(player.getLocaleCode()));
     }
     if (land->isLeased()) {
         return ll::makeStringError("租赁领地暂不支持创建子领地"_trl(player.getLocaleCode()));
@@ -211,9 +229,6 @@ ll::Expected<> LandManagementService::ensurePlayerLandCountLimit(mce::UUID const
 }
 ll::Expected<>
 LandManagementService::setLandTeleportPos(Player& player, std::shared_ptr<Land> const& land, Vec3 point) {
-    if (!land->isOwner(player.getUuid()) && !impl->mRegistry.isOperator(player.getUuid())) {
-        return ll::makeStringError("操作失败，您不是领地主人"_trl(player.getLocaleCode()));
-    }
     if (!land->getAABB().hasPos(point)) {
         return ll::makeStringError("设置传送点失败，传送点不在领地范围内"_trl(player.getLocaleCode()));
     }
@@ -275,6 +290,9 @@ ll::Expected<> LandManagementService::transferLand(Player& player, std::shared_p
 
 ll::Expected<>
 LandManagementService::transferLand(Player& player, std::shared_ptr<Land> const& land, mce::UUID const& target) {
+    if (target == mce::UUID::EMPTY() || target == SYSTEM_ACCOUNT_UUID) {
+        return ll::makeStringError("请选择有效的玩家作为领地主"_trl(player.getLocaleCode()));
+    }
     auto const actorUuid  = player.getUuid();
     auto const isOperator = impl->mRegistry.isOperator(actorUuid);
     if (!isOperator && actorUuid == target) {
@@ -337,6 +355,9 @@ ll::Expected<> LandManagementService::_playerChangeMember(
     mce::UUID const&             target,
     bool                         isAdd
 ) {
+    if (isAdd && land->isOwnerless()) {
+        return ll::makeStringError("无主领地不能添加成员，请先设置领地主"_trl(player.getLocaleCode()));
+    }
     if (isAdd) {
         if (land->isOwner(target)) {
             return ll::makeStringError("操作失败，领地主人不能被添加为成员"_trl(player.getLocaleCode()));
@@ -422,13 +443,13 @@ ll::Expected<> LandManagementService::_addOrdinaryLand(Player& player, std::shar
 ll::Expected<std::shared_ptr<Land>>
 LandManagementService::_payMoneyAndCreateSubLand(Player& player, SubLandCreateSelector* selector, int64_t money) {
     assert(selector != nullptr);
-    auto& economy = EconomySystem::getInstance();
-    if (!economy.reduceChecked(player.getUuid(), money)) {
-        return ll::makeStringError("您的余额不足，无法购买"_trl(player.getLocaleCode()));
-    }
     auto parent = selector->tryGetParentLand();
     if (!parent) {
         return ll::makeStringError("操作失败，领地不存在"_trl(player.getLocaleCode()));
+    }
+    auto& economy = EconomySystem::getInstance();
+    if (!economy.reduceChecked(player.getUuid(), money)) {
+        return ll::makeStringError("您的余额不足，无法购买"_trl(player.getLocaleCode()));
     }
 
     auto sub = selector->newSubLand();
@@ -546,7 +567,7 @@ LandManagementService::_processDeleteLand(Player& player, std::shared_ptr<Land> 
 
 ll::Expected<>
 LandManagementService::_processLandRefund(Player& player, std::shared_ptr<Land> const& land, bool isSingle) {
-    if (land->isLeased()) {
+    if (land->isLeased() || land->isOwnerless()) {
         return {};
     }
     auto price =

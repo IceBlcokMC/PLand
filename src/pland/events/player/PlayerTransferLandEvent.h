@@ -19,6 +19,7 @@ public:
     : LandEventMixin(std::move(land), player),
       mNewOwner(newOwner) {}
 
+    // 空 UUID 表示管理员将领地设为无主领地。
     LDNDAPI mce::UUID newOwner() const;
 };
 

@@ -32,6 +32,7 @@ public:
 
     LDAPI static void sendEditLandNameGUI(Player& player, std::shared_ptr<Land> const& ptr); // 编辑领地名称
     LDAPI static void sendTransferLandGUI(Player& player, std::shared_ptr<Land> const& ptr); // 转让领地
+    LDAPI static void sendSetOwnerlessConfirm(Player& player, std::shared_ptr<Land> const& ptr);
     LDAPI static void
     _sendTransferLandToOnlinePlayer(Player& player, std::shared_ptr<Land> const& ptr); // 转让领地给在线玩家
     LDAPI static void

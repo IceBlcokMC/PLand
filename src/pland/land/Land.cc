@@ -89,15 +89,17 @@ mce::UUID const& Land::getOwner() const {
 }
 void Land::setOwner(mce::UUID const& uuid) {
     auto old = impl->mCacheOwner.value_or(mce::UUID::EMPTY());
-    if (uuid != old) {
+    if (uuid != old || impl->mContext.mOwnerDataIsXUID || impl->mContext.mLandOwner != uuid.asString()) {
         impl->mCacheOwner         = uuid;
         impl->mContext.mLandOwner = uuid.asString();
+        impl->mContext.mOwnerDataIsXUID = false;
         markDirty();
         if (auto observer = tryGetObserver()) {
             observer->onOwnerChanged(shared_from_this(), old, uuid);
         }
     }
 }
+bool Land::isOwnerless() const { return !impl->mContext.mOwnerDataIsXUID && getOwner() == mce::UUID::EMPTY(); }
 std::string const& Land::getRawOwner() const { return impl->mContext.mLandOwner; }
 bool               Land::isSystemOwned() const {
     assert(SYSTEM_ACCOUNT_UUID != mce::UUID::EMPTY());
@@ -186,7 +188,7 @@ void Land::setLeaseEndAt(time_t ts) {
 }
 
 bool Land::is3D() const { return impl->mContext.mIs3DLand; }
-bool Land::isOwner(mce::UUID const& uuid) const { return impl->mCacheOwner == uuid; }
+bool Land::isOwner(mce::UUID const& uuid) const { return uuid != mce::UUID::EMPTY() && impl->mCacheOwner == uuid; }
 bool Land::isMember(mce::UUID const& uuid) const { return impl->mCacheMembers.contains(uuid); }
 bool Land::isConvertedLand() const { return impl->mContext.mIsConvertedLand; }
 bool Land::isOwnerDataIsXUID() const { return impl->mContext.mOwnerDataIsXUID; }
@@ -265,7 +267,7 @@ bool Land::isCollision(BlockPos const& pos1, BlockPos const& pos2) const {
 
 LandPermType Land::getPermType(mce::UUID const& uuid) const { return getEffectiveRole(uuid); }
 LandRole     Land::getEffectiveRole(mce::UUID const& uuid) const {
-    if (isLeaseFrozen()) {
+    if (isOwnerless() || isLeaseFrozen()) {
         return LandRole::Actor;
     }
     if (isOwner(uuid)) return LandRole::Owner;

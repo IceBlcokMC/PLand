@@ -19,6 +19,7 @@
 #include "pland/service/LeasingService.h"
 #include "pland/service/ServiceLocator.h"
 #include "pland/utils/FeedbackUtils.h"
+#include "pland/utils/LandPermissionUtils.h"
 #include "utils/BackUtils.h"
 
 
@@ -308,6 +309,9 @@ void LandBuyGUI::_impl(Player& player, LandResizeSelector* selector) {
         "textures/ui/realms_green_check",
         "path",
         [needPay, refund, discountedPrice, selector](Player& pl) {
+            if (auto land = selector->tryGetLand(); land && !permission_utils::checkLandManagement(pl, *land)) {
+                return;
+            }
             LandResizeSettlement settlement{};
             settlement.newTotalPrice = discountedPrice.value_or(0);
             if (needPay.value_or(0) > 0) {
@@ -397,6 +401,10 @@ void LandBuyGUI::_impl(Player& player, SubLandCreateSelector* selector) {
         "textures/ui/realms_green_check",
         "path",
         [discountedPrice, selector](Player& pl) {
+            if (auto parent = selector->tryGetParentLand();
+                parent && !permission_utils::checkLandManagement(pl, *parent)) {
+                return;
+            }
             auto& service = PLand::getInstance().getServiceLocator().getLandManagementService();
             if (auto exp = service.buyLand(pl, selector, discountedPrice.value_or(0))) {
                 feedback_utils::notifySuccess(pl, "购买领地成功"_trl(pl.getLocaleCode()));

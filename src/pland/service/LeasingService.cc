@@ -447,6 +447,9 @@ ll::Expected<> LeasingService::toLeased(std::shared_ptr<Land> const& land, int d
     if (!land) {
         return ll::makeStringError("land is null");
     }
+    if (land->isOwnerless()) {
+        return ll::makeStringError("Ownerless land cannot be leased; assign an owner first");
+    }
     if (land->isLeased()) {
         return ll::makeStringError("land is already leased");
     }

@@ -109,7 +109,9 @@ struct LandScheduler::Impl {
 
             auto& owner = land->getOwner();
 
-            if (land->isSystemOwned()) {
+            if (land->isOwnerless()) {
+                pkt.mTitleText = "[Land] 这里是无主领地 {}"_trl(player->getLocaleCode(), land->getName());
+            } else if (land->isSystemOwned()) {
                 pkt.mTitleText = "[Land] 这里是 系统 领地"_trl(player->getLocaleCode());
             } else if (land->isOwner(player->getUuid())) {
                 pkt.mTitleText = "[Land] 当前正在领地 {}"_trl(player->getLocaleCode(), land->getName());
