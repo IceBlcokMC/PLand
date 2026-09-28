@@ -421,6 +421,25 @@ decltype(InterceptorConfig::cfg) InterceptorConfig::cfg = [] {
         {         "minecraft:bamboo_hanging_sign",            editSign}, // 竹子悬挂告示牌
         {        "minecraft:crimson_hanging_sign",            editSign}, // 绯红木悬挂告示牌
         {         "minecraft:warped_hanging_sign",            editSign}, // 诡异木悬挂告示牌
+
+        // 杂项
+        {                   "minecraft:straw_bed",              useBed}, // 草床
+        {                 "minecraft:copper_door",             useDoor}, // 铜门
+        {         "minecraft:exposed_copper_door",             useDoor}, // 斑驳的铜门
+        {       "minecraft:weathered_copper_door",             useDoor}, // 锈蚀的铜门
+        {        "minecraft:oxidized_copper_door",             useDoor}, // 氧化的铜门
+        {           "minecraft:waxed_copper_door",             useDoor}, // 涂蜡的铜门
+        {   "minecraft:waxed_exposed_copper_door",             useDoor}, // 涂蜡的斑驳铜门
+        { "minecraft:waxed_weathered_copper_door",             useDoor}, // 涂蜡的锈蚀铜门
+        {  "minecraft:waxed_oxidized_copper_door",             useDoor}, // 涂蜡的氧化铜门
+        {             "minecraft:copper_trapdoor",         useTrapdoor}, // 铜活板门
+        {     "minecraft:exposed_copper_trapdoor",         useTrapdoor}, // 斑驳的铜活板门
+        {   "minecraft:weathered_copper_trapdoor",         useTrapdoor}, // 锈蚀的铜活板门
+        {    "minecraft:oxidized_copper_trapdoor",         useTrapdoor}, // 氧化的铜活板门
+        {       "minecraft:waxed_copper_trapdoor",         useTrapdoor}, // 涂蜡的铜活板门
+    {   "minecraft:waxed_exposed_copper_trapdoor",         useTrapdoor}, // 涂蜡的斑驳铜活板门
+    { "minecraft:waxed_weathered_copper_trapdoor",         useTrapdoor}, // 涂蜡的锈蚀铜活板门
+    {  "minecraft:waxed_oxidized_copper_trapdoor",         useTrapdoor}, // 涂蜡的氧化铜活板门
     };
 
     config.rules.mob.allowHostileDamage = {
@@ -489,6 +508,7 @@ decltype(InterceptorConfig::cfg) InterceptorConfig::cfg = [] {
         "minecraft:iron_golem",       // 铁傀儡
         "minecraft:snow_golem",       // 雪傀儡
         "minecraft:allay",            // 悦灵
+        "minecraft:happy_ghast",      // 快乐恶魂
 
         "minecraft:cat",    // 猫 (基岩版与豹猫分离)
         "minecraft:ocelot", // 豹猫
@@ -515,6 +535,7 @@ decltype(InterceptorConfig::cfg) InterceptorConfig::cfg = [] {
         "minecraft:tropicalfish", // 热带鱼
         "minecraft:pufferfish",   // 河豚
         "minecraft:turtle",       // 海龟
+        "minecraft:nautilus",     // 鹦鹉螺
     };
 
     config.rules.mob.allowSpecialEntityDamage = {
@@ -529,6 +550,7 @@ decltype(InterceptorConfig::cfg) InterceptorConfig::cfg = [] {
         "minecraft:ender_crystal",          // 末影水晶
         "minecraft:chest_minecart",         // 运输矿车
         "minecraft:tnt_minecart",           // TNT矿车
+        "minecraft:cushion",                // 坐垫
     };
     return config;
 }();
