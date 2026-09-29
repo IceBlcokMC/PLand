@@ -337,6 +337,9 @@ decltype(InterceptorConfig::cfg) InterceptorConfig::cfg = [] {
     auto useComparator       = std::string{reflect::getTemplateInnerLeafName<&RolePerms::useComparator>()};
     auto useRepeater         = std::string{reflect::getTemplateInnerLeafName<&RolePerms::useRepeater>()};
     auto useBeeNest          = std::string{reflect::getTemplateInnerLeafName<&RolePerms::useBeeNest>()};
+    auto useDoor             = std::string{reflect::getTemplateInnerLeafName<&RolePerms::useDoor>()};
+    auto useBed              = std::string{reflect::getTemplateInnerLeafName<&RolePerms::useBed>()};
+    auto useTrapdoor         = std::string{reflect::getTemplateInnerLeafName<&RolePerms::useTrapdoor>()};    
     auto editSign            = std::string{reflect::getTemplateInnerLeafName<&RolePerms::editSign>()};
     config.rules.block       = {
         /* 特殊功能与交互方块 */
