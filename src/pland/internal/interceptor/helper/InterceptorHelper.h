@@ -88,7 +88,7 @@ inline bool _hasMemberOrGuestPermission(
 
     if (land->isOwnerless() || land->isLeaseFrozen()) {
         TRACE_LOG("land is ownerless or frozen, fallback to actor");
-        return entry.actor; // 如果冻结, 不再允许 Member 特权，退化为 Actor
+        return entry.actor; // 无主或冻结时不再允许 Member 特权，退化为 Actor
     }
 
     if (entry.actor) {

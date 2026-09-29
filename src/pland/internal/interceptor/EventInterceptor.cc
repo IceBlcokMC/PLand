@@ -2,6 +2,8 @@
 
 #include "InterceptorConfig.h"
 
+#include "pland/internal/interceptor/hooks/HookRegistry.h"
+
 #include <ll/api/event/EventBus.h>
 
 #include <absl/container/flat_hash_map.h>
@@ -69,5 +71,7 @@ void EventInterceptor::_unregisterHook(bool InterceptorConfig::Hooks::* configur
         impl->mHookGuards.erase(iter);
     }
 }
+
+void EventInterceptor::setupHooks() { hooks::HookRegistry::dispatchAllHooks(*this); }
 
 } // namespace land::internal::interceptor
