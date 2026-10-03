@@ -54,6 +54,12 @@ struct ConfigData {
             int  bottomTipCycle{1};         // 底部提示刷新周期(秒)
         } notifications;
 
+        struct OwnerlessConfig {
+            bool enabled{false};                     // 是否启用无主领地功能
+            bool keepMembersWhenSetOwnerless{false}; // 设置无主领地时保留成员
+            bool allowSetOwnerlessByOwner{false};    // 是否允许领地主人创建无主领地
+        } ownerless;
+
     } features;
 
     /**
@@ -186,11 +192,11 @@ struct ConfigProvider {
 
     inline static constexpr std::string_view FILE_NAME = "Config.json";
 
-    LDNDAPI static std::filesystem::path _filePath(const std::filesystem::path& baseDir);
+    LDNDAPI static std::filesystem::path _filePath(std::filesystem::path const& baseDir);
 
-    LDNDAPI static ll::Expected<> load(const std::filesystem::path& baseDir);
+    LDNDAPI static ll::Expected<> load(std::filesystem::path const& baseDir);
 
-    LDNDAPI static ll::Expected<> save(const std::filesystem::path& baseDir);
+    LDNDAPI static ll::Expected<> save(std::filesystem::path const& baseDir);
 
     // inline API
 
@@ -208,6 +214,9 @@ struct ConfigProvider {
     }
 
     inline static bool isLandTeleportEnabled() { return cfg.features.landTeleport; }
+
+    inline static bool  isOwnerlessEnabled() { return cfg.features.ownerless.enabled; }
+    inline static auto& getOwnerlessConfig() { return cfg.features.ownerless; }
 
     inline static bool isEconomySystemEnabled() { return cfg.economy.enabled; }
 

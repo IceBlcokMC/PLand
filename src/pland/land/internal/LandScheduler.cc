@@ -31,6 +31,10 @@
 
 namespace land::internal {
 
+// TODO: 重构解耦此模块
+// 按通用调度系统处理进出领地事件和状态管理 + ILandTickSubSystem 处理子任务
+// 持久化消息提示等，移入例如 LandActionBarTipSubSystem 系统处理，而非一个类处理全部逻辑
+
 struct LandScheduler::Impl {
     std::vector<Player*>                    mPlayers{};
     absl::flat_hash_map<Player*, LandDimid> mDimensionMap{};
@@ -91,7 +95,9 @@ struct LandScheduler::Impl {
         auto& playerInfo = ll::service::PlayerInfo::getInstance();
         auto& registry   = PLand::getInstance().getLandRegistry();
 
-        SetTitlePacket pkt{SetTitlePacketPayload{SetTitlePacketPayload::TitleType::Actionbar, "", std::nullopt}};
+        SetTitlePacket pkt{
+            SetTitlePacketPayload{SetTitlePacketPayload::TitleType::Actionbar, "", std::nullopt}
+        };
         pkt.mType = SetTitlePacket::TitleType::Actionbar;
         for (auto& [player, landId] : mLandIdMap) {
             if (landId == INVALID_LAND_ID) {
@@ -107,20 +113,31 @@ struct LandScheduler::Impl {
                 continue;
             }
 
-            auto& owner = land->getOwner();
-
-            if (land->isOwnerless()) {
-                pkt.mTitleText = "[Land] 这里是无主领地 {}"_trl(player->getLocaleCode(), land->getName());
-            } else if (land->isSystemOwned()) {
-                pkt.mTitleText = "[Land] 这里是 系统 领地"_trl(player->getLocaleCode());
-            } else if (land->isOwner(player->getUuid())) {
-                pkt.mTitleText = "[Land] 当前正在领地 {}"_trl(player->getLocaleCode(), land->getName());
-            } else {
-                auto info      = playerInfo.fromUuid(owner);
-                pkt.mTitleText = "[Land] 这里是 {} 的领地"_trl(
-                    player->getLocaleCode(),
-                    info.has_value() ? info->name : owner.asString()
+            auto localeCode = player->getLocaleCode();
+            switch (land->getOwnershipKind()) {
+            case LandOwnershipKind::Player: {
+                if (land->isOwner(player->getUuid())) {
+                    pkt.mTitleText = "{} - 我的领地"_trl(localeCode, land->getName());
+                    break;
+                }
+                auto const& owner     = land->getOwner();
+                auto        ownerInfo = playerInfo.fromUuid(owner);
+                pkt.mTitleText        = "{} - 所有者: {}"_trl(
+                    localeCode,
+                    land->getName(),
+                    ownerInfo.has_value() ? ownerInfo->name : owner.asString()
                 );
+                break;
+            }
+            case LandOwnershipKind::System:
+                pkt.mTitleText = "{} - 系统托管"_trl(localeCode, land->getName());
+                break;
+            case LandOwnershipKind::Ownerless:
+                pkt.mTitleText = "{} - 无主领地"_trl(localeCode, land->getName());
+                break;
+            case LandOwnershipKind::PendingMigration:
+                pkt.mTitleText = "{} - 旧版待迁移"_trl(localeCode, land->getName());
+                break;
             }
 
             pkt.sendTo(*player);
@@ -177,17 +194,38 @@ LandScheduler::LandScheduler() : impl(std::make_unique<Impl>()) {
                 return;
             }
 
-            SetTitlePacket title{SetTitlePacketPayload{SetTitlePacketPayload::TitleType::Title, "", std::nullopt}};
-            SetTitlePacket subTitle{SetTitlePacketPayload{SetTitlePacketPayload::TitleType::Subtitle, "", std::nullopt}};
+            SetTitlePacket title{
+                SetTitlePacketPayload{SetTitlePacketPayload::TitleType::Title, "", std::nullopt}
+            };
+            SetTitlePacket subTitle{
+                SetTitlePacketPayload{SetTitlePacketPayload::TitleType::Subtitle, "", std::nullopt}
+            };
             title.mType    = SetTitlePacket::TitleType::Title;
             subTitle.mType = SetTitlePacket::TitleType::Subtitle;
 
-            if (land->isOwner(player.getUuid())) {
-                title.mTitleText    = land->getName();
-                subTitle.mTitleText = "欢迎回来"_trl(player.getLocaleCode());
-            } else {
-                title.mTitleText    = "Welcome to"_trl(player.getLocaleCode());
-                subTitle.mTitleText = land->getName();
+            auto localeCode = player.getLocaleCode();
+
+            title.mTitleText = land->getName();
+            switch (land->getOwnershipKind()) {
+            case LandOwnershipKind::Player: {
+                if (land->isOwner(player.getUuid())) {
+                    subTitle.mTitleText = "欢迎回家"_trl(localeCode);
+                    break;
+                }
+                auto ownerInfo = ll::service::PlayerInfo::getInstance().fromUuid(land->getOwner());
+                subTitle.mTitleText =
+                    "所有者: {}"_trl(localeCode, ownerInfo.has_value() ? ownerInfo->name : land->getOwner().asString());
+                break;
+            }
+            case LandOwnershipKind::System:
+                subTitle.mTitleText = "系统托管"_trl(localeCode);
+                break;
+            case LandOwnershipKind::Ownerless:
+                subTitle.mTitleText = "无主领地"_trl(localeCode);
+                break;
+            case LandOwnershipKind::PendingMigration:
+                subTitle.mTitleText = "旧版领地"_trl(localeCode);
+                break;
             }
 
             title.sendTo(player);

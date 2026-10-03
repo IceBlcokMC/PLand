@@ -225,7 +225,13 @@ struct LandRegistry::Impl : public observer::LandEventPublisher {
 
             LandContext ctx;
             try {
-                json_util::merge_versioned_and_deserialize<LandContext, nlohmann::json>(*json, ctx);
+                // 迁移单元会把 version 抬到当前版本，若因此跳过默认值合并，历史记录缺失的字段会让
+                // 反序列化提前中断，故对执行过迁移的记录强制合并一次默认值
+                json_util::merge_versioned_and_deserialize<LandContext, nlohmann::json>(
+                    *json,
+                    ctx,
+                    migrateResult.value() == infra::MigrateResult::Success
+                );
             } catch (std::exception const& e) {
                 logger.error("Failed to deserialize land record: {}", e.what());
                 continue;
@@ -704,9 +710,15 @@ ll::Expected<> LandRegistry::executeTransaction(
 
     if (!success) {
         // === 回滚 (Rollback) ===
+        // 事务内的 setter 会即时更新归属/成员索引, 回滚必须先用事务后的状态擦除索引, 再按快照重建,
+        // 否则索引会残留事务中产生的归属条目
         for (auto& land : participants) {
             auto snapshot = snapshots[land.get()];
+            impl->clearIndex(land);
             land->_reinit(std::move(snapshot.context), snapshot.dirtyCount);
+            if (impl->mLandCache.contains(land->getId())) {
+                impl->initIndex(land); // 事务中新建的领地未入缓存, 不建立索引
+            }
         }
         return ll::makeStringError("Transaction aborted: executor returned false or threw an exception");
     }
@@ -750,15 +762,25 @@ std::shared_ptr<Land> LandRegistry::getLand(LandID id) const {
     }
     return nullptr;
 }
-std::vector<std::shared_ptr<Land>> LandRegistry::getLands() const {
+void LandRegistry::forEachLand(std::function<bool(std::shared_ptr<Land> const&)> const& visitor) const {
     std::shared_lock lock(impl->mDataMutex);
 
-    std::vector<std::shared_ptr<Land>> lands;
-    lands.reserve(impl->mLandCache.size());
-    for (auto& land : impl->mLandCache) {
-        lands.push_back(land.second);
+    for (const auto& land : impl->mLandCache | std::views::values) {
+        if (!visitor(land)) {
+            return;
+        }
     }
-    return lands;
+}
+void LandRegistry::forEachLand(
+    LandDimid                                                dimid,
+    std::function<bool(std::shared_ptr<Land> const&)> const& visitor
+) const {
+    std::shared_lock lock(impl->mDataMutex);
+
+    impl->mDimensionChunkMap.forEachLandId(dimid, [&](LandID id) {
+        auto iter = impl->mLandCache.find(id);
+        return iter == impl->mLandCache.end() || visitor(iter->second);
+    });
 }
 std::vector<std::shared_ptr<Land>> LandRegistry::getLands(std::vector<LandID> const& ids) const {
     std::shared_lock lock(impl->mDataMutex);
@@ -767,17 +789,6 @@ std::vector<std::shared_ptr<Land>> LandRegistry::getLands(std::vector<LandID> co
     for (auto id : ids) {
         if (auto iter = impl->mLandCache.find(id); iter != impl->mLandCache.end()) {
             lands.push_back(iter->second);
-        }
-    }
-    return lands;
-}
-std::vector<std::shared_ptr<Land>> LandRegistry::getLands(LandDimid dimid) const {
-    std::shared_lock lock(impl->mDataMutex);
-
-    std::vector<std::shared_ptr<Land>> lands;
-    for (auto& land : impl->mLandCache) {
-        if (land.second->getDimensionId() == dimid) {
-            lands.push_back(land.second);
         }
     }
     return lands;
@@ -830,22 +841,32 @@ std::vector<std::shared_ptr<Land>> LandRegistry::getLands(mce::UUID const& uuid,
     }
     return lands;
 }
-std::unordered_map<mce::UUID, std::unordered_set<std::shared_ptr<Land>>> LandRegistry::getLandsByOwner() const {
+std::vector<std::pair<mce::UUID, size_t>> LandRegistry::getOwnerLandCounts() const {
     std::shared_lock lock(impl->mDataMutex);
 
-    std::unordered_map<mce::UUID, std::unordered_set<std::shared_ptr<Land>>> result;
+    std::vector<std::pair<mce::UUID, size_t>> result;
     result.reserve(impl->mOwnerIdx.forward_map().size());
 
-    // 转换为 STL 容器
     for (auto const& [uuid, ids] : impl->mOwnerIdx.forward_map()) {
-        auto& landSet = result[uuid];
+        result.emplace_back(uuid, ids.size());
+    }
+    return result;
+}
+void LandRegistry::forEachOwnerLand(
+    std::function<bool(mce::UUID const&, std::shared_ptr<Land> const&)> const& visitor
+) const {
+    std::shared_lock lock(impl->mDataMutex);
+
+    for (auto const& [uuid, ids] : impl->mOwnerIdx.forward_map()) {
         for (auto id : ids) {
-            if (auto it = impl->mLandCache.find(id); it != impl->mLandCache.end()) {
-                landSet.insert(it->second);
+            auto iter = impl->mLandCache.find(id);
+            if (iter != impl->mLandCache.end()) {
+                if (!visitor(uuid, iter->second)) {
+                    return;
+                }
             }
         }
     }
-    return result;
 }
 
 
@@ -988,18 +1009,6 @@ LandRegistry::getLandAt(BlockPos const& pos1, BlockPos const& pos2, LandDimid di
         }
     }
     return lands;
-}
-
-std::vector<std::shared_ptr<Land>> LandRegistry::getLandsWhere(CustomFilter const& filter) const {
-    std::shared_lock<std::shared_mutex> lock(impl->mDataMutex);
-
-    std::vector<std::shared_ptr<Land>> result;
-    for (auto const& [id, land] : impl->mLandCache) {
-        if (filter(land)) {
-            result.push_back(land);
-        }
-    }
-    return result;
 }
 
 

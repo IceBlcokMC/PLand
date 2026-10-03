@@ -43,6 +43,10 @@ struct LandCommandAcceptOrigin {
     inline static constexpr size_t                                kCount   = sizeof...(AcceptOrigins);
     inline static constexpr std::array<CommandOriginType, kCount> kOrigins = {AcceptOrigins...};
 
+    inline static constexpr bool isAccepted(CommandOriginType type) {
+        if constexpr (kCount == 0) return false;
+        else return ((type == AcceptOrigins) || ...);
+    }
     inline static constexpr bool kAcceptDedicatedServer = isAccepted(CommandOriginType::DedicatedServer);
     inline static constexpr bool kAcceptPlayer          = isAccepted(CommandOriginType::Player);
 
@@ -51,10 +55,6 @@ struct LandCommandAcceptOrigin {
     inline static constexpr bool kAllNonPlayerAcceptedAreTrusted =
         ((AcceptOrigins == CommandOriginType::Player || isTrustedServerOrigin(AcceptOrigins)) && ...);
 
-    inline static constexpr bool isAccepted(CommandOriginType type) {
-        if constexpr (kCount == 0) return false;
-        else return ((type == AcceptOrigins) || ...);
-    }
 
     inline static std::string getAcceptedOrigins() {
         if constexpr (kCount == 0) return "None";
@@ -211,6 +211,17 @@ struct HandlerTraits<T> : HandlerTraits<std::remove_pointer_t<std::remove_cvref_
 template <typename T>
 using DeduceParamsT = typename HandlerTraits<std::remove_cvref_t<T>>::Params;
 
+
+// 由于 MSVC 编译器在泛型 lambda 中处理 if constexpr 时的实现缺陷导致编译失败, 故拆离 lambda 规避此问题
+template <typename RawFnType, typename Fn, typename... Args>
+decltype(auto) invoke_impl(Fn&& fn, Args&&... args) {
+    if constexpr (std::is_pointer_v<RawFnType>) {
+        return std::invoke(*fn, std::forward<Args>(args)...);
+    } else {
+        return std::invoke(fn, std::forward<Args>(args)...);
+    }
+}
+
 } // namespace detail
 
 
@@ -224,11 +235,7 @@ decltype(auto) wrapCommandHandler() {
     using Params    = detail::DeduceParamsT<RawFnType>;
 
     auto invoke_fn = [](auto&&... args) {
-        if constexpr (std::is_pointer_v<RawFnType>) {
-            return std::invoke(*Fn, std::forward<decltype(args)>(args)...);
-        } else {
-            return std::invoke(Fn, std::forward<decltype(args)>(args)...);
-        }
+        return detail::invoke_impl<RawFnType>(Fn, std::forward<decltype(args)>(args)...);
     };
 
     if constexpr (std::is_same_v<Params, ll::command::EmptyParam>) {

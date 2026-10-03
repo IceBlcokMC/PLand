@@ -2,8 +2,11 @@
 #include "pland/Global.h"
 #include "pland/aabb/LandAABB.h"
 #include "pland/enums/LandHoldType.h"
+#include "pland/enums/LandOwnershipKind.h"
 #include "pland/enums/LeaseState.h"
 
+#include <optional>
+#include <string>
 #include <vector>
 
 
@@ -97,29 +100,30 @@ struct LandPermTable final {
 
 // ! 注意：如果 LandContext 有更改，则必须递增 LandSchemaVersion，否则导致加载异常
 // 对于字段变动、重命名，请注册对应的 migrator 转换数据
-inline constexpr int kLandSchemaVersion = 33;
+inline constexpr int kLandSchemaVersion = 35;
 struct LandContext {
-    int                      version{kLandSchemaVersion};      // 版本号
-    LandAABB                 mPos{};                           // 领地对角坐标
-    LandPos                  mTeleportPos{};                   // 领地传送坐标
-    LandID                   mLandID{INVALID_LAND_ID};         // 领地唯一ID  (由 LandRegistry::addLand() 时分配)
-    LandDimid                mLandDimid{};                     // 领地所在维度
-    bool                     mIs3DLand{};                      // 是否为3D领地
-    LandPermTable            mLandPermTable{};                 // 领地权限
-    std::string              mLandOwner{};                     // 领地主人(默认UUID,其余情况看mOwnerDataIsXUID)
-    std::vector<std::string> mLandMembers{};                   // 领地成员
-    std::string              mLandName{"Unnamed territories"}; // 领地名称
-    int                      mOriginalBuyPrice{0};             // 原始购买价格
-    LandHoldType             mHoldType{LandHoldType::Bought};  // 购买/租赁模式
+    int                        version{kLandSchemaVersion};      // 版本号
+    LandAABB                   mPos{};                           // 领地对角坐标
+    LandPos                    mTeleportPos{};                   // 领地传送坐标
+    LandID                     mLandID{INVALID_LAND_ID};         // 领地唯一ID  (由 LandRegistry::addLand() 时分配)
+    LandDimid                  mLandDimid{};                     // 领地所在维度
+    bool                       mIs3DLand{};                      // 是否为3D领地
+    LandPermTable              mLandPermTable{};                 // 领地权限
+    std::string                mLandOwner{};                     // 领地主人(语义由 mOwnership 决定)
+    std::optional<std::string> mPreviousOwner{};                 // 上一任领地主人(原始值，可能是 XUID)
+    std::vector<std::string>   mLandMembers{};                   // 领地成员
+    std::string                mLandName{"Unnamed territories"}; // 领地名称
+    int                        mOriginalBuyPrice{0};             // 原始购买价格
+    LandHoldType               mHoldType{LandHoldType::Bought};  // 购买/租赁模式
     struct LeaseInfo {
         LeaseState mState{LeaseState::None}; // 租赁状态
         time_t     mStartAt{0};              // 租赁开始时间(秒)
         time_t     mEndAt{0};                // 租赁到期时间(秒)
     } mLeasing;
-    [[deprecated]] bool mIsConvertedLand{false};        // 是否为转换后的领地(其它插件创建的领地)
-    [[deprecated]] bool mOwnerDataIsXUID{false};        // 领地主人数据是否为XUID (如果为true，则主人上线自动转换为UUID)
-    LandID              mParentLandID{INVALID_LAND_ID}; // 父领地ID
-    std::vector<LandID> mSubLandIDs{};                  // 子领地ID
+    [[deprecated]] bool mIsConvertedLand{false};               // 是否为转换后的领地(其它插件创建的领地)
+    LandOwnershipKind   mOwnership{LandOwnershipKind::Player}; // 领地归属类型
+    LandID              mParentLandID{INVALID_LAND_ID};        // 父领地ID
+    std::vector<LandID> mSubLandIDs{};                         // 子领地ID
 };
 
 STATIC_ASSERT_AGGREGATE(LandPermTable);

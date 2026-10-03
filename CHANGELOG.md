@@ -2,26 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
+to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
 ### ✨ 新增功能
 
-- 增加无主领地的功能 @yangyangzhong82
-- 新增冰霜行者冻结冰权限 `allowFrostWalker`。[#250](https://github.com/IceBlcokMC/PLand/issues/250) @yangyangzhong82
+- 无主领地功能 @yangyangzhong82
+- 新增冰霜行者冻结冰权限 [#250](https://github.com/IceBlcokMC/PLand/issues/250) @yangyangzhong82
 
 ### 🐛 问题修复
 
-- 玩家从领地外点击脚手架延伸时，不再可绕过领地放置权限的问题；按最终放置位置校验权限。[#251](https://github.com/IceBlcokMC/PLand/issues/251) @yangyangzhong82
+- 修复玩家可从领地外点击脚手架延伸到领地内 [#251](https://github.com/IceBlcokMC/PLand/issues/251) @yangyangzhong82
+
+### 🧩 其他改动
+
+- 优化部分代码 @engsr6982
 
 ## [0.24.1] - 2026-09-25
 
 ### 🐛 问题修复
 
-- 修复 `DispenserDispenseFromHook` 引发的崩溃(发射器) [#258](https://github.com/IceBlcokMC/PLand/issues/258) @lwenk
-- 修复 `KineticDamageSystemHook` 启用失败(矛冲锋) [#257](https://github.com/IceBlcokMC/PLand/issues/257) @lwenk
+- 修复 `DispenserDispenseFromHook` 引发的崩溃 (发射器) [#258](https://github.com/IceBlcokMC/PLand/issues/258) @lwenk
+- 修复 `KineticDamageSystemHook` 启用失败 (矛冲锋) [#257](https://github.com/IceBlcokMC/PLand/issues/257) @lwenk
 
 ## [0.24.0] - 2026-09-23
 
@@ -87,7 +91,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🧩 其他改动
 
-- 补充遗漏的实体、方块权限配置 @engsr6982 [#216](https://github.com/IceBlcokMC/PLand/issues/216) [#212](https://github.com/IceBlcokMC/PLand/issues/212)
+- 补充遗漏的实体、方块权限配置
+  @engsr6982 [#216](https://github.com/IceBlcokMC/PLand/issues/216) [#212](https://github.com/IceBlcokMC/PLand/issues/212)
 - 改进配置文件合并逻辑 @engsr6982
 - 删除一堆脱裤子放屁的代码 @engsr6982
 
@@ -120,7 +125,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 问题修复
 
-- Fix(LeasingService): 修复 mod 关闭时空指针访问异常 [#211] @engsr6982
+- Fix (LeasingService): 修复 mod 关闭时空指针访问异常 [#211] @engsr6982
 
 ## [0.20.2] - 2026-04-12
 
@@ -154,7 +159,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 租赁模式 @engsr6982 #154
 - 数据库快照 @engsr6982 #165
-- 添加**大型垂滴叶触发权限** @engsr6982 #192
+- 添加 **大型垂滴叶触发权限** @engsr6982 #192
 
 ### 🐛 问题修复
 
@@ -183,7 +188,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ 新增功能
 
-- 增强拾取物品权限，其他非掉落物可拾取实体(三叉戟等)拾取需要权限 @yangyangzhong82 #193
+- 增强拾取物品权限，其他非掉落物可拾取实体 (三叉戟等)拾取需要权限 @yangyangzhong82 #193
 
 ### 🐛 问题修复
 
@@ -210,16 +215,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ 新增功能
 
-- 新增领地 **名称**、**描述** 可配置检查 @engsr6982
+- 新增领地 **名称**、 **描述** 可配置检查 @engsr6982
 - DevTool 新增领地树可视化 @engsr6982
 - 管理 GUI：
-  - 管理玩家表单支持分页和搜索（#129）@engsr6982
-  - 支持按领地 ID 查找领地 @engsr6982
+    - 管理玩家表单支持分页和搜索（#129）@engsr6982
+    - 支持按领地 ID 查找领地 @engsr6982
 - 权限系统:
-  - 区分环境权限与角色权限 #170 @engsr6982
-  - 成员支持独立权限配置 #170 @engsr6982
-- 添加实体拾取物品事件(关联`allowMobGrief`权限) #171 @engsr6982
-- 分离拦截配置(InterceptorConfig.json)和领地配置(Config.json)，改进权限映射 #169 @engsr6982
+    - 区分环境权限与角色权限 #170 @engsr6982
+    - 成员支持独立权限配置 #170 @engsr6982
+- 添加实体拾取物品事件 (关联`allowMobGrief`权限) #171 @engsr6982
+- 分离拦截配置 (InterceptorConfig.json)和领地配置 (Config.json)，改进权限映射 #169 @engsr6982
 
 ### 🐛 问题修复
 
@@ -424,7 +429,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 问题修复
 
-- 对领地传送功能(`isTargetChunkFullyLoaded`)添加空指针检查 @engsr6982
+- 对领地传送功能 (`isTargetChunkFullyLoaded`)添加空指针检查 @engsr6982
 - 修复选区器 2/3 维颠倒错误 @engsr6982
 - 修复领地重新选区功能 @engsr6982
 
@@ -454,7 +459,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 实现脏数据计数 #95 @engsr6982
 - 重构经济系统，LegacyMoney 更改为可选依赖 @engsr6982
 - 重构绘制系统，BedrockServerClientInterface 更改为可选依赖 #114 @engsr6982
-- 选择领地表单支持**分页、搜索、过滤** #107 #101 @engsr6982
+- 选择领地表单支持 **分页、搜索、过滤** #107 #101 @engsr6982
 - 新增配置项 `land.minSpacingIncludeY` #115 @engsr6982
 - 支持领地管理员修改默认权限配置 #110 @yangyangzhong82 @engsr6982
 
@@ -517,7 +522,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 增加 getLandsByOwner API 与重载方法@engsr6982
 - 领地 UI 表单增加设置传送点设置的按钮@yangyangzhong82
 - 增加 使用合成器,雕纹书架,红石比较器,红石中继器,潜影盒五种方块交互权限，并修复权限判断问题 (#48)@yangyangzhong82
-- 增加 玩家破坏画、矿车、船的权限控制(#48)@yangyangzhong82
+- 增加 玩家破坏画、矿车、船的权限控制 (#48)@yangyangzhong82
 - 增加 放置船和矿车权限 （#41）@yangyangzhong82
 - 增加 对特殊实体造成伤害 权限 @engsr6982
 - 增加试炼宝库和蜂巢蜂箱的权限控制 #62 #64 @yangyangzhong82
@@ -533,8 +538,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 修复部分事件未正确取消导致的逻辑穿透问题 @engsr6982
 - 修复语言文件打包路径错误问题 @engsr6982
 - 修复玩家长时间停留 GUI 导致 `Player` 悬空引用问题@engsr6982
-- 修复玩家乘骑实体权限判断的问题，现在以被乘骑实体的坐标来判断领地而非操作玩家的坐标(#50)@yangyangzhong82
-- 修复无权限玩家在领地外仍然能用弹射物伤害领地内生物的问题(#50) @yangyangzhong82
+- 修复玩家乘骑实体权限判断的问题，现在以被乘骑实体的坐标来判断领地而非操作玩家的坐标 (#50)@yangyangzhong82
+- 修复无权限玩家在领地外仍然能用弹射物伤害领地内生物的问题 (#50) @yangyangzhong82
 - 修复领地主人无法用伤害药水伤害领地生物的问题 @yangyangzhong82
 - 修复河豚可对领地生物造成伤害 #68 @engsr6982
 - 修复甜浆果丛可被交互 #63 @engsr6982
@@ -546,7 +551,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 修改生物判断逻辑，将非 monster 类型统一视为动物,避免某些生物没有归类导致判断问题 (#35) @yangyangzhong82
 - 优化弹射物权限判定流程，将除了钓鱼竿之外的弹射物权限全部合并至发射弹射物权限中@yangyangzhong82
-- 将液体流动事件替换为 `LiquidFlowBeforeEvent`，提升性能 @yangyangzhong82(#44)
+- 将液体流动事件替换为 `LiquidFlowBeforeEvent`，提升性能 @yangyangzhong82 (#44)
 - 将活塞和液体流动修改为只对边界判断@yangyangzhong82 @engsr6982
 - 优化领地创建时对数量与范围限制的判断：允许领地管理员无视配置文件的限制创建领地 @yangyangzhong82
 - 优化权限判定,对部分方块和物品不再单纯使用类型名进行判断，使其判断更加灵活@yangyangzhong82

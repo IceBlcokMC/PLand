@@ -188,15 +188,17 @@ LeasingService::LeasingService(
             });
 
     // 初始化定时器
-    for (auto& land : impl->mRegistry.getLands()) {
-        if (land->isLeased()) {
-            if (land->getLeaseState() == LeaseState::Active) {
-                impl->mScheduler.push(land->getLeaseEndAt(), land->getId());
-            } else if (land->getLeaseState() == LeaseState::Frozen) {
-                impl->mScheduler.push(land->getLeaseEndAt() + time_utils::toSeconds(conf.freeze.days), land->getId());
-            }
+    impl->mRegistry.forEachLand([&](std::shared_ptr<Land> const& land) {
+        if (!land->isLeased()) {
+            return true;
         }
-    }
+        if (land->getLeaseState() == LeaseState::Active) {
+            impl->mScheduler.push(land->getLeaseEndAt(), land->getId());
+        } else if (land->getLeaseState() == LeaseState::Frozen) {
+            impl->mScheduler.push(land->getLeaseEndAt() + time_utils::toSeconds(conf.freeze.days), land->getId());
+        }
+        return true;
+    });
 
     ll::coro::keepThis([quit = impl->mQuit, sleep = impl->mSleep, this]() -> ll::coro::CoroTask<> {
         while (!quit->load()) {

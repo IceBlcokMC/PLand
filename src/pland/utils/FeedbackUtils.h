@@ -3,7 +3,6 @@
 
 #include "fmt/format.h"
 
-#include <ll/api/form/ModalForm.h>
 #include <ll/api/i18n/I18n.h>
 
 #include "mc/network/packet/ToastRequestPacket.h"
@@ -87,33 +86,6 @@ inline void sendTitle(Player& p, std::string const& mainTitle, std::string const
         pkt.mTitleText = subTitle;
         pkt.sendTo(p);
     }
-}
-
-using RetryCallback = std::function<void(Player&)>;
-inline void askRetry(Player& p, std::string const& content, RetryCallback retry, RetryCallback cancel = nullptr) {
-    using ll::i18n_literals::operator""_trl;
-    auto localeCode = p.getLocaleCode();
-    ll::form::ModalForm{
-        "§bPLand§r - §c操作失败"_trl(localeCode),
-        content,
-        "§a重试"_trl(localeCode),
-        "§c放弃/取消"_trl(localeCode),
-    }
-        .sendTo(
-            p,
-            [retry  = std::move(retry),
-             cancel = std::move(cancel)](Player& player, ll::form::ModalFormResult const& result, auto) {
-                if (result && (bool)result.value()) {
-                    retry(player);
-                } else {
-                    if (cancel) cancel(player);
-                }
-            }
-        );
-}
-
-inline void askRetry(Player& player, ll::Error const& error, RetryCallback retry, RetryCallback cancel = nullptr) {
-    askRetry(player, error.message(), std::move(retry), std::move(cancel));
 }
 
 template <typename... Args>

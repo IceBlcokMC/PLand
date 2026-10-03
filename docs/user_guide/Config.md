@@ -25,7 +25,7 @@ PLand 的所有配置文件均为 **JSON 格式**，位于 `plugins/PLand/config
 
 ```json
 {
-    "version": 34, // 配置文件版本，请勿修改
+    "version": 35, // 配置文件版本，请勿修改
     "economy": {
         "enabled": false, // 是否启用经济系统
         "kit": "LegacyMoney", // 经济套件 LegacyMoney 或 ScoreBoard
@@ -56,6 +56,11 @@ PLand 的所有配置文件均为 **JSON 格式**，位于 `plugins/PLand/config
             "enterLandTip": true, // 进入领地提示
             "bottomContinuousTip": true, // 底部持续提示
             "bottomTipCycle": 1 // 底部提示刷新周期(秒)
+        },
+        "ownerless": {
+            "enabled": true, // 是否启用无主领地功能
+            "keepMembersWhenSetOwnerless": false, // 设置无主领地时是否保留领地成员
+            "allowSetOwnerlessByOwner": true // 是否允许领地主人设置无主领地
         }
     },
     

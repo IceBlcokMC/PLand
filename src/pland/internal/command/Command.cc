@@ -18,7 +18,6 @@
 #include "pland/service/LandManagementService.h"
 #include "pland/service/ServiceLocator.h"
 #include "pland/utils/FeedbackUtils.h"
-#include "pland/utils/LandPermissionUtils.h"
 
 
 #include "ll/api/command/Command.h"
@@ -146,7 +145,6 @@ void new_land(CommandOrigin const& ori, CommandOutput& /* out */, NewLandParam c
             feedback_utils::sendErrorText(player, "操作失败, 当前位置没有领地"_trl(player.getLocaleCode()));
             return;
         }
-        if (!permission_utils::checkLandManagement(player, *land)) return;
         auto expected = mod.getServiceLocator().getLandManagementService().requestCreateSubLand(player, land);
         if (!expected) {
             feedback_utils::sendError(player, expected.error());
@@ -276,7 +274,6 @@ void land_set_teleport_pos(CommandOrigin const& ori, CommandOutput& out) {
         return;
     }
 
-    if (!permission_utils::checkLandManagement(player, *land)) return;
     auto& service = mod.getServiceLocator().getLandManagementService();
     if (auto res = service.setLandTeleportPos(player, land, point)) {
         feedback_utils::notifySuccess(player, "传送点已更新为: {}"_trl(localeCode, point.toString()));
@@ -295,8 +292,8 @@ void show_current_land_mgr(CommandOrigin const& ori, CommandOutput& /* out */) {
         return;
     }
 
-    auto& uuid = player.getUuid();
-    if (!land->isOwner(uuid) && !PLand::getInstance().getLandRegistry().isOperator(uuid)) {
+    auto& service = PLand::getInstance().getServiceLocator().getLandManagementService();
+    if (!service.canManageLand(player.getUuid(), land)) {
         feedback_utils::sendText(player, "当前位置不是你的领地"_trl(localeCode));
         return;
     }

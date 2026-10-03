@@ -45,16 +45,13 @@ ll::Expected<LandPriceService::PriceResult> LandPriceService::getSubLandPrice(La
 }
 
 int64_t LandPriceService::getRefundAmount(std::shared_ptr<Land> const& land) const {
-    if (land->isOwnerless()) return 0;
     auto const& conf = ConfigProvider::getBoughtConfig();
     return PriceCalculate::calculateRefundsPrice(land->getOriginalBuyPrice(), conf.refundRate);
 }
 
 int64_t LandPriceService::getRefundAmountRecursively(std::shared_ptr<Land> const& land) const {
-    auto const& conf = ConfigProvider::getBoughtConfig();
-    return calculatePriceRecursively(land, [&conf](std::shared_ptr<Land> const& land, int64_t& price) {
-        if (land->isOwnerless()) return true;
-        price += PriceCalculate::calculateRefundsPrice(land->getOriginalBuyPrice(), conf.refundRate);
+    return calculatePriceRecursively(land, [this](std::shared_ptr<Land> const& sub, int64_t& price) {
+        price += getRefundAmount(sub);
         return true;
     });
 }

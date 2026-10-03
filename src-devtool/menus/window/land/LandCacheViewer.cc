@@ -45,14 +45,7 @@ public:
     LandCacheViewerWindow(std::string title, WindowManager& wm);
     ~LandCacheViewerWindow() override;
 
-    enum Buttons {
-        EditLand,  // 编辑领地数据
-        ExportLand // 导出领地数据
-    };
-    void handleButtonClicked(Buttons bt, std::shared_ptr<land::Land> land);
-
     void handleEditLand(std::shared_ptr<land::Land> land);
-    void handleExportLand(std::shared_ptr<land::Land> land);
     void handleViewLandTree(std::shared_ptr<land::Land> land);
 
     void renderCacheLand(); // 渲染缓存的领地
@@ -79,16 +72,6 @@ LandCacheViewerWindow::LandCacheViewerWindow(std::string title, WindowManager& w
 
 LandCacheViewerWindow::~LandCacheViewerWindow() = default;
 
-void LandCacheViewerWindow::handleButtonClicked(Buttons bt, std::shared_ptr<land::Land> land) {
-    switch (bt) {
-    case EditLand:
-        handleEditLand(land);
-        break;
-    case ExportLand:
-        handleExportLand(land);
-        break;
-    }
-}
 void LandCacheViewerWindow::handleEditLand(std::shared_ptr<land::Land> land) {
     auto id = land->getId();
     if (!editors_.contains(id)) {
@@ -112,20 +95,14 @@ void LandCacheViewerWindow::handleViewLandTree(std::shared_ptr<land::Land> land)
     viewers_[id]->setVisible(true);
 }
 
-void LandCacheViewerWindow::handleExportLand(std::shared_ptr<land::Land> land) {
-    namespace fs = std::filesystem;
-    auto dir     = land::PLand::getInstance().getSelf().getModDir() / "devtool_exports";
-    if (!std::filesystem::exists(dir)) {
-        std::filesystem::create_directory(dir);
-    }
-    auto          file = dir / fmt::format("land_{}.json", land->getId());
-    std::ofstream ofs(file);
-    ofs << land->toJson().dump(2);
-    ofs.close();
-}
-
 void LandCacheViewerWindow::preBuildData() {
-    lands_ = land::PLand::getInstance().getLandRegistry().getLandsByOwner();
+    lands_.clear();
+    land::PLand::getInstance().getLandRegistry().forEachOwnerLand(
+        [this](mce::UUID const& owner, std::shared_ptr<land::Land> const& land) {
+            lands_[owner].insert(land);
+            return true;
+        }
+    );
 
     auto& playerInfo = ll::service::PlayerInfo::getInstance();
     for (const auto& owner : lands_ | std::views::keys) {
@@ -269,7 +246,7 @@ void LandCacheViewerWindow::renderCacheLand() {
             ImGui::Text("%s", ld->getAABB().toString().c_str());
             ImGui::TableNextColumn(); // 操作
             if (ImGui::Button(fmt::format("编辑数据##{}", ld->getId()).c_str())) {
-                handleButtonClicked(EditLand, ld);
+                handleEditLand(ld);
             }
             if (ld->isParentLand()) {
                 ImGui::SameLine();
@@ -281,11 +258,6 @@ void LandCacheViewerWindow::renderCacheLand() {
             if (ImGui::Button(fmt::format("复制##{}", ld->getId()).c_str())) {
                 ImGui::SetClipboardText(ld->toJson().dump().c_str());
             }
-            ImGui::SameLine();
-            if (ImGui::Button(fmt::format("导出##{}", ld->getId()).c_str())) {
-                handleButtonClicked(ExportLand, ld);
-            }
-            if (ImGui::IsItemHovered()) ImGui::SetItemTooltip("将当前领地数据导出到 pland/devtool_exports 下");
         }
     }
     ImGui::EndTable();

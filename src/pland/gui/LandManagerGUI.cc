@@ -1,7 +1,7 @@
 #include "pland/gui/LandManagerGUI.h"
 #include "LandTeleportGUI.h"
-#include "common/OnlinePlayerPicker.h"
 #include "common/PermEditorRouter.h"
+#include "common/PlayerPicker.h"
 #include "common/SimpleInputForm.h"
 
 #include "ll/api/form/CustomForm.h"
@@ -17,8 +17,8 @@
 
 #include "pland/PLand.h"
 #include "pland/economy/EconomySystem.h"
-#include "pland/gui/common/OnlinePlayerPicker.h"
 #include "pland/gui/utils/BackUtils.h"
+#include "pland/infra/Overload.h"
 #include "pland/land/Config.h"
 #include "pland/land/Land.h"
 #include "pland/land/repo/LandRegistry.h"
@@ -28,7 +28,6 @@
 #include "pland/service/LeasingService.h"
 #include "pland/service/ServiceLocator.h"
 #include "pland/utils/FeedbackUtils.h"
-#include "pland/utils/LandPermissionUtils.h"
 #include "pland/utils/TimeUtils.h"
 
 #include <string>
@@ -39,76 +38,83 @@
 namespace land::gui {
 using namespace ll::form;
 
-namespace {
-bool checkDeletePermission(Player& player, std::shared_ptr<Land> const& land) {
-    if (!permission_utils::checkLandManagement(player, *land)) return false;
-    if (!PLand::getInstance().getLandRegistry().isOperator(player.getUuid()) && land->hasSubLand()) {
-        auto& hierarchy = PLand::getInstance().getServiceLocator().getLandHierarchyService();
-        for (auto const& descendant : hierarchy.getDescendants(land)) {
-            if (descendant->isOwnerless()) {
-                feedback_utils::sendErrorText(
-                    player,
-                    "下属包含无主领地，请联系领地管理员操作"_trl(player.getLocaleCode())
-                );
-                return false;
-            }
-        }
-    }
-    return true;
-}
-} // namespace
-
 
 void LandManagerGUI::sendMainMenu(Player& player, std::shared_ptr<Land> land) {
-    auto fm = SimpleForm{};
+    auto& instance          = PLand::getInstance();
+    auto& locator           = instance.getServiceLocator();
+    auto& managementService = locator.getLandManagementService();
+
+    if (auto expected = managementService.ensureCanManageLand(player, land); !expected) {
+        feedback_utils::sendError(player, expected.error());
+        return;
+    }
 
     auto localeCode = player.getLocaleCode();
+
+    auto fm = SimpleForm{};
     fm.setTitle(("[PLand] | 领地管理 [ID:{}]"_trl(localeCode, land->getId())));
 
-    auto& service = PLand::getInstance().getServiceLocator().getLandHierarchyService();
-
-    std::string subContent;
-    if (land->isParentLand()) {
-        subContent = "下属子领地数量: {}"_trl(localeCode, land->getSubLandIDs().size());
-    } else if (land->isMixLand()) {
-        subContent = "下属子领地数量: {}\n父领地ID: {}\n父领地名称: {}"_trl(
-            localeCode,
-            land->getSubLandIDs().size(),
-            service.getParent(land)->getId(),
-            service.getParent(land)->getName()
-        );
-    } else {
-        subContent = "父领地ID: {}\n父领地名称: {}"_trl(
-            localeCode,
-            land->hasParentLand() ? (std::to_string(service.getParent(land)->getId())) : "null",
-            land->hasParentLand() ? service.getParent(land)->getName() : "null"
-        );
+    std::string subContent{};
+    {
+        auto& hierarchyService = locator.getLandHierarchyService();
+        switch (land->getType()) {
+        case LandType::Ordinary:
+            break;
+        case LandType::Parent:
+            subContent += "下属子领地数量: {}"_trl(localeCode, land->getSubLandIDs().size());
+            break;
+        case LandType::Mix:
+            subContent += "下属子领地数量: {}\n父领地ID: {}\n父领地名称: {}"_trl(
+                localeCode,
+                land->getSubLandIDs().size(),
+                hierarchyService.getParent(land)->getId(),
+                hierarchyService.getParent(land)->getName()
+            );
+            break;
+        case LandType::Sub:
+            subContent += "父领地ID: {}\n父领地名称: {}"_trl(
+                localeCode,
+                land->hasParentLand() ? (std::to_string(hierarchyService.getParent(land)->getId())) : "null",
+                land->hasParentLand() ? hierarchyService.getParent(land)->getName() : "null"
+            );
+            break;
+        }
     }
 
     std::string leaseContent;
-    if (land->isLeased()) {
+    switch (land->getLeaseState()) {
+    case LeaseState::None:
+        break;
+    case LeaseState::Active: {
+        leaseContent = "租赁状态:正常\n剩余租期:{}"_trl(localeCode, time_utils::formatRemaining(land->getLeaseEndAt()));
+        break;
+    }
+    case LeaseState::Frozen: {
+        auto& priceService = PLand::getInstance().getServiceLocator().getLandPriceService();
+        auto  detail       = priceService.calculateRenewCost(land, 0);
+        leaseContent       = "租赁状态: 已冻结\n欠费: {}"_trl(localeCode, detail.total);
+        break;
+    }
+    case LeaseState::Expired: {
+        leaseContent = "租赁状态: 已到期(系统回收)"_trl(localeCode);
+        break;
+    }
+    }
 
-
-        auto state = land->getLeaseState();
-        switch (state) {
-        case LeaseState::None:
-            break;
-        case LeaseState::Active: {
-            leaseContent =
-                "租赁状态:正常\n剩余租期:{}"_trl(localeCode, time_utils::formatRemaining(land->getLeaseEndAt()));
-            break;
-        }
-        case LeaseState::Frozen: {
-            auto& priceService = PLand::getInstance().getServiceLocator().getLandPriceService();
-            auto  detail       = priceService.calculateRenewCost(land, 0);
-            leaseContent       = "租赁状态: 已冻结\n欠费: {}"_trl(localeCode, detail.total);
-            break;
-        }
-        case LeaseState::Expired: {
-            leaseContent = "租赁状态: 已到期(系统回收)"_trl(localeCode);
-            break;
-        }
-        }
+    std::string ownershipText;
+    switch (land->getOwnershipKind()) {
+    case LandOwnershipKind::Player:
+        ownershipText = "有主领地"_trl(localeCode);
+        break;
+    case LandOwnershipKind::Ownerless:
+        ownershipText = "无主领地"_trl(localeCode);
+        break;
+    case LandOwnershipKind::PendingMigration:
+        ownershipText = "待迁移领地"_trl(localeCode);
+        break;
+    case LandOwnershipKind::System:
+        ownershipText = "系统托管"_trl(localeCode);
+        break;
     }
 
     fm.setContent(
@@ -123,11 +129,12 @@ void LandManagerGUI::sendMainMenu(Player& player, std::shared_ptr<Land> land) {
             land->getAABB().toString(),
             leaseContent,
             subContent,
-            land->isOwnerless() ? "无主领地（仅领地管理员可管理）"_trl(localeCode) : "有主领地"_trl(localeCode)
+            ownershipText
         )
     );
 
-    bool const isAdmin     = PLand::getInstance().getLandRegistry().isOperator(player.getUuid());
+    // 前置校验已确认表单仅管理员和主人可用，剩余按钮只需要考虑其它状态
+    bool const isAdmin     = instance.getLandRegistry().isOperator(player.getUuid());
     bool const canOperLand = isAdmin ||             // 管理员
                              !land->isLeased() ||   // 未租赁(普通领地)
                              land->isLeaseActive(); // 租赁状态为正常
@@ -136,18 +143,16 @@ void LandManagerGUI::sendMainMenu(Player& player, std::shared_ptr<Land> land) {
         fm.appendButton("编辑权限"_trl(localeCode), "textures/ui/sidebar_icons/promotag", "path", [land](Player& pl) {
             sendEditLandPermGUI(pl, land);
         });
-        if (!land->isOwnerless()) {
-            fm.appendButton("修改成员"_trl(localeCode), "textures/ui/FriendsIcon", "path", [land](Player& pl) {
-                sendChangeMember(pl, land);
-            });
-        }
+        fm.appendButton("成员管理"_trl(localeCode), "textures/ui/FriendsIcon", "path", [land](Player& pl) {
+            sendMemberList(pl, land);
+        });
         fm.appendButton("修改领地名称"_trl(localeCode), "textures/ui/book_edit_default", "path", [land](Player& pl) {
             sendEditLandNameGUI(pl, land);
         });
     }
 
     if (land->isLeased()) {
-        fm.appendButton("续费/缴费"_trl(localeCode), "textures/ui/MCoin", "path", [land](Player& pl) {
+        fm.appendButton("续租/缴费"_trl(localeCode), "textures/ui/icons/icon_deals.png", "path", [land](Player& pl) {
             sendLeaseRenewGUI(pl, land);
         });
     }
@@ -155,50 +160,58 @@ void LandManagerGUI::sendMainMenu(Player& player, std::shared_ptr<Land> land) {
     if (canOperLand) {
         // 开启了领地传送功能，或者玩家是领地管理员
         if (ConfigProvider::isLandTeleportEnabled() || isAdmin) {
-            fm.appendButton("传送到领地"_trl(localeCode), "textures/ui/icon_recipe_nature", "path", [land](Player& pl) {
+            fm.appendButton("传送到领地"_trl(localeCode), "textures/ui/glyph_realms.png", "path", [land](Player& pl) {
                 LandTeleportGUI::impl(pl, land);
             });
 
             // 如果玩家在领地内，则显示设置传送点按钮
             if (land->getAABB().hasPos(player.getPosition())) {
-                fm.appendButton(
-                    "设置传送点"_trl(localeCode),
-                    "textures/ui/Add-Ons_Nav_Icon36x36",
-                    "path",
-                    [land](Player& pl) {
-                        if (!permission_utils::checkLandManagement(pl, *land)) return;
-                        auto& service = PLand::getInstance().getServiceLocator().getLandManagementService();
-                        if (auto res = service.setLandTeleportPos(pl, land, pl.getPosition())) {
-                            feedback_utils::notifySuccess(pl, "传送点已设置!"_trl(pl.getLocaleCode()));
-                        } else {
-                            feedback_utils::sendError(pl, res.error());
-                        }
+                fm.appendButton("设置传送点"_trl(localeCode), "textures/ui/icon_best3.png", "path", [land](Player& pl) {
+                    auto& service = PLand::getInstance().getServiceLocator().getLandManagementService();
+                    if (auto res = service.setLandTeleportPos(pl, land, pl.getPosition())) {
+                        feedback_utils::notifySuccess(pl, "传送点已更新!"_trl(pl.getLocaleCode()));
+                    } else {
+                        feedback_utils::sendError(pl, res.error());
                     }
-                );
+                });
             }
         }
 
-        fm.appendButton(
-            land->isOwnerless() ? "设置领地主"_trl(localeCode) : "领地过户"_trl(localeCode),
-            "textures/ui/sidebar_icons/my_characters",
-            "path",
-            [land](Player& pl) { sendTransferLandGUI(pl, land); }
-        );
-        if (isAdmin && !land->isOwnerless()) {
-            fm.appendButton("设为无主领地"_trl(localeCode), "textures/ui/lock", "path", [land](Player& pl) {
-                sendSetOwnerlessConfirm(pl, land);
+        if (land->isPlayerOwned()) {
+            fm.appendButton(
+                "领地过户"_trl(localeCode),
+                "textures/ui/sidebar_icons/my_characters",
+                "path",
+                [land](Player& pl) { sendTransferLandGUI(pl, land); }
+            );
+        }
+        if (land->isOwnerless()) {
+            fm.appendButton("设置领地主"_trl(localeCode), "textures/ui/op.png", "path", [land](Player& pl) {
+                sendTransferLandGUI(pl, land);
             });
+        }
+
+        // 租赁领地需先买断, 功能未启用时不提供该操作
+        {
+            auto const& ownerlessConf   = ConfigProvider::getOwnerlessConfig();
+            bool const  operatorAllowed = isAdmin || ownerlessConf.allowSetOwnerlessByOwner;
+            bool const  stateAllowed    = !land->isOwnerless() && !land->isLeased();
+            if (ownerlessConf.enabled && operatorAllowed && stateAllowed) {
+                fm.appendButton("设为无主领地"_trl(localeCode), "textures/ui/deop.png", "path", [land](Player& pl) {
+                    confirmOwnerless(pl, land);
+                });
+            }
         }
 
         if (ConfigProvider::isSubLandEnabled() && land->canCreateSubLand()) {
             fm.appendButton("创建子领地"_trl(localeCode), "textures/ui/icon_recipe_nature", "path", [land](Player& pl) {
-                sendCreateSubLandConfirm(pl, land);
+                confirmCreateSubLand(pl, land);
             });
         }
 
         if (land->isOrdinaryLand() && !land->isLeased()) {
-            fm.appendButton("重新选区"_trl(localeCode), "textures/ui/anvil_icon", "path", [land](Player& pl) {
-                sendChangeRangeConfirm(pl, land);
+            fm.appendButton("调整范围"_trl(localeCode), "textures/ui/anvil_icon", "path", [land](Player& pl) {
+                confirmResizeLand(pl, land);
             });
         }
 
@@ -286,13 +299,19 @@ void LandManagerGUI::sendEditLandPermGUI(Player& player, std::shared_ptr<Land> c
         player,
         ptr->getPermTable(),
         [ptr, saved, ref](LandPermTable const& table) {
-            if (auto* sp = ref.tryUnwrap<ServerPlayer>().as_ptr()) {
-                if (!permission_utils::checkLandManagement(*sp, *ptr)) return;
-                ptr->setPermTable(table);
-                if (*saved) return;
-                *saved = true;
-                feedback_utils::sendText(*sp, "权限表已更新"_trl(sp->getLocaleCode()));
+            auto* sp = ref.tryUnwrap<ServerPlayer>().as_ptr();
+            if (!sp) {
+                return; // 玩家已离线, 放弃本次修改
             }
+
+            auto& service = PLand::getInstance().getServiceLocator().getLandManagementService();
+            if (auto expected = service.setLandPermTable(*sp, ptr, table); !expected) {
+                feedback_utils::sendError(*sp, expected.error());
+                return;
+            }
+            if (*saved) return;
+            *saved = true;
+            feedback_utils::sendText(*sp, "权限表已更新"_trl(sp->getLocaleCode()));
         },
         back_utils::wrapCallback<sendMainMenu>(ptr)
     );
@@ -319,6 +338,7 @@ void LandManagerGUI::confirmSimpleDelete(Player& player, std::shared_ptr<Land> c
         return;
     }
     auto localeCode = player.getLocaleCode();
+
     auto refund =
         ptr->isLeased() ? 0 : PLand::getInstance().getServiceLocator().getLandPriceService().getRefundAmount(ptr);
     auto content =
@@ -344,7 +364,6 @@ void LandManagerGUI::confirmSimpleDelete(Player& player, std::shared_ptr<Land> c
             }
 
             auto& service = PLand::getInstance().getServiceLocator().getLandManagementService();
-            if (!permission_utils::checkLandManagement(pl, *ptr)) return;
             if (auto expected = service.deleteLand(pl, ptr, service::DeletePolicy::CurrentOnly)) {
                 feedback_utils::notifySuccess(pl, "删除成功"_trl(pl.getLocaleCode()));
             } else {
@@ -367,7 +386,6 @@ void LandManagerGUI::confirmParentDelete(Player& player, std::shared_ptr<Land> c
     );
 
     fm.appendButton("删除当前领地和子领地"_trl(localeCode), [ptr](Player& pl) {
-        if (!checkDeletePermission(pl, ptr)) return;
         auto expected = PLand::getInstance().getServiceLocator().getLandManagementService().deleteLand(
             pl,
             ptr,
@@ -380,7 +398,6 @@ void LandManagerGUI::confirmParentDelete(Player& player, std::shared_ptr<Land> c
         }
     });
     fm.appendButton("删除当前领地并提升子领地为父领地"_trl(localeCode), [ptr](Player& pl) {
-        if (!checkDeletePermission(pl, ptr)) return;
         auto expected = PLand::getInstance().getServiceLocator().getLandManagementService().deleteLand(
             pl,
             ptr,
@@ -411,7 +428,6 @@ void LandManagerGUI::confirmMixDelete(Player& player, std::shared_ptr<Land> cons
     );
 
     fm.appendButton("删除当前领地和子领地"_trl(localeCode), [ptr](Player& pl) {
-        if (!checkDeletePermission(pl, ptr)) return;
         auto expected = PLand::getInstance().getServiceLocator().getLandManagementService().deleteLand(
             pl,
             ptr,
@@ -424,7 +440,6 @@ void LandManagerGUI::confirmMixDelete(Player& player, std::shared_ptr<Land> cons
         }
     });
     fm.appendButton("删除当前领地并移交子领地给父领地"_trl(localeCode), [ptr](Player& pl) {
-        if (!checkDeletePermission(pl, ptr)) return;
         auto expected = PLand::getInstance().getServiceLocator().getLandManagementService().deleteLand(
             pl,
             ptr,
@@ -449,7 +464,6 @@ void LandManagerGUI::sendEditLandNameGUI(Player& player, std::shared_ptr<Land> c
         "请输入新的领地名称"_trl(localeCode),
         ptr->getName(),
         [ptr](Player& pl, std::string result) {
-            if (!permission_utils::checkLandManagement(pl, *ptr)) return;
             auto& service = PLand::getInstance().getServiceLocator().getLandManagementService();
             if (auto expected = service.setLandName(pl, ptr, result)) {
                 feedback_utils::sendText(pl, "领地名称已更新!"_trl(pl.getLocaleCode(), result));
@@ -459,36 +473,15 @@ void LandManagerGUI::sendEditLandNameGUI(Player& player, std::shared_ptr<Land> c
         }
     );
 }
-void LandManagerGUI::sendTransferLandGUI(Player& player, std::shared_ptr<Land> const& ptr) {
-    auto localeCode = player.getLocaleCode();
 
-    auto fm = SimpleForm{};
-    gui::back_utils::injectBackButton<sendMainMenu>(fm, ptr);
-
-    fm.setTitle(ptr->isOwnerless() ? "[PLand] | 设置领地主"_trl(localeCode) : "[PLand] | 转让领地"_trl(localeCode));
-    fm.appendButton(
-        "转让给在线玩家"_trl(localeCode),
-        "textures/ui/sidebar_icons/my_characters",
-        "path",
-        [ptr](Player& self) { _sendTransferLandToOnlinePlayer(self, ptr); }
-    );
-
-    fm.appendButton(
-        "转让给离线玩家"_trl(localeCode),
-        "textures/ui/sidebar_icons/my_characters",
-        "path",
-        [ptr](Player& self) { _sendTransferLandToOfflinePlayer(self, ptr); }
-    );
-
-    fm.sendTo(player);
-}
-void LandManagerGUI::sendSetOwnerlessConfirm(Player& player, std::shared_ptr<Land> const& ptr) {
+void LandManagerGUI::confirmOwnerless(Player& player, std::shared_ptr<Land> const& ptr) {
     auto localeCode = player.getLocaleCode();
     ModalForm(
         "[PLand] | 设为无主领地"_trl(localeCode),
-        "确定将领地 \"{}\" 设为无主领地吗?\n原领地主及成员将失去权限，只有领地管理员可以管理。\n租赁计时将被清除，领地不再自动回收。\n下属子领地的归属不变，管理员可单独设置。\n以后可通过设置领地主恢复为有主领地。"_trl(
+        "确定将 '{}' ID:{}  设为无主领地吗?\n注意：领地主人(成员)将会失去此领地的权限。\n原领地主将获得购买费用退款。\n下属子领地的归属不变。"_trl(
             localeCode,
-            ptr->getName()
+            ptr->getName(),
+            ptr->getId()
         ),
         "确认"_trl(localeCode),
         "返回"_trl(localeCode)
@@ -500,74 +493,52 @@ void LandManagerGUI::sendSetOwnerlessConfirm(Player& player, std::shared_ptr<Lan
                 return;
             }
             auto& service = PLand::getInstance().getServiceLocator().getLandManagementService();
-            if (!PLand::getInstance().getLandRegistry().isOperator(self.getUuid())) {
-                feedback_utils::sendErrorText(self, "仅领地管理员可以设置无主领地"_trl(self.getLocaleCode()));
-                return;
-            }
             if (auto expected = service.setLandOwnerless(self, ptr)) {
                 feedback_utils::notifySuccess(self, "已设为无主领地"_trl(self.getLocaleCode()));
-                sendMainMenu(self, ptr);
             } else {
                 feedback_utils::sendError(self, expected.error());
             }
         });
 }
-void LandManagerGUI::_sendTransferLandToOnlinePlayer(Player& player, const std::shared_ptr<Land>& ptr) {
-    gui::OnlinePlayerPicker::sendTo(
+
+void LandManagerGUI::sendTransferLandGUI(Player& player, std::shared_ptr<Land> const& ptr) {
+    PlayerPickerRouter::sendTo(
         player,
-        [ptr](Player& self, Player& target) {
-            _confirmTransferLand(self, ptr, target.getUuid(), target.getRealName());
+        [ptr](Player& player, PlayerPickerRouter::result_t result) {
+            auto handlers = infra::overload_t{
+                [&](Player* target) {
+                    if (target) {
+                        confirmTransferLand(player, ptr, target->getUuid(), target->getRealName());
+                    }
+                },
+                [&](PlayerPickerRouter::OfflinePlayerInfo info) {
+                    confirmTransferLand(player, ptr, info.uuid, info.name);
+                }
+            };
+            std::visit(handlers, result);
         },
-        gui::back_utils::wrapCallback<sendTransferLandGUI>(ptr)
+        back_utils::wrapCallback<sendMainMenu>(ptr)
     );
 }
-void LandManagerGUI::_sendTransferLandToOfflinePlayer(Player& player, std::shared_ptr<Land> const& ptr) {
-    auto localeCode = player.getLocaleCode();
-
-    CustomForm fm("[PLand] | 转让给离线玩家"_trl(localeCode));
-    fm.appendInput("playerName", "请输入离线玩家名称"_trl(localeCode), "玩家名称");
-    fm.sendTo(player, [ptr](Player& self, CustomFormResult const& res, FormCancelReason) {
-        if (!res) {
-            return;
-        }
-        auto localeCode = self.getLocaleCode();
-
-        auto playerName = std::get<std::string>(res->at("playerName"));
-        if (playerName.empty()) {
-            feedback_utils::sendErrorText(self, "玩家名称不能为空!"_trl(localeCode));
-            sendTransferLandGUI(self, ptr);
-            return;
-        }
-
-        auto playerInfo = ll::service::PlayerInfo::getInstance().fromName(playerName);
-        if (!playerInfo) {
-            feedback_utils::sendErrorText(self, "未找到该玩家信息，请检查名称是否正确!"_trl(localeCode));
-            sendTransferLandGUI(self, ptr);
-            return;
-        }
-        auto& targetUuid = playerInfo->uuid;
-        _confirmTransferLand(self, ptr, targetUuid, playerName);
-    });
-}
-void LandManagerGUI::_confirmTransferLand(
+void LandManagerGUI::confirmTransferLand(
     Player&                      player,
-    const std::shared_ptr<Land>& ptr,
+    std::shared_ptr<Land> const& ptr,
     mce::UUID                    target,
     std::string                  displayName
 ) {
     auto localeCode = player.getLocaleCode();
 
-    ModalForm(
-        ptr->isOwnerless() ? "[PLand] | 设置领地主"_trl(localeCode) : "[PLand] | 确认转让"_trl(localeCode),
-        ptr->isOwnerless()
-            ? "确定将 {} 设为领地主吗?\n该领地将转为有主领地，由该玩家管理。"_trl(localeCode, displayName)
-            : "您确定要将领地转让给 {} 吗?\n转让后，您将失去此领地的权限。\n此操作不可逆,请谨慎操作!"_trl(
-                  localeCode,
-                  displayName
-              ),
-        "确认"_trl(localeCode),
-        "返回"_trl(localeCode)
-    )
+    bool ownerless = ptr->isOwnerless();
+
+    std::string title = ownerless ? "[PLand] | 设置领地主"_trl(localeCode) : "[PLand] | 确认转让"_trl(localeCode);
+    std::string content =
+        ownerless ? "确定将 {} 设为领地主吗?\n该领地将转为有主领地，由该玩家管理。"_trl(localeCode, displayName)
+                  : "您确定要将领地转让给 {} 吗?\n转让后，您将失去此领地的权限。\n此操作不可逆,请谨慎操作!"_trl(
+                        localeCode,
+                        displayName
+                    );
+
+    ModalForm(title, content, "确认"_trl(localeCode), "返回"_trl(localeCode))
         .sendTo(player, [ptr, target, displayName](Player& player, ModalFormResult const& res, FormCancelReason) {
             if (!res) {
                 return;
@@ -577,7 +548,6 @@ void LandManagerGUI::_confirmTransferLand(
                 return;
             }
             auto& service = PLand::getInstance().getServiceLocator().getLandManagementService();
-            if (!permission_utils::checkLandManagement(player, *ptr)) return;
             if (auto expected = service.transferLand(player, ptr, target)) {
                 auto localeCode = player.getLocaleCode();
 
@@ -594,7 +564,7 @@ void LandManagerGUI::_confirmTransferLand(
         });
 }
 
-void LandManagerGUI::sendCreateSubLandConfirm(Player& player, const std::shared_ptr<Land>& ptr) {
+void LandManagerGUI::confirmCreateSubLand(Player& player, std::shared_ptr<Land> const& ptr) {
     auto localeCode = player.getLocaleCode();
 
     ModalForm{
@@ -612,7 +582,6 @@ void LandManagerGUI::sendCreateSubLandConfirm(Player& player, const std::shared_
                 return;
             }
             auto& service = PLand::getInstance().getServiceLocator().getLandManagementService();
-            if (!permission_utils::checkLandManagement(player, *ptr)) return;
             if (auto expected = service.requestCreateSubLand(player, ptr)) {
                 feedback_utils::sendText(
                     player,
@@ -627,7 +596,7 @@ void LandManagerGUI::sendCreateSubLandConfirm(Player& player, const std::shared_
         });
 }
 
-void LandManagerGUI::sendChangeRangeConfirm(Player& player, std::shared_ptr<Land> const& ptr) {
+void LandManagerGUI::confirmResizeLand(Player& player, std::shared_ptr<Land> const& ptr) {
     auto localeCode = player.getLocaleCode();
 
     ModalForm fm(
@@ -648,7 +617,6 @@ void LandManagerGUI::sendChangeRangeConfirm(Player& player, std::shared_ptr<Land
             return;
         }
         auto& service = PLand::getInstance().getServiceLocator().getLandManagementService();
-        if (!permission_utils::checkLandManagement(self, *ptr)) return;
         if (auto expected = service.requestChangeRange(self, ptr)) {
             feedback_utils::sendText(
                 self,
@@ -664,65 +632,47 @@ void LandManagerGUI::sendChangeRangeConfirm(Player& player, std::shared_ptr<Land
 }
 
 
-void LandManagerGUI::sendChangeMember(Player& player, std::shared_ptr<Land> ptr) {
+void LandManagerGUI::sendMemberList(Player& player, std::shared_ptr<Land> ptr) {
+    auto localeCode = player.getLocaleCode();
+
     auto fm = SimpleForm{};
+    fm.setTitle("[PLand] 成员管理"_trl(localeCode));
+    fm.setContent("Tip: 点击成员可移除领地成员");
+
     gui::back_utils::injectBackButton<sendMainMenu>(fm, ptr);
 
-    auto localeCode = player.getLocaleCode();
-    fm.appendButton("添加在线成员"_trl(localeCode), "textures/ui/color_plus", "path", [ptr](Player& self) {
-        _sendAddOnlineMember(self, ptr);
-    });
-    fm.appendButton("添加离线成员"_trl(localeCode), "textures/ui/color_plus", "path", [ptr](Player& self) {
-        _sendAddOfflineMember(self, ptr);
+    fm.appendButton("添加成员"_trl(localeCode), "textures/ui/color_plus", "path", [ptr](Player& self) {
+        sendAddMember(self, ptr);
     });
 
     auto& infos = ll::service::PlayerInfo::getInstance();
     for (auto& member : ptr->getMembers()) {
         auto i = infos.fromUuid(member);
         fm.appendButton(i.has_value() ? i->name : member.asString(), [member, ptr](Player& self) {
-            _confirmRemoveMember(self, ptr, member);
+            confirmRemoveMember(self, ptr, member);
         });
     }
 
     fm.sendTo(player);
 }
-void LandManagerGUI::_sendAddOnlineMember(Player& player, std::shared_ptr<Land> ptr) {
-    gui::OnlinePlayerPicker::sendTo(
+void LandManagerGUI::sendAddMember(Player& player, std::shared_ptr<Land> ptr) {
+    PlayerPickerRouter::sendTo(
         player,
-        [ptr](Player& self, Player& target) { _confirmAddMember(self, ptr, target.getUuid(), target.getRealName()); },
-        gui::back_utils::wrapCallback<sendChangeMember>(ptr)
+        [ptr](Player& player, PlayerPickerRouter::result_t result) {
+            auto handlers = infra::overload_t{
+                [&](Player* target) {
+                    if (target) {
+                        confirmAddMember(player, ptr, target->getUuid(), target->getRealName());
+                    }
+                },
+                [&](PlayerPickerRouter::OfflinePlayerInfo info) { confirmAddMember(player, ptr, info.uuid, info.name); }
+            };
+            std::visit(handlers, result);
+        },
+        back_utils::wrapCallback<sendMemberList>(ptr)
     );
 }
-void LandManagerGUI::_sendAddOfflineMember(Player& player, std::shared_ptr<Land> ptr) {
-    auto localeCode = player.getLocaleCode();
-
-    CustomForm fm("[PLand] | 添加离线成员"_trl(localeCode));
-    fm.appendInput("playerName", "请输入离线玩家名称"_trl(localeCode), "玩家名称");
-    fm.sendTo(player, [ptr](Player& self, CustomFormResult const& res, FormCancelReason) {
-        if (!res) {
-            return;
-        }
-        auto localeCode = self.getLocaleCode();
-
-        auto playerName = std::get<std::string>(res->at("playerName"));
-        if (playerName.empty()) {
-            feedback_utils::sendErrorText(self, "玩家名称不能为空!"_trl(localeCode));
-            sendChangeMember(self, ptr);
-            return;
-        }
-
-        auto playerInfo = ll::service::PlayerInfo::getInstance().fromName(playerName);
-        if (!playerInfo) {
-            feedback_utils::sendErrorText(self, "未找到该玩家信息，请检查名称是否正确!"_trl(localeCode));
-            sendChangeMember(self, ptr);
-            return;
-        }
-
-        auto& targetUuid = playerInfo->uuid;
-        _confirmAddMember(self, ptr, targetUuid, playerName);
-    });
-}
-void LandManagerGUI::_confirmAddMember(
+void LandManagerGUI::confirmAddMember(
     Player&               player,
     std::shared_ptr<Land> ptr,
     mce::UUID             member,
@@ -741,12 +691,11 @@ void LandManagerGUI::_confirmAddMember(
             return;
         }
         if (!(bool)res.value()) {
-            sendChangeMember(self, ptr);
+            sendMemberList(self, ptr);
             return;
         }
 
         auto& service = PLand::getInstance().getServiceLocator().getLandManagementService();
-        if (!permission_utils::checkLandManagement(self, *ptr)) return;
         if (auto expected = service.addMember(self, ptr, member)) {
             feedback_utils::sendText(self, "添加成功!"_trl(self.getLocaleCode()));
         } else {
@@ -754,7 +703,7 @@ void LandManagerGUI::_confirmAddMember(
         }
     });
 }
-void LandManagerGUI::_confirmRemoveMember(Player& player, std::shared_ptr<Land> ptr, mce::UUID member) {
+void LandManagerGUI::confirmRemoveMember(Player& player, std::shared_ptr<Land> ptr, mce::UUID member) {
     auto info       = ll::service::PlayerInfo::getInstance().fromUuid(member);
     auto localeCode = player.getLocaleCode();
 
@@ -769,12 +718,11 @@ void LandManagerGUI::_confirmRemoveMember(Player& player, std::shared_ptr<Land> 
             return;
         }
         if (!(bool)res.value()) {
-            sendChangeMember(self, ptr);
+            sendMemberList(self, ptr);
             return;
         }
 
         auto& service = PLand::getInstance().getServiceLocator().getLandManagementService();
-        if (!permission_utils::checkLandManagement(self, *ptr)) return;
         if (auto expected = service.removeMember(self, ptr, member)) {
             feedback_utils::sendText(self, "移除成员成功!"_trl(self.getLocaleCode()));
         } else {

@@ -3,8 +3,9 @@
 #include "LandOwnerPicker.h"
 #include "pland/PLand.h"
 #include "pland/gui/LandManagerGUI.h"
-#include "pland/gui/common/PermEditorRouter.h"
 #include "pland/gui/common/AdvancedLandPicker.h"
+#include "pland/gui/common/PermEditorRouter.h"
+#include "pland/land/Config.h"
 #include "pland/land/Land.h"
 #include "pland/land/LandTemplatePermTable.h"
 #include "pland/land/repo/LandContext.h"
@@ -20,13 +21,16 @@
 
 #include <ll/api/form/SimpleForm.h>
 
+#include <utility>
+
 namespace land::gui {
 
 
 void OperatorManager::sendMainMenu(Player& player) {
     auto localeCode = player.getLocaleCode();
 
-    if (!PLand::getInstance().getLandRegistry().isOperator(player.getUuid())) {
+    auto& registry = PLand::getInstance().getLandRegistry();
+    if (!registry.isOperator(player.getUuid())) {
         feedback_utils::sendErrorText(player, "无权限访问此表单"_trl(localeCode));
         return;
     }
@@ -36,25 +40,53 @@ void OperatorManager::sendMainMenu(Player& player) {
     fm.setTitle("[PLand] | 领地管理"_trl(localeCode));
     fm.setContent("请选择您要进行的操作"_trl(localeCode));
 
-    fm.appendButton("管理脚下领地"_trl(localeCode), "textures/ui/free_download", "path", [](Player& self) {
-        auto lands = PLand::getInstance().getLandRegistry().getLandAt(self.getPosition(), self.getDimensionId());
-        if (!lands) {
-            feedback_utils::sendErrorText(self, "您当前所处位置没有领地"_trl(self.getLocaleCode()));
-            return;
-        }
-        LandManagerGUI::sendMainMenu(self, lands);
-    });
+    // 脚下没有领地时不提供入口
+    if (auto current = registry.getLandAt(player.getPosition(), player.getDimensionId())) {
+        fm.appendButton("管理脚下领地"_trl(localeCode), "textures/ui/free_download", "path", [current](Player& self) {
+            LandManagerGUI::sendMainMenu(self, current);
+        });
+    }
+
     fm.appendButton("管理玩家领地"_trl(localeCode), "textures/ui/FriendsIcon", "path", [](Player& self) {
         LandOwnerPicker::sendTo(self, static_cast<void (*)(Player&, mce::UUID)>(&sendAdvancedLandPicker), sendMainMenu);
     });
-    fm.appendButton("管理无主领地"_trl(localeCode), "textures/ui/lock", "path", [](Player& self) {
-        sendAdvancedLandPicker(
-            self,
-            PLand::getInstance().getLandRegistry().getLandsWhere([](std::shared_ptr<Land> const& land) {
-                return land->isOwnerless();
-            })
-        );
-    });
+
+    // 空列表与未启用的功能不提供入口
+    if (ConfigProvider::isOwnerlessEnabled()) {
+        std::vector<std::shared_ptr<Land>> ownerlessLands;
+        registry.forEachLand([&](std::shared_ptr<Land> const& land) {
+            if (land->isOwnerless()) {
+                ownerlessLands.push_back(land);
+            }
+            return true;
+        });
+        if (!ownerlessLands.empty()) {
+            fm.appendButton(
+                "管理无主领地"_trl(localeCode),
+                "textures/ui/deop.png",
+                "path",
+                [ownerlessLands](Player& self) { sendAdvancedLandPicker(self, ownerlessLands); }
+            );
+        }
+    }
+
+    {
+        std::vector<std::shared_ptr<Land>> pendingLands;
+        registry.forEachLand([&](std::shared_ptr<Land> const& land) {
+            if (land->getOwnershipKind() == LandOwnershipKind::PendingMigration) {
+                pendingLands.push_back(land);
+            }
+            return true;
+        });
+        if (!pendingLands.empty()) {
+            fm.appendButton(
+                "管理待迁移领地"_trl(localeCode),
+                "textures/ui/recipe_book_icon",
+                "path",
+                [pendingLands](Player& self) { sendAdvancedLandPicker(self, pendingLands); }
+            );
+        }
+    }
     fm.appendButton("管理指定领地"_trl(localeCode), "textures/ui/magnifyingGlass", "path", [](Player& self) {
         sendLandSelectModeMenu(self);
     });
@@ -90,7 +122,14 @@ void OperatorManager::sendLandSelectModeMenu(Player& player) {
         "浏览全部领地"_trl(localeCode),
         "textures/ui/achievements_pause_menu_icon",
         "path",
-        [](Player& self) { sendAdvancedLandPicker(self, PLand::getInstance().getLandRegistry().getLands()); }
+        [](Player& self) {
+            std::vector<std::shared_ptr<Land>> lands;
+            PLand::getInstance().getLandRegistry().forEachLand([&](std::shared_ptr<Land> const& land) {
+                lands.push_back(land);
+                return true;
+            });
+            sendAdvancedLandPicker(self, lands);
+        }
     );
     fm.appendButton("按领地 ID 查找"_trl(localeCode), "textures/ui/magnifyingGlass", "path", [](Player& self) {
         sendLandIdSearchForm(self);
@@ -128,8 +167,8 @@ void OperatorManager::sendAdvancedLandPicker(Player& player, mce::UUID targetPla
 void OperatorManager::sendAdvancedLandPicker(Player& player, std::vector<std::shared_ptr<Land>> lands) {
     AdvancedLandPicker::sendTo(
         player,
-        lands,
-        [](Player& self, std::shared_ptr<Land> ptr) { LandManagerGUI::sendMainMenu(self, ptr); },
+        std::move(lands),
+        [](Player& self, std::shared_ptr<Land> ptr) { LandManagerGUI::sendMainMenu(self, std::move(ptr)); },
         back_utils::wrapCallback<sendMainMenu>()
     );
 }

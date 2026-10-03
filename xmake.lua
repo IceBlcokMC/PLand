@@ -88,7 +88,12 @@ target("PLand")
 
     if is_mode("debug") then
         add_defines("PLAND_DEBUG")
-        -- add_defines("PLAND_I18N_COLLECT_STRINGS", "LL_I18N_COLLECT_STRINGS", "LL_I18N_COLLECT_STRINGS_CUSTOM")
+        --add_defines(
+        --    "PLAND_I18N_COLLECT_STRINGS",
+        --    "LL_I18N_COLLECT_STRINGS",
+        --    "LL_I18N_COLLECT_STRINGS_CUSTOM",
+        --    "LL_I18N_STRING_LITERAL_TYPE=::ll::FixedString"
+        --)
     end
 
     if is_plat("windows") then

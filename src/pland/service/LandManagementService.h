@@ -15,6 +15,7 @@ class UUID;
 }
 
 namespace land {
+struct LandPermTable;
 struct LandResizeSettlement;
 class Land;
 class OrdinaryLandCreateSelector;
@@ -38,7 +39,7 @@ enum class DeletePolicy : uint8_t {
     TransferChildren, // 删除当前，子领地转移
 };
 
-// 玩家操作权限由命令、GUI 等调用方校验；服务负责业务规则和数据变更。
+// NOTE: 领地管理权限（领地主或领地管理员）由本服务校验
 class LandManagementService {
     struct Impl;
     std::unique_ptr<Impl> impl;
@@ -104,11 +105,34 @@ public:
      */
     LDNDAPI ll::Expected<> ensurePlayerLandCountLimit(mce::UUID const& uuid, std::string_view locale = {}) const;
 
+    /**
+     * 判定 actor 是否可管理该领地
+     * @param actor 操作者 UUID
+     * @param land 领地
+     * @return 领地主或领地管理员为 true
+     */
+    LDNDAPI bool canManageLand(mce::UUID const& actor, std::shared_ptr<Land> const& land) const;
+
+    /**
+     * 校验 actor 可管理该领地
+     * @return 失败时返回 i18n 后的错误消息
+     */
+    LDNDAPI ll::Expected<> ensureCanManageLand(Player& actor, std::shared_ptr<Land> const& land) const;
+
+    /**
+     * 校验 actor 是领地管理员
+     * @return 失败时返回 i18n 后的错误消息
+     */
+    LDNDAPI ll::Expected<> ensureIsOperator(Player& actor) const;
+
     LDNDAPI ll::Expected<> setLandTeleportPos(Player& player, std::shared_ptr<Land> const& land, Vec3 point);
 
     LDNDAPI ll::Expected<> deleteLand(Player& player, std::shared_ptr<Land> ptr, DeletePolicy policy);
 
     LDNDAPI ll::Expected<> setLandName(Player& player, std::shared_ptr<Land> const& land, std::string name);
+
+    LDNDAPI ll::Expected<>
+            setLandPermTable(Player& player, std::shared_ptr<Land> const& land, LandPermTable const& permTable);
 
     LDNDAPI ll::Expected<> setLandOwnerless(Player& player, std::shared_ptr<Land> const& land);
 
@@ -148,8 +172,6 @@ private:
     ll::Expected<> _ensureLandWithDeletePolicy(Player& player, std::shared_ptr<Land> const& land, DeletePolicy policy);
 
     ll::Expected<> _processDeleteLand(Player& player, std::shared_ptr<Land> const& land, DeletePolicy policy);
-
-    ll::Expected<> _processLandRefund(Player& player, std::shared_ptr<Land> const& land, bool isSingle);
 };
 
 } // namespace service

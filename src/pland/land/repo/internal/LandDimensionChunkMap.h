@@ -6,6 +6,8 @@
 
 #include "absl/container/flat_hash_map.h"
 
+#include <functional>
+
 namespace land {
 class Land;
 }
@@ -55,6 +57,12 @@ public:
      * @brief 查询某个领地下所有的区块
      */
     [[nodiscard]] ChunkSet const* queryChunk(LandDimid dimId, LandID landId) const;
+
+    /**
+     * @brief 遍历某个维度下已登记的领地 ID
+     * @param visitor 返回 false 结束遍历
+     */
+    void forEachLandId(LandDimid dimId, std::function<bool(LandID)> const& visitor) const;
 
     void addLand(std::shared_ptr<Land> const& land);
 
