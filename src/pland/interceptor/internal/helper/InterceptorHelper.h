@@ -1,6 +1,6 @@
 #pragma once
 #include "pland/PLand.h"
-#include "pland/internal/interceptor/InterceptorConfig.h"
+#include "pland/interceptor/internal/InterceptorConfig.h"
 #include "pland/land/Config.h"
 #include "pland/land/Land.h"
 #include "pland/land/repo/LandRegistry.h"

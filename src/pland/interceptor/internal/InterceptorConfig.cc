@@ -3,7 +3,7 @@
 #include "ll/api/Expected.h"
 #include "nlohmann/json_fwd.hpp"
 #include "pland/PLand.h"
-#include "pland/internal/interceptor/helper/EventTrace.h"
+#include "pland/interceptor/internal/helper/EventTrace.h"
 #include "pland/land/repo/LandContext.h"
 #include "pland/reflect/TypeName.h"
 #include "pland/utils/JsonUtil.h"

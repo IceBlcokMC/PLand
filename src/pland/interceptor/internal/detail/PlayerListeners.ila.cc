@@ -1,7 +1,7 @@
-#include "pland/internal/interceptor/EventInterceptor.h"
-#include "pland/internal/interceptor/InterceptorConfig.h"
-#include "pland/internal/interceptor/helper/EventTrace.h"
-#include "pland/internal/interceptor/helper/InterceptorHelper.h"
+#include "pland/interceptor/internal/EventInterceptor.h"
+#include "pland/interceptor/internal/InterceptorConfig.h"
+#include "pland/interceptor/internal/helper/EventTrace.h"
+#include "pland/interceptor/internal/helper/InterceptorHelper.h"
 
 #include <ll/api/event/EventBus.h>
 

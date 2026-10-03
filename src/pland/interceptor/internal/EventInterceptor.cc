@@ -2,7 +2,7 @@
 
 #include "InterceptorConfig.h"
 
-#include "pland/internal/interceptor/hooks/HookRegistry.h"
+#include "pland/interceptor/internal/hooks/HookRegistry.h"
 
 #include <ll/api/event/EventBus.h>
 

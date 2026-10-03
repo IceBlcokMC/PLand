@@ -1,7 +1,7 @@
-#include "pland/internal/interceptor/EventInterceptor.h"
-#include "pland/internal/interceptor/InterceptorConfig.h"
-#include "pland/internal/interceptor/helper/EventTrace.h"
-#include "pland/internal/interceptor/helper/InterceptorHelper.h"
+#include "pland/interceptor/internal/EventInterceptor.h"
+#include "pland/interceptor/internal/InterceptorConfig.h"
+#include "pland/interceptor/internal/helper/EventTrace.h"
+#include "pland/interceptor/internal/helper/InterceptorHelper.h"
 
 #include "ll/api/event/player/PlayerAttackEvent.h"
 #include "ll/api/event/player/PlayerDestroyBlockEvent.h"
@@ -36,7 +36,7 @@
 #include "mc/world/level/block/ShulkerBoxBlock.h"
 #include "mc/world/level/block/SmokerBlock.h"
 #include "mc/world/level/block/TrapDoorBlock.h"
-#include "pland/internal/interceptor/helper/VanillaItemTags.h"
+#include "pland/interceptor/internal/helper/VanillaItemTags.h"
 
 
 namespace land::internal::interceptor {
