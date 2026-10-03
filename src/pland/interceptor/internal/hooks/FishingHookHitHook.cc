@@ -8,7 +8,7 @@
 #include "mc/world/actor/FishingHook.h"
 #include "mc/world/actor/player/Player.h"
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 // https://github.com/IceBlcokMC/PLand/issues/56
 
@@ -45,4 +45,4 @@ LAND_REGISTER_HOOK([](EventInterceptor& interceptor) {
     interceptor.registerHookIf<&InterceptorConfig::Hooks::FishingHookHitHook, FishingHookHitHook>();
 });
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

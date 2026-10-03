@@ -13,7 +13,7 @@
 #include "mc/world/level/block/VanillaStates.h"
 #include "mc/world/level/block/actor/DispenserBlockActor.h"
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 
 // Fix [#231](https://github.com/IceBlcokMC/PLand/issues/231)
@@ -113,4 +113,4 @@ LAND_REGISTER_HOOK([](EventInterceptor& interceptor) {
         .registerHookIf<&HookConfig::DispenserLiquidDispenseHook, DispenserDispenseFromHook, DispenserGetItemHook>();
 });
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

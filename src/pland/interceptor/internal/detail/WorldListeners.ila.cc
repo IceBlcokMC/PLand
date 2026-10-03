@@ -20,7 +20,7 @@
 #include "mc/world/level/dimension/DimensionType.h"
 #include "mc/world/phys/AABB.h"
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 void EventInterceptor::setupIlaWorldListeners() {
     auto registry = &PLand::getInstance().getLandRegistry();
@@ -212,4 +212,4 @@ void EventInterceptor::setupIlaWorldListeners() {
     });
 }
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

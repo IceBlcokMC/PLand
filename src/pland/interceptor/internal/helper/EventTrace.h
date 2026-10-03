@@ -7,7 +7,7 @@
 #include <fmt/base.h>
 #include <fmt/format.h>
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 
 struct EventTrace {
@@ -74,4 +74,4 @@ struct EventTraceScope {
 
 #endif
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

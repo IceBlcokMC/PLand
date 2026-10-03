@@ -9,7 +9,7 @@
 
 #include <mc/deps/core/string/HashedString.h>
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 struct HashedStringHash {
     size_t operator()(HashedString const& value) const noexcept { return value.getHash(); }
@@ -126,4 +126,4 @@ static_assert(std::is_aggregate_v<InterceptorConfig>);
 using HookConfig     = InterceptorConfig::Hooks;
 using ListenerConfig = InterceptorConfig::Listeners;
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

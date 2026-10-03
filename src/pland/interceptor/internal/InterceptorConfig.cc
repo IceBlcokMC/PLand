@@ -20,7 +20,7 @@
 #include <cstddef>
 #include <string_view>
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 struct MutableObjectPredicate {
     static constexpr std::array<std::string_view, 2> kMutableObjectPaths = {"/rules/item", "/rules/block"};
 
@@ -559,4 +559,4 @@ decltype(InterceptorConfig::cfg) InterceptorConfig::cfg = [] {
 }();
 
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

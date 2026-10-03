@@ -8,7 +8,7 @@
 
 #include <ll/api/event/EventBus.h>
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 void EventInterceptor::setupLLWorldListeners() {
     auto registry = &PLand::getInstance().getLandRegistry();
@@ -26,4 +26,4 @@ void EventInterceptor::setupLLWorldListeners() {
     });
 }
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

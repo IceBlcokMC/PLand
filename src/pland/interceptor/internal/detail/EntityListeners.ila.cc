@@ -26,7 +26,7 @@
 #include <mc/deps/nbt/CompoundTag.h>
 
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 void EventInterceptor::setupIlaEntityListeners() {
     auto registry = &PLand::getInstance().getLandRegistry();
@@ -179,4 +179,4 @@ void EventInterceptor::setupIlaEntityListeners() {
     });
 }
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

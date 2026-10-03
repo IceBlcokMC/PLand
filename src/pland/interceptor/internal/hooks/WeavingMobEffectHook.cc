@@ -7,7 +7,7 @@
 
 #include "mc/world/effect/WeavingMobEffect.h"
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 // https://github.com/IceBlcokMC/PLand/issues/59
 
@@ -34,4 +34,4 @@ LAND_REGISTER_HOOK([](EventInterceptor& interceptor) {
     interceptor.registerHookIf<&InterceptorConfig::Hooks::WeavingMobEffectHook, WeavingMobEffectHook>();
 });
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

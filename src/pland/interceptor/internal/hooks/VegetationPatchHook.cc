@@ -11,7 +11,7 @@
 #include "mc/world/level/WorldBlockTarget.h"
 #include "mc/world/level/levelgen/feature/VegetationPatchFeature.h"
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 
 // 苔藓生长 (VegetationPatchFeature) 面积检查
@@ -47,4 +47,4 @@ LAND_REGISTER_HOOK([](EventInterceptor& interceptor) {
     interceptor.registerHookIf<&HookConfig::VegetationPatchPlaceHook, VegetationPatchPlaceHook>();
 });
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

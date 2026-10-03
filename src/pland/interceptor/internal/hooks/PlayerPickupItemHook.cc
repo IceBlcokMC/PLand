@@ -12,7 +12,7 @@
 #include "mc/world/actor/projectile/ThrownTrident.h"
 #include "mc/world/level/BlockSource.h"
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 // https://github.com/IceBlcokMC/PLand/issues/193
 
@@ -56,4 +56,4 @@ LAND_REGISTER_HOOK([](EventInterceptor& interceptor) {
     interceptor.registerHookIf<&InterceptorConfig::Hooks::AbstractArrowPlayerTouchHook, AbstractArrowPlayerTouchHook>();
 });
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

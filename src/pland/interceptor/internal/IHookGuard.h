@@ -4,7 +4,7 @@
 #include <concepts>
 #include <type_traits>
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 
 struct IHookGuard {
@@ -41,4 +41,4 @@ struct MultiHookGuardImpl final : IHookGuard {
 };
 
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

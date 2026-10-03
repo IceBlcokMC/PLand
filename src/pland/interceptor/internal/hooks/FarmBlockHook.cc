@@ -9,7 +9,7 @@
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/block/FarmBlock.h"
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 
 // https://github.com/IceBlcokMC/PLand/issues/191
@@ -46,4 +46,4 @@ LAND_REGISTER_HOOK([](EventInterceptor& interceptor) {
     interceptor.registerHookIf<&InterceptorConfig::Hooks::FarmChangeEventHook, FarmChangeEventHook>();
 });
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

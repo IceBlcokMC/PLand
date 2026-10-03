@@ -8,7 +8,7 @@
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/block/FireBlock.h"
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 // https://github.com/IceBlcokMC/PLand/issues/136
 
@@ -37,4 +37,4 @@ LAND_REGISTER_HOOK([](EventInterceptor& interceptor) {
     interceptor.registerHookIf<&InterceptorConfig::Hooks::FireBlockBurnHook, FireBlockBurnHook>();
 });
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

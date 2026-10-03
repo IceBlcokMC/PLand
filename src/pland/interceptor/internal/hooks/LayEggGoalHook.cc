@@ -8,7 +8,7 @@
 #include "mc/world/actor/ai/goal/LayEggGoal.h"
 #include "mc/world/level/BlockSource.h"
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 // https://github.com/IceBlcokMC/PLand/issues/69
 
@@ -34,4 +34,4 @@ LAND_REGISTER_HOOK([](EventInterceptor& interceptor) {
     interceptor.registerHookIf<&InterceptorConfig::Hooks::LayEggGoalHook, LayEggGoalHook>();
 });
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

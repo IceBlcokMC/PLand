@@ -8,7 +8,7 @@
 #include <memory>
 #include <type_traits>
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 class EventInterceptor final {
     struct Impl;
@@ -74,4 +74,4 @@ private:
     void setupHooks();
 };
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

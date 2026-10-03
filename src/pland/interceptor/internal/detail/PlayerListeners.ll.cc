@@ -39,7 +39,7 @@
 #include "pland/interceptor/internal/helper/VanillaItemTags.h"
 
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 void EventInterceptor::setupLLPlayerListeners() {
     auto registry = &PLand::getInstance().getLandRegistry();
@@ -320,4 +320,4 @@ void EventInterceptor::setupLLPlayerListeners() {
 }
 
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

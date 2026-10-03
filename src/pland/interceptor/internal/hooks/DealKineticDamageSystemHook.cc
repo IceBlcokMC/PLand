@@ -13,7 +13,7 @@
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/phys/AABB.h"
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 // Fix [#231](https://github.com/IceBlcokMC/PLand/issues/231)
 // TODO: 精确的命中查询 (HitDetection::MeleeTargeting::getHitResults) 为 MCNAPI 符号
@@ -56,4 +56,4 @@ LAND_REGISTER_HOOK([](EventInterceptor& interceptor) {
     interceptor.registerHookIf<&HookConfig::KineticDamageHook, KineticDamageSystemHook>();
 });
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

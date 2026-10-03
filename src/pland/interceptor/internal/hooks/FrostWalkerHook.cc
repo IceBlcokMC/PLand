@@ -14,7 +14,7 @@
 #include <mc/deps/core/string/HashedString.h>
 #include <mc/world/level/block/VanillaBlockTypeIds.h>
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 // https://github.com/IceBlcokMC/PLand/issues/250
 // 由于冰霜行者范围计算在 frostWalk 内部，采用2阶段 Hook 拦截
@@ -79,4 +79,4 @@ LAND_REGISTER_HOOK([](EventInterceptor& interceptor) {
     interceptor.registerHookIf<&HookConfig::FrostWalkerHook, FrostWalkerHook, FrostWalkerSetBlockHook>();
 });
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

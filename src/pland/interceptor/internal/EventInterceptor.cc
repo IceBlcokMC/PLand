@@ -8,7 +8,7 @@
 
 #include <absl/container/flat_hash_map.h>
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 struct EventInterceptor::Impl {
     absl::flat_hash_map<bool InterceptorConfig::Listeners::*, ll::event::ListenerPtr>  mListeners;
@@ -74,4 +74,4 @@ void EventInterceptor::_unregisterHook(bool InterceptorConfig::Hooks::* configur
 
 void EventInterceptor::setupHooks() { hooks::HookRegistry::dispatchAllHooks(*this); }
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

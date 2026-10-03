@@ -9,7 +9,7 @@
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/block/BigDripleafBlock.h"
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 // https://github.com/IceBlcokMC/PLand/issues/192
 LL_TYPE_INSTANCE_HOOK(
@@ -44,4 +44,4 @@ LAND_REGISTER_HOOK([](EventInterceptor& interceptor) {
     interceptor.registerHookIf<&InterceptorConfig::Hooks::BigDripleafBlockHook, BigDripleafBlockHook>();
 });
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

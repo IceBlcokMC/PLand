@@ -9,7 +9,7 @@
 #include "mc/world/level/block/LecternBlock.h"
 #include "mc/world/level/block/block_events/BlockPlayerInteractEvent.h"
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 // https://github.com/IceBlcokMC/PLand/issues/143
 
@@ -58,4 +58,4 @@ LAND_REGISTER_HOOK([](EventInterceptor& interceptor) {
     interceptor.registerHookIf<&InterceptorConfig::Hooks::LecternBlockDropBookHook, LecternBlockDropBookHook>();
 });
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

@@ -15,7 +15,7 @@
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/block/Block.h"
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 void EventInterceptor::setupIlaPlayerListeners() {
     auto registry = &PLand::getInstance().getLandRegistry();
@@ -117,4 +117,4 @@ void EventInterceptor::setupIlaPlayerListeners() {
     });
 }
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

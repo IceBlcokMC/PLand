@@ -8,7 +8,7 @@
 #include "mc/world/actor/ActorType.h"
 #include "mc/world/level/block/actor/ChestBlockActor.h"
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 // https://github.com/IceBlcokMC/PLand/issues/158
 
@@ -36,4 +36,4 @@ LAND_REGISTER_HOOK([](EventInterceptor& interceptor) {
     interceptor.registerHookIf<&InterceptorConfig::Hooks::ChestBlockActorOpenHook, ChestBlockActorOpenHook>();
 });
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

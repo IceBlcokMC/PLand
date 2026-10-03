@@ -13,7 +13,7 @@
 
 #include <memory>
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 /**
  * 检查玩家是否拥有特权
@@ -196,4 +196,4 @@ inline bool hasGuestPermission(std::shared_ptr<Land> const& land) {
 }
 
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

@@ -14,7 +14,7 @@
 #include <mc/deps/core/string/HashedString.h>
 
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 
 // https://github.com/IceBlcokMC/PLand/issues/251
@@ -58,4 +58,4 @@ LAND_REGISTER_HOOK([](EventInterceptor& interceptor) {
     interceptor.registerHookIf<&HookConfig::ScaffoldingBlockHook, ScaffoldingBlockPlaceHook>();
 });
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

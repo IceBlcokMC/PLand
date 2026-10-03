@@ -7,7 +7,7 @@
 
 #include "mc/world/actor/global/LightningBolt.h"
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 // https://github.com/IceBlcokMC/PLand/issues/167
 
@@ -32,4 +32,4 @@ LAND_REGISTER_HOOK([](EventInterceptor& interceptor) {
     interceptor.registerHookIf<&InterceptorConfig::Hooks::LightningBoltHook, LightningBoltHook>();
 });
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

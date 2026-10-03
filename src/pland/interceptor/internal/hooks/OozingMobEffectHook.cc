@@ -7,7 +7,7 @@
 
 #include "mc/world/effect/OozingMobEffect.h"
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 // https://github.com/IceBlcokMC/PLand/issues/59
 
@@ -34,4 +34,4 @@ LAND_REGISTER_HOOK([](EventInterceptor& interceptor) {
     interceptor.registerHookIf<&InterceptorConfig::Hooks::OozingMobEffectHook, OozingMobEffectHook>();
 });
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

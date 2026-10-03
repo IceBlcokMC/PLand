@@ -7,7 +7,7 @@
 
 #include "mc/entity/components_json_legacy/HopperComponent.h"
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 // https://github.com/IceBlcokMC/PLand/issues/55
 
@@ -37,4 +37,4 @@ LAND_REGISTER_HOOK([](EventInterceptor& interceptor) {
         .registerHookIf<&InterceptorConfig::Hooks::HopperComponentPullInItemsHook, HopperComponentPullInItemsHook>();
 });
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

@@ -17,7 +17,7 @@
 #include "ll/api/event/world/SpawnMobEvent.h"
 
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 void EventInterceptor::setupLLEntityListeners() {
     auto registry = &PLand::getInstance().getLandRegistry();
@@ -146,4 +146,4 @@ void EventInterceptor::setupLLEntityListeners() {
     });
 }
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

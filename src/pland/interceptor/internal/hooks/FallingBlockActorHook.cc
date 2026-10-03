@@ -10,7 +10,7 @@
 
 #include <absl/container/flat_hash_map.h>
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 
 
 // Fix [#242](https://github.com/IceBlcokMC/PLand/issues/242)
@@ -65,4 +65,4 @@ LAND_REGISTER_HOOK([](EventInterceptor& interceptor) {
         FallingBlockActorRemoveHook>([]() { sFallingBlockStartCache.clear(); });
 });
 
-} // namespace land::internal::interceptor
+} // namespace land::interceptor::internal

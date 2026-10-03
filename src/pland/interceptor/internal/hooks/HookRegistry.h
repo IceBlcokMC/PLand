@@ -2,11 +2,11 @@
 #include <type_traits>
 #include <vector>
 
-namespace land::internal::interceptor {
+namespace land::interceptor::internal {
 class EventInterceptor;
 }
 
-namespace land::internal::interceptor::hooks {
+namespace land::interceptor::internal::hooks {
 
 using HookRegisterFn = std::add_pointer_t<void(EventInterceptor& interceptor)>;
 
@@ -30,12 +30,12 @@ struct AutoHookRegister {
     inline explicit AutoHookRegister(HookRegisterFn fn) { HookRegistry::addHook(fn); }
 };
 
-} // namespace land::internal::interceptor::hooks
+} // namespace land::interceptor::internal::hooks
 
 #define LAND_CONCAT_IMPL(x, y) x##y
 #define LAND_CONCAT(x, y)      LAND_CONCAT_IMPL(x, y)
 
 #define LAND_REGISTER_HOOK(...)                                                                                        \
-    static const ::land::internal::interceptor::hooks::AutoHookRegister LAND_CONCAT(_auto_hook_reg_, __COUNTER__)(     \
+    static const ::land::interceptor::internal::hooks::AutoHookRegister LAND_CONCAT(_auto_hook_reg_, __COUNTER__)(     \
         __VA_ARGS__                                                                                                    \
     )
