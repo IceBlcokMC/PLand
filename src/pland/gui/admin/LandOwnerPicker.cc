@@ -31,15 +31,20 @@ struct LandOwnerPicker::Impl : std::enable_shared_from_this<Impl> {
     ll::form::SimpleForm::ButtonCallback mBackTo;
 
     void _collectEntries() {
-        auto& info  = ll::service::PlayerInfo::getInstance();
-        auto  lands = PLand::getInstance().getLandRegistry().getLandsByOwner();
-        mEntries.reserve(lands.size());
-        for (auto const& [owner, landSet] : lands) {
+        auto& info   = ll::service::PlayerInfo::getInstance();
+        auto  counts = PLand::getInstance().getLandRegistry().getOwnerLandCounts();
+        mEntries.reserve(counts.size());
+        for (auto const& [owner, landCount] : counts) {
+            if (owner == mce::UUID::EMPTY()) {
+                // NOTE: 空 UUID 桶同时包含无主领地与待迁移的 XUID 领地，两类领地各有专用管理入口，
+                //       按 UUID 分组的入口无法区分它们，故整组跳过。
+                continue;
+            }
             if (owner == SYSTEM_ACCOUNT_UUID) {
-                mEntries.emplace_back(owner, "PLandSystem", landSet.size());
+                mEntries.emplace_back(owner, "PLandSystem", landCount);
             } else {
                 auto entry = info.fromUuid(owner);
-                mEntries.emplace_back(owner, entry ? entry->name : owner.asString(), landSet.size());
+                mEntries.emplace_back(owner, entry ? entry->name : owner.asString(), landCount);
             }
         }
     }

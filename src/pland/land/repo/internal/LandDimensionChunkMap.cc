@@ -50,6 +50,20 @@ LandDimensionChunkMap::ChunkSet const* LandDimensionChunkMap::queryChunk(LandDim
     return &iter2->second;
 }
 
+void LandDimensionChunkMap::forEachLandId(LandDimid dimId, std::function<bool(LandID)> const& visitor) const {
+    auto dimIter = mMap.find(dimId);
+    if (dimIter == mMap.end()) {
+        return;
+    }
+
+    // 反向表键集合即该维度已登记的领地
+    for (auto const& entry : dimIter->second.reverse_map()) {
+        if (!visitor(entry.first)) {
+            return;
+        }
+    }
+}
+
 void LandDimensionChunkMap::addLand(std::shared_ptr<Land> const& land) {
     auto landDimId = land->getDimensionId();
     auto landId    = land->getId();

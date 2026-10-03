@@ -87,13 +87,13 @@ void PermEditorRouter::showChooser(
     fm.setContent("请选择要使用的权限编辑表单"_trl(localeCode));
     fm.appendButton(
         "新版 DDUI 编辑器"_trl(localeCode),
-        "textures/ui/icon_recipe_nature",
+        "textures/ui/book_addtextpage_default",
         "path",
         [initial, apply](Player& self) { openDDUI(self, initial, apply); }
     );
     fm.appendButton(
         "传统 JSON UI 编辑器"_trl(localeCode),
-        "textures/ui/book_write_default",
+        "textures/ui/copy",
         "path",
         [initial, apply, back](Player& self) { openLegacy(self, initial, apply, back); }
     );

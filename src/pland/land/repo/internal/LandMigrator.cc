@@ -1,5 +1,9 @@
 #include "LandMigrator.h"
 
+#include "pland/enums/LandOwnershipKind.h"
+
+#include "mc/platform/UUID.h"
+
 #include <nlohmann/json.hpp>
 
 namespace land {
@@ -213,6 +217,29 @@ LandMigrator::LandMigrator() {
         for (auto& [key, entry] : role.items()) {
             mapPath(role, fmt::format("{}.{}", key, legacyField), fmt::format("{}.{}", key, newField));
         }
+        return true;
+    });
+
+    // 33 -> 34
+    // mOwnerDataIsXUID(bool) -> mOwnership(枚举)，归属类型改为显式状态机
+    registerMigrationUnit(34, [](LandMigrator::container_t& data) -> bool {
+        if (data.contains("mOwnership")) {
+            return true; // 已是新结构
+        }
+
+        auto const emptyOwner = mce::UUID::EMPTY().asString();
+        auto const owner      = data.value("mLandOwner", std::string{});
+        auto       kind       = LandOwnershipKind::Player;
+
+        if (data.value("mOwnerDataIsXUID", false)) {
+            kind = LandOwnershipKind::PendingMigration; // 主人仍为 XUID，待主人上线后迁移
+        } else if (owner.empty() || owner == emptyOwner) {
+            kind = LandOwnershipKind::Ownerless;
+        } else if (owner == SYSTEM_ACCOUNT_UUID_STR) {
+            kind = LandOwnershipKind::System;
+        }
+
+        data["mOwnership"] = static_cast<std::underlying_type_t<LandOwnershipKind>>(kind);
         return true;
     });
 }

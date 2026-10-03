@@ -8,6 +8,7 @@ class UUID;
 namespace land {
 class Land;
 enum class LeaseState : uint8_t;
+enum class LandOwnershipKind : uint8_t;
 } // namespace land
 
 namespace land::observer {
@@ -18,6 +19,9 @@ public:
 
     virtual void
     onOwnerChanged(std::shared_ptr<Land> const& land, mce::UUID const& oldOwner, mce::UUID const& newOwner) = 0;
+
+    virtual void
+    onOwnershipChanged(std::shared_ptr<Land> const& land, LandOwnershipKind oldKind, LandOwnershipKind newKind) = 0;
 
     virtual void onMemberAdded(std::shared_ptr<Land> const& land, mce::UUID const& member) = 0;
 

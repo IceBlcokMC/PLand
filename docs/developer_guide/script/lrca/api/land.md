@@ -217,6 +217,52 @@
 :::warning 此接口由于历史遗留问题导致 Owner 字段不一定为 UUID, 领地内部会处理 XUID 转换，通常无需特别处理，建议改用 `Land_getOwner()`。
 :::
 
+## 获取领地主人归属类型 <Badge type="tip" text="v0.25.0+" />
+
+`Land_getOwnershipKind`
+
+- 参数:
+  - landId : `Integer`
+    领地 ID
+- 返回值: 成员 UUID 列表
+- 返回值类型: `LandOwnershipKind`
+
+:::tip 若指定的领地不存在，则返回 -1
+:::
+
+## 获取领地的上一任主人 <Badge type="tip" text="v0.25.0+" />
+
+`Land_getPreviousOwner`
+
+- 参数:
+  - landId : `Integer`
+    领地 ID
+- 返回值: 领地主人 UUID / XUID
+- 返回值类型: `string`
+
+:::tip 此接口可能返回 UUID，也可能返回 XUID，空字符串代表没有数据
+:::
+
+## 判断领地是否为无主领地 <Badge type="tip" text="v0.25.0+" />
+
+`Land_isOwnerless`
+
+- 参数:
+  - landId : `Integer`
+    领地 ID
+- 返回值: 是否为无主领地
+- 返回值类型: `boolean`
+
+## 判断领地是否由玩家持有 <Badge type="tip" text="v0.25.0+" />
+
+`Land_isPlayerOwned`
+
+- 参数:
+  - landId : `Integer`
+    领地 ID
+- 返回值: 是否为无主领地
+- 返回值类型: `boolean`
+
 ## 获取领地成员列表
 
 `Land_getMembers(landId)`

@@ -1,5 +1,6 @@
 #include "LandEventPublisher.h"
 
+#include "pland/events/domain/LandOwnershipChangedEvent.h"
 #include "pland/events/domain/LandStateChangedEvent.h"
 #include "pland/events/domain/MemberChangedEvent.h"
 #include "pland/events/domain/OwnerChangedEvent.h"
@@ -16,6 +17,16 @@ void LandEventPublisher::onOwnerChanged(
 ) {
     if (oldOwner != newOwner) {
         ll::event::EventBus::getInstance().publish(event::OwnerChangedEvent{land, oldOwner, newOwner});
+    }
+}
+
+void LandEventPublisher::onOwnershipChanged(
+    std::shared_ptr<Land> const& land,
+    LandOwnershipKind            oldKind,
+    LandOwnershipKind            newKind
+) {
+    if (oldKind != newKind) {
+        ll::event::EventBus::getInstance().publish(event::LandOwnershipChangedEvent{land, oldKind, newKind});
     }
 }
 

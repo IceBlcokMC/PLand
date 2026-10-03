@@ -86,9 +86,9 @@ inline bool _hasMemberOrGuestPermission(
     auto entry = land->getPermTable().role.*pointer;
     TRACE_LOG("unknown: member={}, actor={}", entry.member ? "allowed" : "denied", entry.actor ? "allowed" : "denied");
 
-    if (land->isLeaseFrozen()) {
-        TRACE_LOG("land is frozen, fallback to actor");
-        return entry.actor; // 如果冻结, 不再允许 Member 特权，退化为 Actor
+    if (land->isOwnerless() || land->isLeaseFrozen()) {
+        TRACE_LOG("land is ownerless or frozen, fallback to actor");
+        return entry.actor; // 无主或冻结时不再允许 Member 特权，退化为 Actor
     }
 
     if (entry.actor) {

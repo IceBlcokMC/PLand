@@ -6,8 +6,8 @@ PLand 通过 **LeviLamina 的事件系统**向附属插件暴露领地事件，�
 
 ::: tip 事件分为 `Before` 和 `After` 两个阶段
 
-- `Before` 阶段：事件触发**前**，可以通过 `ev.cancel()` 取消事件
-- `After` 阶段：事件触发**后**，无法取消
+- `Before` 阶段：事件触发 **前**，可以通过 `ev.cancel()` 取消事件
+- `After` 阶段：事件触发 **后**，无法取消
   :::
 
 ::: tip 命名规则
@@ -29,7 +29,7 @@ PLand 通过 **LeviLamina 的事件系统**向附属插件暴露领地事件，�
 位于 `pland/events/player/`，均继承 `ll::event::PlayerEvent`（可通过 `ev.self()` 获取玩家）。
 
 | 事件                                      | 头文件                                       | 可取消 |
-| :---------------------------------------- | :------------------------------------------- | :----: |
+|:------------------------------------------|:---------------------------------------------|:------:|
 | `PlayerEnterLandEvent`                    | `player/PlayerMoveEvent.h`                   |   ×    |
 | `PlayerLeaveLandEvent`                    | `player/PlayerMoveEvent.h`                   |   ×    |
 | `PlayerBuyLandBeforeEvent`                | `player/PlayerBuyLandEvent.h`                |   √    |
@@ -54,20 +54,21 @@ PLand 通过 **LeviLamina 的事件系统**向附属插件暴露领地事件，�
 
 位于 `pland/events/domain/`，与具体玩家无关，均带 `land()` 访问器。
 
-| 事件                    | 头文件                           | 可取消 |
-| :---------------------- | :------------------------------- | :----: |
-| `LandRecycleEvent`      | `domain/LandRecycleEvent.h`      |   ×    |
-| `LandResizedEvent`      | `domain/LandResizedEvent.h`      |   ×    |
-| `LandStateChangedEvent` | `domain/LandStateChangedEvent.h` |   ×    |
-| `MemberChangedEvent`    | `domain/MemberChangedEvent.h`    |   ×    |
-| `MembersClearedEvent`   | `domain/MemberChangedEvent.h`    |   ×    |
-| `OwnerChangedEvent`     | `domain/OwnerChangedEvent.h`     |   ×    |
-| `ConfigReloadEvent`     | `domain/ConfigReloadEvent.h`     |   ×    |
+| 事件                        | 头文件                               | 可取消 |
+|:----------------------------|:-------------------------------------|:------:|
+| `LandRecycleEvent`          | `domain/LandRecycleEvent.h`          |   ×    |
+| `LandResizedEvent`          | `domain/LandResizedEvent.h`          |   ×    |
+| `LandStateChangedEvent`     | `domain/LandStateChangedEvent.h`     |   ×    |
+| `MemberChangedEvent`        | `domain/MemberChangedEvent.h`        |   ×    |
+| `MembersClearedEvent`       | `domain/MemberChangedEvent.h`        |   ×    |
+| `OwnerChangedEvent`         | `domain/OwnerChangedEvent.h`         |   ×    |
+| `LandOwnershipChangedEvent` | `domain/LandOwnershipChangedEvent.h` |   ×    |
+| `ConfigReloadEvent`         | `domain/ConfigReloadEvent.h`         |   ×    |
 
 ### 经济事件
 
 | 事件                    | 头文件                            | 可取消 |
-| :---------------------- | :-------------------------------- | :----: |
+|:------------------------|:----------------------------------|:------:|
 | `LandRefundFailedEvent` | `economy/LandRefundFailedEvent.h` |   ×    |
 
 ::: tip 提示
@@ -78,7 +79,7 @@ PLand 通过 **LeviLamina 的事件系统**向附属插件暴露领地事件，�
 
 ## 监听事件示例
 
-以下示例监听**玩家进入领地**事件，并在控制台打印玩家与领地信息：
+以下示例监听 **玩家进入领地**事件，并在控制台打印玩家与领地信息：
 
 ```cpp
 #include "pland/events/player/PlayerMoveEvent.h"
@@ -106,7 +107,7 @@ void setup() {
 
 ## 取消事件示例
 
-`Before` 事件可以通过 `ev.cancel()` 取消，从而**阻止**该操作发生。
+`Before` 事件可以通过 `ev.cancel()` 取消，从而 **阻止**该操作发生。
 
 例如：禁止玩家在**末地（维度 2）**购买领地：
 

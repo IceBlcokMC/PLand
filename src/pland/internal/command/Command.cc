@@ -139,8 +139,13 @@ void new_land(CommandOrigin const& ori, CommandOutput& /* out */, NewLandParam c
     }
 
     case NewLandParam::NewType::SubLand: {
-        auto expected =
-            PLand::getInstance().getServiceLocator().getLandManagementService().requestCreateSubLand(player);
+        auto& mod  = PLand::getInstance();
+        auto  land = mod.getLandRegistry().getLandAt(player.getPosition(), player.getDimensionId());
+        if (!land) {
+            feedback_utils::sendErrorText(player, "操作失败, 当前位置没有领地"_trl(player.getLocaleCode()));
+            return;
+        }
+        auto expected = mod.getServiceLocator().getLandManagementService().requestCreateSubLand(player, land);
         if (!expected) {
             feedback_utils::sendError(player, expected.error());
             return;
@@ -287,8 +292,8 @@ void show_current_land_mgr(CommandOrigin const& ori, CommandOutput& /* out */) {
         return;
     }
 
-    auto& uuid = player.getUuid();
-    if (!land->isOwner(uuid) && !PLand::getInstance().getLandRegistry().isOperator(uuid)) {
+    auto& service = PLand::getInstance().getServiceLocator().getLandManagementService();
+    if (!service.canManageLand(player.getUuid(), land)) {
         feedback_utils::sendText(player, "当前位置不是你的领地"_trl(localeCode));
         return;
     }

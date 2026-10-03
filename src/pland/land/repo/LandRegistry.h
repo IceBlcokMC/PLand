@@ -4,11 +4,10 @@
 
 #include <memory>
 #include <optional>
-#include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
-class Player;
 class BlockPos;
 namespace mce {
 class UUID;
@@ -86,17 +85,39 @@ public:
 public: // 领地查询API
     LDNDAPI std::shared_ptr<Land> getLand(LandID id) const;
 
-    LDNDAPI std::vector<std::shared_ptr<Land>> getLands() const;
-
     LDNDAPI std::vector<std::shared_ptr<Land>> getLands(std::vector<LandID> const& ids) const;
-
-    LDNDAPI std::vector<std::shared_ptr<Land>> getLands(LandDimid dimid) const;
 
     LDNDAPI std::vector<std::shared_ptr<Land>> getLands(mce::UUID const& uuid, bool includeShared = false) const;
 
     LDNDAPI std::vector<std::shared_ptr<Land>> getLands(mce::UUID const& uuid, LandDimid dimid) const;
 
-    LDNDAPI std::unordered_map<mce::UUID, std::unordered_set<std::shared_ptr<Land>>> getLandsByOwner() const;
+    /**
+     * @brief 遍历全部领地
+     * @note visitor 在 mDataMutex 共享锁内执行: 不得回调本注册表, 不得修改 Land
+     *       (owner/member setter 会经 observer 取 unique_lock, 同线程死锁)
+     * @param visitor 返回 false 结束遍历
+     */
+    LDAPI void forEachLand(std::function<bool(std::shared_ptr<Land> const&)> const& visitor) const;
+
+    /**
+     * @brief 遍历某个维度的领地
+     * @note 同 forEachLand 的持锁约束
+     * @param visitor 返回 false 结束遍历
+     */
+    LDAPI void forEachLand(LandDimid dimid, std::function<bool(std::shared_ptr<Land> const&)> const& visitor) const;
+
+    /**
+     * @brief 按主人遍历领地
+     * @note 同 forEachLand 的持锁约束
+     * @param visitor 返回 false 结束遍历
+     */
+    LDAPI void
+    forEachOwnerLand(std::function<bool(mce::UUID const&, std::shared_ptr<Land> const&)> const& visitor) const;
+
+    /**
+     * @brief 获取各主人的领地数量
+     */
+    LDNDAPI std::vector<std::pair<mce::UUID, size_t>> getOwnerLandCounts() const;
 
     [[deprecated("Use `getEffectiveRole` instead")]]
     LDNDAPI
@@ -112,9 +133,6 @@ public: // 领地查询API
 
     LDNDAPI std::unordered_set<std::shared_ptr<Land>>
             getLandAt(BlockPos const& pos1, BlockPos const& pos2, LandDimid dimid) const;
-
-    using CustomFilter = std::function<bool(std::shared_ptr<Land> const&)>;
-    LDNDAPI std::vector<std::shared_ptr<Land>> getLandsWhere(CustomFilter const& filter) const;
 
 public:
     static constexpr auto kSnapshotDir = "snapshots"; // 快照目录名

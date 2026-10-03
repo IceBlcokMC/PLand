@@ -63,23 +63,53 @@ public:
     LDAPI void setPermTable(LandPermTable permTable);
 
     /**
-     * 获取领地主人的 UUID。
+     * 获取领地主人的 UUID
      *
-     * ⚠️ 注意：
-     * - 如果底层存储的 Owner 仍是 XUID（旧数据），此函数会返回 `mce::UUID::EMPTY()`。
-     * - 在玩家上线并完成 XUID → UUID 转换之前，`getOwner()` 可能不代表真实的主人(EMPTY)。
-     * - 如果需要访问原始存储值（可能是 XUID 或 UUID 字符串），请使用 `getRawOwner()`。
+     * NOTE: 两种归属类型都会返回 `mce::UUID::EMPTY()`，请用 `getOwnershipKind()` 区分：
+     *       - Ownerless: 无主领地
+     *       - PendingMigration: 旧数据，主人数据仍为 XUID，待主人上线后自动迁移
+     *       如需访问原始存储值（可能是 XUID 或 UUID 字符串），请使用 `getRawOwner()`。
      */
     LDNDAPI mce::UUID const& getOwner() const;
 
+    /**
+     * 设置领地主人的 UUID
+     *
+     * NOTE: 归属类型由传入的 UUID 派生（空 UUID => Ownerless，系统账号 => System，其余 => Player），
+     *       本函数是归属状态的唯一写入点，不要单独修改归属类型。
+     */
     LDAPI void setOwner(mce::UUID const& uuid);
+
+    /**
+     * @brief 获取领地归属类型
+     */
+    LDNDAPI LandOwnershipKind getOwnershipKind() const;
+
+    /**
+     * @brief 判断当前领地是否为无主领地
+     */
+    LDNDAPI bool isOwnerless() const;
+
+    /**
+     * @brief 判断当前领地是否由玩家持有
+     *
+     * NOTE: 等价于归属类型为 Player
+     */
+    LDNDAPI bool isPlayerOwned() const;
 
     [[deprecated("Use getOwner() instead, this returns raw storage string (may be XUID or UUID).")]]
     LDNDAPI std::string const& getRawOwner() const;
 
     /**
-     * @brief 判断当前领地是否为系统所有
-     * @return true/false
+     * @brief 获取上一任领地主
+     *
+     * NOTE: 返回值是原始存储值(可能是 XUID)，仅在归属发生变化时更新，可用于审计与撤销
+     * @return 从未发生过归属变更时为空
+     */
+    LDNDAPI std::optional<std::string> const& getPreviousOwner() const;
+
+    /**
+     * @brief 判断当前领地是否为系统所有（租赁欠费回收后的归属）
      */
     LDNDAPI bool isSystemOwned() const;
 
@@ -177,6 +207,11 @@ public:
 
     LDNDAPI bool is3D() const;
 
+    /**
+     * @brief 判断 uuid 是否为领地主
+     *
+     * NOTE: 空 UUID 永远不是领地主，无主领地的归属请用 `isOwnerless()` 判定
+     */
     LDNDAPI bool isOwner(mce::UUID const& uuid) const;
 
     LDNDAPI bool isMember(mce::UUID const& uuid) const;

@@ -22,7 +22,7 @@ struct HashedStringEq {
 };
 
 struct InterceptorConfig {
-    inline static constexpr int SchemaVersion = 6;
+    inline static constexpr int SchemaVersion = 8;
 
     int version = SchemaVersion;
     struct Listeners {
@@ -59,6 +59,7 @@ struct InterceptorConfig {
     } listeners;
 
     struct Hooks {
+        bool ScaffoldingBlockHook{true};           // 脚手架最终放置位置
         bool FishingHookHitHook{true};             // 钓鱼钩击中
         bool LayEggGoalHook{true};                 // 海龟产卵
         bool FireBlockBurnHook{true};              // 火焰蔓延
@@ -79,6 +80,7 @@ struct InterceptorConfig {
         bool DispenserLiquidDispenseHook{true};    // 发射器倾倒液体(边界)
         bool KineticDamageHook{true};              // 矛冲刺命中(动能伤害)
         bool VegetationPatchPlaceHook{true};       // 苔藓生长(植被斑块面积检查)
+        bool FrostWalkerHook{true};                // 冰霜行者冻结水
     } hooks;
 
     struct Rules {
@@ -120,5 +122,8 @@ private:
 };
 
 static_assert(std::is_aggregate_v<InterceptorConfig>);
+
+using HookConfig     = InterceptorConfig::Hooks;
+using ListenerConfig = InterceptorConfig::Listeners;
 
 } // namespace land::internal::interceptor

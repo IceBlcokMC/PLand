@@ -4,6 +4,8 @@
 
 #include "observer/ILandObserver.h"
 #include "pland/Global.h"
+#include "pland/PLand.h"
+#include "pland/enums/LandOwnershipKind.h"
 #include "pland/enums/LandRole.h"
 #include "pland/land/Config.h"
 #include "pland/utils/JsonUtil.h"
@@ -15,6 +17,21 @@
 
 
 namespace land {
+
+namespace {
+
+// 归属类型由领地主 UUID 派生，是本模块唯一的归属派生规则
+LandOwnershipKind deriveOwnershipKind(mce::UUID const& uuid) {
+    if (uuid == mce::UUID::EMPTY()) {
+        return LandOwnershipKind::Ownerless;
+    }
+    if (uuid == SYSTEM_ACCOUNT_UUID) {
+        return LandOwnershipKind::System;
+    }
+    return LandOwnershipKind::Player;
+}
+
+} // namespace
 
 struct Land::Impl {
     LandContext          mContext;
@@ -31,12 +48,65 @@ struct Land::Impl {
         mCacheOwner = std::nullopt;
         mCacheMembers.clear();
 
-        if (!mContext.mOwnerDataIsXUID) {
+        if (mContext.mOwnership != LandOwnershipKind::PendingMigration) {
             mCacheOwner = mce::UUID::fromString(mContext.mLandOwner);
         }
         mCacheMembers.reserve(mContext.mLandMembers.size());
         for (auto const& member : mContext.mLandMembers) {
             mCacheMembers.emplace(mce::UUID::fromString(member));
+        }
+
+        assertOwnershipConsistency();
+    }
+
+    /**
+     * @brief 校验归属类型与领地主字段的一致性
+     * @note 不一致时通过 logger.warn 输出，不修改数据
+     */
+    void assertOwnershipConsistency() const {
+        auto& logger = PLand::getInstance().getSelf().getLogger();
+
+        auto const cacheText = mCacheOwner ? mCacheOwner->asString() : std::string{"<none>"};
+        auto const warn      = [&](std::string_view reason) {
+            logger.warn(
+                "Land {} ownership inconsistent ({}): kind={}, owner={}, cacheOwner={}",
+                mContext.mLandID,
+                reason,
+                static_cast<int>(mContext.mOwnership),
+                mContext.mLandOwner,
+                cacheText
+            );
+        };
+
+        switch (mContext.mOwnership) {
+        case LandOwnershipKind::Player:
+            if (!mce::UUID::canParse(mContext.mLandOwner)) {
+                warn("owner is not a parsable UUID");
+            }
+            break;
+        case LandOwnershipKind::Ownerless:
+            if (mContext.mLandOwner != mce::UUID::EMPTY().asString()) {
+                warn("ownerless land still stores an owner");
+            }
+            break;
+        case LandOwnershipKind::System:
+            if (mContext.mLandOwner != SYSTEM_ACCOUNT_UUID_STR) {
+                warn("system land owner is not the system account");
+            }
+            break;
+        case LandOwnershipKind::PendingMigration:
+            if (mce::UUID::canParse(mContext.mLandOwner)) {
+                warn("owner is already a UUID");
+            }
+            break;
+        }
+
+        if (mContext.mOwnership == LandOwnershipKind::PendingMigration) {
+            if (mCacheOwner.has_value()) {
+                warn("pending migration land has a cached owner");
+            }
+        } else if (!mCacheOwner.has_value()) {
+            warn("owner cache is not initialized");
         }
     }
 };
@@ -51,6 +121,7 @@ Land::Land(LandAABB const& pos, LandDimid dimid, bool is3D, mce::UUID const& own
     impl->mContext.mLandDimid     = dimid;
     impl->mContext.mIs3DLand      = is3D;
     impl->mContext.mLandOwner     = owner.asString();
+    impl->mContext.mOwnership     = deriveOwnershipKind(owner);
     impl->mContext.mLandPermTable = ptable;
 
     impl->initCache();
@@ -80,7 +151,7 @@ void                 Land::setPermTable(LandPermTable permTable) {
 
 mce::UUID const& Land::getOwner() const {
     if (!impl->mCacheOwner) {
-        if (impl->mContext.mOwnerDataIsXUID) {
+        if (impl->mContext.mOwnership == LandOwnershipKind::PendingMigration) {
             return mce::UUID::EMPTY();
         }
         impl->mCacheOwner = mce::UUID(impl->mContext.mLandOwner);
@@ -88,23 +159,42 @@ mce::UUID const& Land::getOwner() const {
     return *impl->mCacheOwner;
 }
 void Land::setOwner(mce::UUID const& uuid) {
-    auto old = impl->mCacheOwner.value_or(mce::UUID::EMPTY());
-    if (uuid != old) {
-        impl->mCacheOwner         = uuid;
-        impl->mContext.mLandOwner = uuid.asString();
-        markDirty();
-        if (auto observer = tryGetObserver()) {
-            observer->onOwnerChanged(shared_from_this(), old, uuid);
-        }
+    auto const kind = deriveOwnershipKind(uuid);
+    auto const old  = impl->mCacheOwner.value_or(mce::UUID::EMPTY());
+
+    if (old == uuid && kind == impl->mContext.mOwnership) {
+        return; // 归属状态未发生变化
+    }
+
+    auto const oldKind            = impl->mContext.mOwnership;
+    impl->mContext.mPreviousOwner = impl->mContext.mLandOwner; // 记录上一任, 供审计与撤销使用
+    impl->mCacheOwner             = uuid;
+    impl->mContext.mLandOwner     = uuid.asString();
+    impl->mContext.mOwnership     = kind;
+    markDirty();
+    impl->assertOwnershipConsistency();
+
+    auto observer = tryGetObserver();
+    if (!observer) {
+        return;
+    }
+    if (old != uuid) {
+        observer->onOwnerChanged(shared_from_this(), old, uuid);
+    }
+    if (oldKind != kind) {
+        observer->onOwnershipChanged(shared_from_this(), oldKind, kind);
     }
 }
+LandOwnershipKind  Land::getOwnershipKind() const { return impl->mContext.mOwnership; }
+bool               Land::isOwnerless() const { return impl->mContext.mOwnership == LandOwnershipKind::Ownerless; }
+bool               Land::isPlayerOwned() const { return impl->mContext.mOwnership == LandOwnershipKind::Player; }
 std::string const& Land::getRawOwner() const { return impl->mContext.mLandOwner; }
-bool               Land::isSystemOwned() const {
+std::optional<std::string> const& Land::getPreviousOwner() const { return impl->mContext.mPreviousOwner; }
+bool                              Land::isSystemOwned() const {
     assert(SYSTEM_ACCOUNT_UUID != mce::UUID::EMPTY());
     assert(SYSTEM_ACCOUNT_UUID.asString() == SYSTEM_ACCOUNT_UUID_STR);
-    return impl->mCacheOwner == SYSTEM_ACCOUNT_UUID;
+    return impl->mContext.mOwnership == LandOwnershipKind::System;
 }
-
 std::unordered_set<mce::UUID> const& Land::getMembers() const { return impl->mCacheMembers; }
 
 bool Land::addLandMember(mce::UUID const& uuid) {
@@ -186,10 +276,10 @@ void Land::setLeaseEndAt(time_t ts) {
 }
 
 bool Land::is3D() const { return impl->mContext.mIs3DLand; }
-bool Land::isOwner(mce::UUID const& uuid) const { return impl->mCacheOwner == uuid; }
+bool Land::isOwner(mce::UUID const& uuid) const { return uuid != mce::UUID::EMPTY() && impl->mCacheOwner == uuid; }
 bool Land::isMember(mce::UUID const& uuid) const { return impl->mCacheMembers.contains(uuid); }
 bool Land::isConvertedLand() const { return impl->mContext.mIsConvertedLand; }
-bool Land::isOwnerDataIsXUID() const { return impl->mContext.mOwnerDataIsXUID; }
+bool Land::isOwnerDataIsXUID() const { return impl->mContext.mOwnership == LandOwnershipKind::PendingMigration; }
 bool Land::isDirty() const { return impl->mDirtyCounter.load(std::memory_order_relaxed) > 0; }
 void Land::markDirty() {
     impl->mDirtyCounter.fetch_add(1, std::memory_order_relaxed);
@@ -265,7 +355,7 @@ bool Land::isCollision(BlockPos const& pos1, BlockPos const& pos2) const {
 
 LandPermType Land::getPermType(mce::UUID const& uuid) const { return getEffectiveRole(uuid); }
 LandRole     Land::getEffectiveRole(mce::UUID const& uuid) const {
-    if (isLeaseFrozen()) {
+    if (isOwnerless() || isLeaseFrozen()) {
         return LandRole::Actor;
     }
     if (isOwner(uuid)) return LandRole::Owner;
@@ -276,8 +366,6 @@ LandRole     Land::getEffectiveRole(mce::UUID const& uuid) const {
 void Land::migrateOwner(mce::UUID const& ownerUUID) {
     if (isConvertedLand() && isOwnerDataIsXUID()) {
         setOwner(ownerUUID);
-        impl->mContext.mOwnerDataIsXUID = false;
-        markDirty();
     }
 }
 

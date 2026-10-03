@@ -1,6 +1,7 @@
 #include "pland/economy/EconomySystem.h"
 #include "pland/PLand.h"
 #include "pland/land/Config.h"
+#include "pland/Global.h"
 
 #include <memory>
 #include <stdexcept>

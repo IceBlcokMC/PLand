@@ -31,26 +31,28 @@ public:
     LDAPI static void confirmMixDelete(Player& player, std::shared_ptr<Land> const& ptr);    // 删除混合领地
 
     LDAPI static void sendEditLandNameGUI(Player& player, std::shared_ptr<Land> const& ptr); // 编辑领地名称
+
+    LDAPI static void confirmOwnerless(Player& player, std::shared_ptr<Land> const& ptr); // 确认转无主领地
+
     LDAPI static void sendTransferLandGUI(Player& player, std::shared_ptr<Land> const& ptr); // 转让领地
-    LDAPI static void
-    _sendTransferLandToOnlinePlayer(Player& player, std::shared_ptr<Land> const& ptr); // 转让领地给在线玩家
-    LDAPI static void
-    _sendTransferLandToOfflinePlayer(Player& player, std::shared_ptr<Land> const& ptr); // 转让领地给离线玩家
-    LDAPI static void _confirmTransferLand( // 确认转让领地
+    LDAPI static void confirmTransferLand( // 确认转让领地
         Player&           player,
         std::shared_ptr<Land> const& ptr,
         mce::UUID         target,
         std::string       displayName
     );
-    LDAPI static void sendCreateSubLandConfirm(Player& player, std::shared_ptr<Land> const& ptr); // 创建子领地确认
-    LDAPI static void sendChangeRangeConfirm(Player& player, std::shared_ptr<Land> const& ptr);   // 更改领地范围
+    LDAPI static void confirmCreateSubLand(Player& player, std::shared_ptr<Land> const& ptr); // 确认创建子领地
+    LDAPI static void confirmResizeLand(Player& player, std::shared_ptr<Land> const& ptr);    // 确认更改领地范围
 
-    LDAPI static void sendChangeMember(Player& player, std::shared_ptr<Land> ptr);      // 更改成员
-    LDAPI static void _sendAddOnlineMember(Player& player, std::shared_ptr<Land> ptr);  // 添加在线成员
-    LDAPI static void _sendAddOfflineMember(Player& player, std::shared_ptr<Land> ptr); // 添加离线成员
-    LDAPI static void
-    _confirmAddMember(Player& player, std::shared_ptr<Land> ptr, mce::UUID member, std::string displayName); // 添加成员
-    LDAPI static void _confirmRemoveMember(Player& player, std::shared_ptr<Land> ptr, mce::UUID members);    // 移除成员
+    LDAPI static void sendMemberList(Player& player, std::shared_ptr<Land> ptr); // 成员列表
+    LDAPI static void sendAddMember(Player& player, std::shared_ptr<Land> ptr);  // 添加成员
+    LDAPI static void confirmAddMember(
+        Player&               player,
+        std::shared_ptr<Land> ptr,
+        mce::UUID             member,
+        std::string           displayName
+    );                                                                                                   // 确认添加成员
+    LDAPI static void confirmRemoveMember(Player& player, std::shared_ptr<Land> ptr, mce::UUID members); // 确认移除成员
 };
 
 } // namespace gui
