@@ -7,6 +7,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.25.0] - 2026-10-03
+
 ### ✨ 新增功能
 
 - 无主领地功能 @yangyangzhong82
