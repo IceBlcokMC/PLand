@@ -15,13 +15,13 @@
 
 #include "drawer/DrawHandleManager.h"
 #include "events/domain/ConfigReloadEvent.h"
-#include "internal/interceptor/InterceptorConfig.h"
+#include "interceptor/internal/InterceptorConfig.h"
 #include "land/internal/LandScheduler.h"
 #include "land/internal/SafeTeleport.h"
 #include "pland/economy/EconomySystem.h"
 #include "pland/internal/adapter/telemetry/Telemetry.h"
 #include "pland/internal/command/Command.h"
-#include "pland/internal/interceptor/EventInterceptor.h"
+#include "pland/interceptor/internal/EventInterceptor.h"
 #include "pland/land/Config.h"
 #include "pland/land/repo/LandRegistry.h"
 #include "pland/selector/SelectorManager.h"
@@ -40,7 +40,7 @@ struct PLand::Impl {
     std::unique_ptr<ll::thread::ThreadPoolExecutor>          mThreadPoolExecutor{nullptr};
     std::unique_ptr<LandRegistry>                            mLandRegistry{nullptr};
     std::unique_ptr<internal::LandScheduler>                 mLandScheduler{nullptr};
-    std::unique_ptr<internal::interceptor::EventInterceptor> mEventListener{nullptr};
+    std::unique_ptr<interceptor::internal::EventInterceptor> mEventListener{nullptr};
     std::unique_ptr<internal::SafeTeleport>                  mSafeTeleport{nullptr};
     std::unique_ptr<SelectorManager>                         mSelectorManager{nullptr};
     std::unique_ptr<DrawHandleManager>                       mDrawHandleManager{nullptr};
@@ -93,14 +93,14 @@ bool PLand::load() {
         res.error().log(logger);
     }
 
-    internal::interceptor::InterceptorConfig::tryMigrateLegacyConfig(getSelf().getConfigDir());
+    interceptor::internal::InterceptorConfig::tryMigrateLegacyConfig(getSelf().getConfigDir());
 
     if (!loadConfig()) {
         logger.error("Failed to load config"); // loadConfig internal log the error message
         return false;
     }
 
-    if (auto ok = internal::interceptor::InterceptorConfig::load(getSelf().getConfigDir()); !ok) {
+    if (auto ok = interceptor::internal::InterceptorConfig::load(getSelf().getConfigDir()); !ok) {
         logger.error("Failed to load interceptor config, reason: {}", ok.error().message());
         return false;
     }
@@ -128,7 +128,7 @@ bool PLand::load() {
 bool PLand::enable() {
     internal::LandCommand::setupAll();
     mImpl->mLandScheduler     = std::make_unique<internal::LandScheduler>();
-    mImpl->mEventListener     = std::make_unique<internal::interceptor::EventInterceptor>();
+    mImpl->mEventListener     = std::make_unique<interceptor::internal::EventInterceptor>();
     mImpl->mSafeTeleport      = std::make_unique<internal::SafeTeleport>();
     mImpl->mSelectorManager   = std::make_unique<SelectorManager>();
     mImpl->mDrawHandleManager = std::make_unique<DrawHandleManager>();
@@ -141,7 +141,7 @@ bool PLand::enable() {
 
     mImpl->mConfigReloadListener = ll::event::EventBus::getInstance().emplaceListener<event::ConfigReloadEvent>(
         [this](event::ConfigReloadEvent& ev [[maybe_unused]]) {
-            (void)internal::interceptor::InterceptorConfig::load(getSelf().getConfigDir());
+            (void)interceptor::internal::InterceptorConfig::load(getSelf().getConfigDir());
 
             mImpl->mEventListener->reload();
 
