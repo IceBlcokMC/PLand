@@ -1,7 +1,6 @@
 #pragma once
 #include "pland/Global.h"
 
-
 #include <memory>
 
 namespace ll::event {
@@ -12,7 +11,7 @@ namespace land {
 class Land;
 }
 
-namespace land::advisor {
+namespace land::interceptor::advisor {
 
 enum class AdvisorResult : uint8_t { Allow, Deny, Continue };
 
@@ -26,8 +25,10 @@ enum class AdvisorPriority : uint16_t {
 
 using AdvisorId = uint64_t;
 
+inline constexpr AdvisorId kInvalidAdvisorId = 0;
+
 class AdvisorBase {
-    AdvisorId       mId{0};
+    AdvisorId       mId{kInvalidAdvisorId};
     AdvisorPriority mPriority{AdvisorPriority::Normal};
 
     friend class AdvisorRegistry;
@@ -38,11 +39,27 @@ protected:
 public:
     virtual ~AdvisorBase() = default;
 
-    LDNDAPI AdvisorId getId() const noexcept;
+    AdvisorBase(AdvisorBase&&)                 = delete;
+    AdvisorBase(AdvisorBase const&)            = delete;
+    AdvisorBase& operator=(AdvisorBase&&)      = delete;
+    AdvisorBase& operator=(AdvisorBase const&) = delete;
 
-    LDNDAPI AdvisorPriority getPriority() const noexcept;
+    [[nodiscard]] constexpr AdvisorId getId() const noexcept { return mId; }
 
-    [[nodiscard]] virtual AdvisorResult handle(ll::event::Event& event, std::shared_ptr<Land> const& land) = 0;
+    [[nodiscard]] constexpr AdvisorPriority getPriority() const noexcept { return mPriority; }
+
+    [[nodiscard]] constexpr bool operator==(AdvisorBase const& other) const noexcept { return mId == other.mId; }
+
+    [[nodiscard]] constexpr std::strong_ordering operator<=>(AdvisorBase const& other) const noexcept {
+        if (mPriority != other.mPriority) {
+            return mPriority <=> other.mPriority;
+        }
+        return mId <=> other.mId;
+    }
+
+    [[nodiscard]] virtual AdvisorResult handle(ll::event::Event const& event, std::shared_ptr<Land> const& land) = 0;
 };
 
-} // namespace land::advisor
+using AdvisorPtr = std::shared_ptr<AdvisorBase>;
+
+} // namespace land::interceptor::advisor
