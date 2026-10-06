@@ -23,7 +23,10 @@ jobs:
               - '.github/workflows/build.yml'
               - 'src/**'
               - 'src-devtool/**'
+              - 'src-scripting/**'
+              - 'src-scripts/**'
               - 'xmake.lua'
+              - 'tsconfig.json'
 
   build:
     needs: changes
@@ -55,6 +58,11 @@ jobs:
         uses: ZhongRuoyu/setup-llvm@v0
         with:
           llvm-version: 22
+
+      - name: Install scripting deps
+        run: |
+          npm install -g tsc
+          curl -L -o qjsc.exe "https://github.com/engsr6982/quickjs-ng/releases/download/v0.15.1/qjsc.exe"
 
       - run: |
           xmake repo -u
