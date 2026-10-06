@@ -1,0 +1,23 @@
+{
+    "include": [
+        "src-scripts/src/**/*.ts",
+        "src-scripts/types/**/*.d.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "build",
+        "docs"
+    ],
+    "compilerOptions": {
+        "outDir": "build/.dist",
+        "rootDir": "src-scripts/src",
+        "target": "ES2022",
+        "lib": [
+            "ES2022"
+        ],
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "verbatimModuleSyntax": true,
+        "isolatedModules": true,
+    }
+}

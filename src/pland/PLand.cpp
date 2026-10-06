@@ -32,12 +32,40 @@
 #include "DevToolApp.h"
 #endif
 
+#ifdef PLAND_SCRIPTING
+#include "pland/scripting/Bootstrap.h"
+#endif
+
 namespace land {
 
+namespace {
+
+/// 作用域退出时执行回调, dismiss() 之后不再执行
+template <class F>
+class ScopeGuard {
+    F    mCallback;
+    bool mActive = true;
+
+public:
+    explicit ScopeGuard(F callback) : mCallback(std::move(callback)) {}
+    ~ScopeGuard() {
+        if (mActive) {
+            mCallback();
+        }
+    }
+
+    void dismiss() { mActive = false; }
+};
+
+} // namespace
 
 struct PLand::Impl {
-    ll::mod::NativeMod&                                      mSelf;
-    std::unique_ptr<ll::thread::ThreadPoolExecutor>          mThreadPoolExecutor{nullptr};
+    ll::mod::NativeMod& mSelf;
+
+    /// 线程池。只由 destroyThreadPool() 显式销毁, 不随 Impl 析构自动销毁:
+    /// 析构链在 DLL 卸载路径 (FreeLibrary → DllMain → atexit) 上执行, 该路径持有 loader lock,
+    /// 而 join 工作线程要等线程退出, 线程退出 (LdrShutdownThread) 又要 loader lock, 二者互锁。
+    ll::thread::ThreadPoolExecutor*                          mThreadPoolExecutor{nullptr};
     std::unique_ptr<LandRegistry>                            mLandRegistry{nullptr};
     std::unique_ptr<internal::LandScheduler>                 mLandScheduler{nullptr};
     std::unique_ptr<internal::interceptor::EventInterceptor> mEventListener{nullptr};
@@ -54,7 +82,22 @@ struct PLand::Impl {
     std::unique_ptr<devtool::DevToolApp> mDevToolApp{nullptr};
 #endif
 
+#ifdef PLAND_SCRIPTING
+    std::unique_ptr<scripting::Bootstrap> mBootstrap{nullptr};
+#endif
+
     explicit Impl() : mSelf(*ll::mod::NativeMod::current()) {}
+
+    /// 销毁线程池并 join 工作线程, 幂等。
+    /// 只能在 DLL 卸载之前调用 (disable / load 失败清理), 否则会撞上 loader lock 死锁。
+    void destroyThreadPool() {
+        if (!mThreadPoolExecutor) {
+            return;
+        }
+        mThreadPoolExecutor->destroy(); // join 工作线程
+        delete mThreadPoolExecutor;     // impl 已由 destroy() 释放, 这里只释放外壳
+        mThreadPoolExecutor = nullptr;
+    }
 };
 
 bool ensureStableVersion() {
@@ -105,23 +148,41 @@ bool PLand::load() {
         return false;
     }
 
-    mImpl->mThreadPoolExecutor = std::make_unique<ll::thread::ThreadPoolExecutor>("PLand-ThreadPool", 4);
+    // 从这里开始建立运行期资源, 失败路径 (提前 return / 异常) 都要在 load 内就地拆除:
+    // 留给静态析构会落在 DLL 卸载路径的 loader lock 内, 那里 join 线程池会死锁。
+    auto rollback = ScopeGuard{[this] {
+#ifdef PLAND_SCRIPTING
+        mImpl->mBootstrap.reset();
+#endif
+        mImpl->mLandRegistry.reset(); // 停掉落盘协程: stop() 以 interrupt(true) 在调用线程就地 resume
+        mImpl->destroyThreadPool();
+    }};
 
-    try {
-        mImpl->mLandRegistry = std::make_unique<land::LandRegistry>(*this);
+    mImpl->mThreadPoolExecutor = new ll::thread::ThreadPoolExecutor{"PLand-ThreadPool", 4};
 
-        EconomySystem::getInstance().initialize();
-    } catch (std::exception const& exception) {
-        logger.error(exception.what());
-        mImpl->mThreadPoolExecutor->destroy(); // fix deadlock
-        return false;
+    mImpl->mLandRegistry = std::make_unique<land::LandRegistry>(*this);
+
+    EconomySystem::getInstance().initialize();
+
+#ifdef PLAND_SCRIPTING
+    logger.info("Initializing script engine...");
+    mImpl->mBootstrap = std::make_unique<scripting::Bootstrap>(getSelf());
+    if (auto e = mImpl->mBootstrap->initialize(); !e) {
+        e.error().log(logger);
+        return false; // rollback 就地拆除
     }
+    logger.info("Initializing script engine...done");
+    if (auto e = mImpl->mBootstrap->postOnLoad(); !e) {
+        e.error().log(logger);
+    }
+#endif
 
 #ifdef PLAND_DEBUG
     logger.warn("Debug Mode");
     logger.setLevel(ll::io::LogLevel::Trace);
 #endif
 
+    rollback.dismiss();
     return true;
 }
 
@@ -163,19 +224,37 @@ bool PLand::enable() {
         mImpl->mDevToolApp = devtool::DevToolApp::make();
     }
 #endif
+#ifdef PLAND_SCRIPTING
+    if (auto e = mImpl->mBootstrap->postOnEnable(); !e) {
+        e.error().log(getSelf().getLogger());
+    }
+#endif
 
     return true;
 }
 
 bool PLand::disable() {
+    auto& logger = mImpl->mSelf.getLogger();
+
 #ifdef LD_DEVTOOL
     if (ConfigProvider::isDevToolsEnabled()) {
         mImpl->mDevToolApp.reset();
     }
 #endif
+#ifdef PLAND_SCRIPTING
+    if (mImpl->mBootstrap) { // load 失败时已由 rollback 拆除
+        if (auto e = mImpl->mBootstrap->postOnDisable(); !e) {
+            e.error().log(logger);
+        }
+        if (auto e = mImpl->mBootstrap->shutdown(); !e) {
+            e.error().log(logger);
+        }
+        mImpl->mBootstrap.reset();
+    }
+#endif
+
     ll::event::EventBus::getInstance().removeListener(mImpl->mConfigReloadListener);
 
-    auto& logger = mImpl->mSelf.getLogger();
     mImpl->mTelemetry.reset();
 
     mImpl->mServiceLocator.reset();
@@ -189,8 +268,7 @@ bool PLand::disable() {
     mImpl->mLandRegistry.reset();
 
     logger.debug("Destroying thread pool...");
-    mImpl->mThreadPoolExecutor->destroy();
-    mImpl->mThreadPoolExecutor.reset();
+    mImpl->destroyThreadPool();
     return true;
 }
 
@@ -241,6 +319,11 @@ void PLand::setDevToolVisible(bool visible) {
     }
 }
 #endif
+
+#ifdef PLAND_SCRIPTING
+scripting::Bootstrap& PLand::getScriptingBootstrap() { return *mImpl->mBootstrap; }
+#endif
+
 
 } // namespace land
 

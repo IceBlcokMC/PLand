@@ -5,17 +5,19 @@
 #include "ll/api/mod/NativeMod.h"
 
 
-namespace land {
-namespace service {
+namespace land::service {
 class ServiceLocator;
 }
-} // namespace land
 
-namespace ll {
-namespace thread {
+namespace ll::thread {
 class ThreadPoolExecutor;
 }
-} // namespace ll
+
+#ifdef PLAND_SCRIPTING
+namespace land::scripting {
+class Bootstrap;
+}
+#endif
 
 
 namespace land {
@@ -55,6 +57,11 @@ public: /* public */
 #ifdef LD_DEVTOOL
     void setDevToolVisible(bool visible);
 #endif
+
+#ifdef PLAND_SCRIPTING
+    scripting::Bootstrap& getScriptingBootstrap();
+#endif
+
 
 private:
     struct Impl;
