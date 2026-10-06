@@ -34,8 +34,12 @@ jobs:
 
       - name: Install scripting deps
         run: |
-          npm install -g tsc
+          npm install -g typescript
           curl -L -o qjsc.exe "https://github.com/engsr6982/quickjs-ng/releases/download/v0.15.1/qjsc.exe"
+          ls
+          where.exe tsc
+          where.exe qjsc
+          tsc --version
 
       - run: |
           xmake repo -u
