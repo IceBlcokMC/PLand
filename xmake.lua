@@ -26,7 +26,7 @@ if has_config("devtool") then
     add_requires("imgui_color_text_edit")
 end
 if has_config("scripting") then
-    add_requires("jspp af7ed1d68156cb1170cee4223400180fb4714b74")
+    add_requires("jspp 65e95af96243c9a01f4dbc0a9dd21ef91210d4a4")
 end
 
 
@@ -219,11 +219,20 @@ rule("bytecode")
         local qjsc = assert(find_tool("qjsc.exe", { norun = true }), "qjsc not found")
 
         -- 1) depend that runs tsc when TS sources change
+
+        local tsconfig_files = {}
+        local root_ts = path.join(os.projectdir(), "tsconfig.json")
+        if os.isfile(root_ts) then
+            table.insert(tsconfig_files, root_ts)
+        end
+
+        local tsc_inputs = table.join(sourcebatch.sourcefiles, tsconfig_files)
+
         depend.on_changed(function ()
             progress.show(opt.progress, "${color.build.target}build.tsc %s", "src-scripts")
             os.vrunv(tsc.program, {}, { shell = true })
         end, {
-            files = sourcebatch.sourcefiles,
+            files = tsc_inputs,
             changed = target:is_rebuilt()
         })
 

@@ -1,4 +1,5 @@
 import {log, setTimeout, setInterval, clearInterval} from "@runtime"
+import {Player} from "@minecraft"
 
 function launchTask() {
 
@@ -37,6 +38,14 @@ export default class ScriptMod {
         log("onEnable called");
 
         launchTask();
+
+        let player: Player | null = null;
+        setInterval(() => {
+            if (player == null) {
+                player = Player.tryGet("engsr6982")
+            }
+            log("tryGetPlayer: {}", player?.localeCode ?? "null")
+        }, 10 * 1000)
     }
 
     onDisable() {

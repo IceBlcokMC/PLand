@@ -19,5 +19,7 @@
         "moduleResolution": "bundler",
         "verbatimModuleSyntax": true,
         "isolatedModules": true,
+        "strict": true,
+        "sourceMap": true
     }
 }

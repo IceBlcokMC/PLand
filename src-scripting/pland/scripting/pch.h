@@ -35,16 +35,9 @@
 #include "jspp/core/Value.h"
 #include "jspp/core/ValueHelper.h"
 
+// jspp 扩展点的特化 (RTTI / 承载实例 / 类型转换)
+#include "pland/scripting/binding/Customizations.h"
+
 // absl
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
-
-// pre define
-namespace land::scripting {
-namespace binding {
-namespace global {}
-namespace levilamina {}
-namespace minecraft {}
-namespace pland {}
-}; // namespace binding
-} // namespace land::scripting

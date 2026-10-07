@@ -84,15 +84,15 @@ bool                     clearTimeout(uint32_t id) {
 
 } // namespace
 
-jspp::ModuleMeta const& Modules::getUtilsModule() {
+jspp::ModuleMeta const& Modules::getRuntimeModule() {
     static jspp::ModuleMeta m = jspp::binding::defModule("@runtime") //
-                                    .exportFunction("log", &log)
-                                    .exportFunction("format", &format)
-                                    .exportFunction("self", &self)
-                                    .exportFunction("setTimeout", &setTimeout)
-                                    .exportFunction("setInterval", &setInterval)
-                                    .exportFunction("clearTimeout", &clearTimeout)
-                                    .exportFunction("clearInterval", &clearTimeout)
+                                    .export_function("log", &log)
+                                    .export_function("format", &format)
+                                    .export_function("self", &self)
+                                    .export_function("setTimeout", &setTimeout)
+                                    .export_function("setInterval", &setInterval)
+                                    .export_function("clearTimeout", &clearTimeout)
+                                    .export_function("clearInterval", &clearTimeout)
                                     .build();
     return m;
 }
