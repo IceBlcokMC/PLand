@@ -59,6 +59,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ github.event.repository.name }}-scripts-debug-bundle-${{ github.sha }}
+          include-hidden-files: true
           path: |
             build/.dist
             build/.qjsc
@@ -114,7 +115,7 @@ jobs:
           cp CHANGELOG.md README.md LICENSE artifact/
 
       - run: |
-          zip -r ../${{ env.FinalName }}.zip *
+          zip -r ../${{ env.FinalName }}.zip .
         working-directory: artifact
 
       - uses: softprops/action-gh-release@v1
