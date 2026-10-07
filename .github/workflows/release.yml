@@ -56,6 +56,14 @@ jobs:
           path: |
             bin/
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.repository.name }}-scripts-debug-bundle-${{ github.sha }}
+          path: |
+            build/.dist
+            build/.qjsc
+            src-scripts/
+
   update-release-notes:
     outputs:
       release_notes: ${{ steps.extract-release-notes.outputs.release_notes }}
@@ -73,9 +81,6 @@ jobs:
           body: |-
             ${{ steps.extract-release-notes.outputs.release_notes }}
 
-            | File | SHA256 |
-            | ---- | ------ |
-
   upload-to-release:
     needs:
       - build
@@ -85,11 +90,14 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        devtool: ["y", "n"]
+        include:
+          - variant: windows-x64-devtool
+          - variant: windows-x64-headless
+          - variant: scripts-debug-bundle
     env:
-      FinalName: ${{ github.event.repository.name }}-windows-x64-${{ matrix.devtool == 'y' && 'devtool' || 'headless' }}
-      ArtifactName: ${{ github.event.repository.name }}-windows-x64-${{ matrix.devtool == 'y' && 'devtool' || 'headless' }}-${{ github.sha }}
-    name: upload-to-release-${{ matrix.devtool == 'y' && 'devtool' || 'headless' }}
+      FinalName: ${{ github.event.repository.name }}-${{ matrix.variant }}
+      ArtifactName: ${{ github.event.repository.name }}-${{ matrix.variant }}-${{ github.sha }}
+    name: upload-to-release-${{ matrix.variant }}
     steps:
       - run: |
           echo "FinalName: ${{ env.FinalName }}"
@@ -109,14 +117,8 @@ jobs:
           zip -r ../${{ env.FinalName }}.zip *
         working-directory: artifact
 
-      - id: calculate-sha256-core
-        run: |
-          echo sha256=$(sha256sum ${{ env.FinalName }}.zip | awk '{print $1}') >> $GITHUB_OUTPUT
-
       - uses: softprops/action-gh-release@v1
         with:
           append_body: true
-          body: |-
-            | ${{ env.FinalName }}.zip | ${{ steps.calculate-sha256-core.outputs.sha256 }} |
           files: |
             ${{ env.FinalName }}.zip

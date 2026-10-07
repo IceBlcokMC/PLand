@@ -83,6 +83,14 @@ jobs:
           path: |
             bin/
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.repository.name }}-scripts-debug-bundle-${{ github.sha }}
+          path: |
+            build/.dist
+            build/.qjsc
+            src-scripts/
+
   build-gate:
     name: build-gate
     needs: [changes, build]
