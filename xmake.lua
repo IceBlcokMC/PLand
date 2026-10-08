@@ -26,7 +26,7 @@ if has_config("devtool") then
     add_requires("imgui_color_text_edit")
 end
 if has_config("scripting") then
-    add_requires("jspp 65e95af96243c9a01f4dbc0a9dd21ef91210d4a4")
+    add_requires("jspp 91202048f35151e156ccf8e00b3412dc94b7d9a3")
 end
 
 

@@ -13,11 +13,21 @@ void Modules::bind(jspp::Engine& engine) {
 jspp::ModuleMeta const& Modules::getMinecraftModule() {
     static jspp::ModuleMeta m = jspp::binding::defModule("@minecraft") //
                                     .export_class(kScriptPlayer)
+                                    .export_enum(kScriptCommandPermissionLevel)
+                                    .export_enum(kScriptCommandParameterOption)
+                                    .export_class(kScriptCommandOrigin)
+                                    .export_class(kScriptCommandOutput)
+                                    .export_enum(kScriptCommandOriginType)
                                     .build();
     return m;
 }
 jspp::ModuleMeta const& Modules::getLeviLaminaModule() {
-    static jspp::ModuleMeta m = jspp::binding::defModule("@levilamina").build();
+    static jspp::ModuleMeta m = jspp::binding::defModule("@levilamina") //
+                                    .export_class(kScriptCommandRegistrar)
+                                    .export_class(kScriptCommandHandle)
+                                    .export_class(kScriptRuntimeOverload)
+                                    .export_enum(kScriptCommandParamKind)
+                                    .build();
     return m;
 }
 jspp::ModuleMeta const& Modules::getPLandModule() {

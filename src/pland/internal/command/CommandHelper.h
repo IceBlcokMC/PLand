@@ -262,13 +262,13 @@ decltype(auto) wrapCommandHandler(Fn&& fn) {
     using Params = detail::DeduceParamsT<std::decay_t<Fn>>;
 
     if constexpr (std::is_same_v<Params, ll::command::EmptyParam>) {
-        return [fn = std::forward<Fn>(fn)](CommandOrigin const& ori, CommandOutput& out) mutable {
+        return [fn = std::forward<Fn>(fn)](CommandOrigin const& ori, CommandOutput& out) {
             if (detail::handleOrigin<AcceptOrigin, P>(ori, out)) {
                 std::invoke(fn, ori, out);
             }
         };
     } else {
-        return [fn = std::forward<Fn>(fn)](CommandOrigin const& ori, CommandOutput& out, Params const& params) mutable {
+        return [fn = std::forward<Fn>(fn)](CommandOrigin const& ori, CommandOutput& out, Params const& params) {
             if (detail::handleOrigin<AcceptOrigin, P>(ori, out)) {
                 std::invoke(fn, ori, out, params);
             }

@@ -105,7 +105,9 @@ public:
             (void)maybe_fn.asFunction().call(v);
             return {};
         } catch (jspp::Exception const& e) {
-            return ll::makeStringError(fmt::format("failed to call 'onLoad' method: {}\n{}", e.what(), e.stacktrace()));
+            return ll::makeStringError(
+                fmt::format("failed to call '{}' method:\n{}\n{}", method, e.what(), e.stacktrace())
+            );
         }
     }
 };

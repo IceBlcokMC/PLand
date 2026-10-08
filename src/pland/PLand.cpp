@@ -3,7 +3,6 @@
 
 #include <memory>
 
-#include "ll/api/Versions.h"
 #include "ll/api/data/Version.h"
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/ListenerBase.h"
@@ -322,6 +321,26 @@ void PLand::setDevToolVisible(bool visible) {
 
 #ifdef PLAND_SCRIPTING
 scripting::Bootstrap& PLand::getScriptingBootstrap() { return *mImpl->mBootstrap; }
+void                  PLand::reloadScripting() {
+    auto& logger = getSelf().getLogger();
+    logger.info("Reloading script, please wait...");
+
+    auto& boot = getScriptingBootstrap();
+    if (auto ex = boot.reload(); !ex) {
+        logger.error("Failed to reload script.");
+        ex.error().log(logger);
+        return;
+    }
+
+    if (auto e = mImpl->mBootstrap->postOnLoad(); !e) {
+        e.error().log(logger);
+    }
+    if (auto e = mImpl->mBootstrap->postOnEnable(); !e) {
+        e.error().log(logger);
+    }
+
+    logger.info("done!");
+}
 #endif
 
 

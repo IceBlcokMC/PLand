@@ -1,6 +1,7 @@
 #include "pland/PLand.h"
 #include "pland/scripting/Bootstrap.h"
 #include "pland/scripting/EngineOwnData.h"
+#include "pland/scripting/binding/Helper.h"
 #include "pland/scripting/binding/Modules.h"
 #include "pland/scripting/pch.h"
 #include "pland/scripting/system/ScriptTimerSystem.h"
@@ -11,27 +12,10 @@ namespace land::scripting {
 
 namespace {
 
-std::string formatImpl(jspp::Arguments const& args) {
-    auto len = args.length();
-    if (len == 0) [[unlikely]] {
-        throw jspp::Exception{"log/format requires at least one argument", jspp::ExceptionType::TypeError};
-    }
-
-    auto f       = args[0];
-    auto fmt_str = f.asString().getValue();
-
-    fmt::dynamic_format_arg_store<fmt::format_context> store;
-    for (int i = 1; i < len; ++i) {
-        auto v = args[i];
-        store.push_back(v.toString().getValue());
-    }
-    return fmt::vformat(fmt_str, store);
-}
-
-jspp::Local<jspp::Value> format(jspp::Arguments const& args) { return jspp::binding::toJs(formatImpl(args)); }
+jspp::Local<jspp::Value> format(jspp::Arguments const& args) { return jspp::binding::toJs(helper::format(args)); }
 
 jspp::Local<jspp::Value> log(jspp::Arguments const& args) {
-    auto result = formatImpl(args);
+    auto result = helper::format(args);
     fmt::print("{}\n", result);
     return {};
 }

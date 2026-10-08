@@ -60,6 +60,7 @@ public: /* public */
 
 #ifdef PLAND_SCRIPTING
     scripting::Bootstrap& getScriptingBootstrap();
+    void reloadScripting();
 #endif
 
 

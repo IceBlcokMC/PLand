@@ -1,5 +1,6 @@
-import {log, setTimeout, setInterval, clearInterval} from "@runtime"
-import {Player} from "@minecraft"
+import {clearInterval, log, setInterval, setTimeout} from "@runtime"
+import {type CommandOrigin, Player} from "@minecraft"
+import {CommandParamKind, CommandRegistrar} from "@levilamina";
 
 function launchTask() {
 
@@ -39,16 +40,40 @@ export default class ScriptMod {
 
         launchTask();
 
-        let player: Player | null = null;
-        setInterval(() => {
-            if (player == null) {
-                player = Player.tryGet("engsr6982")
-            }
-            log("tryGetPlayer: {}", player?.localeCode ?? "null")
-        }, 10 * 1000)
+        setupCommand();
     }
 
     onDisable() {
         log("onDisable called");
     }
+}
+
+function setupCommand() {
+    let registrar = CommandRegistrar.getInstance();
+
+    const lenumn = "asd";
+    const lenum = [
+        ["op1", 0],
+        ["op2", 1],
+    ]
+    if (!registrar.hasEnum(lenumn)) {
+        registrar.tryRegisterRuntimeEnum(lenumn, lenum as pair<string, number>[]);
+    }
+
+    const cmd = registrar.getOrCreateCommand("paxxx")
+
+    let ori: CommandOrigin | null = null;
+    cmd.runtimeOverload()
+        .text("a")
+        .required("enu", CommandParamKind.Enum, lenumn)
+        .required("str", CommandParamKind.String)
+        .execute((origin, output, args) => {
+            log("origin.type={}", origin.originType);
+            output.success("args.enu={}, args.str={}", args.enu, args.str);
+            ori = origin;
+        })
+
+    cmd.runtimeOverload().text("scripts").text("b").required("str", CommandParamKind.String).execute((origin, output, args) => {
+        output.error("type={}", ori?.originType);
+    })
 }

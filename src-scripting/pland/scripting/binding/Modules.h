@@ -13,8 +13,19 @@ struct Modules {
     [[nodiscard]] static jspp::ModuleMeta const& getLeviLaminaModule();
     [[nodiscard]] static jspp::ModuleMeta const& getPLandModule();
 
-    // minecraft module
+    // @minecraft
     static jspp::ClassMeta const kScriptPlayer;
+    static jspp::EnumMeta const  kScriptCommandPermissionLevel;
+    static jspp::EnumMeta const  kScriptCommandParameterOption;
+    static jspp::ClassMeta const kScriptCommandOrigin;
+    static jspp::ClassMeta const kScriptCommandOutput;
+    static jspp::EnumMeta const  kScriptCommandOriginType;
+
+    // @levilamina
+    static jspp::ClassMeta const kScriptCommandRegistrar;
+    static jspp::ClassMeta const kScriptCommandHandle;
+    static jspp::ClassMeta const kScriptRuntimeOverload;
+    static jspp::EnumMeta const  kScriptCommandParamKind;
 };
 
 

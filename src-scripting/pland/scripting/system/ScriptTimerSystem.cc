@@ -10,15 +10,19 @@ namespace land::scripting {
 ScriptTimerSystem::ScriptTimerSystem() = default;
 ScriptTimerSystem::~ScriptTimerSystem() { clearAll(); }
 
-ScriptTimerSystem::TaskId ScriptTimerSystem::newTimeout(jspp::Local<jspp::Function> const& callback, int64_t timeout) {
+ScriptTimerSystem::TaskId ScriptTimerSystem::newTimeout(jspp::Local<jspp::Function> callback, int64_t timeout) {
     auto id    = mNextId++;
     auto token = std::make_shared<CancelToken>();
-    ll::coro::keepThis([persint = jspp::Global{callback}, timeout, token]() -> ll::coro::CoroTask<> {
+
+    auto tracked = jspp::TrackedGlobal<jspp::Function>::create(std::move(callback));
+    ll::coro::keepThis([tracked, timeout, token]() -> ll::coro::CoroTask<> {
         co_await token->sleep.sleepFor(std::chrono::milliseconds{timeout});
         if (token->abort) {
             co_return;
         }
-        auto _ = jspp::EngineScope{persint.engine()};
+
+        auto& persint = tracked->global();
+        auto  _       = jspp::EngineScope{persint.engine()};
         try {
             auto fn = persint.get();
             (void)fn.call({});
@@ -35,17 +39,20 @@ ScriptTimerSystem::TaskId ScriptTimerSystem::newTimeout(jspp::Local<jspp::Functi
     return id;
 }
 
-ScriptTimerSystem::TaskId ScriptTimerSystem::newInterval(jspp::Local<jspp::Function> const& callback, int64_t timeout) {
+ScriptTimerSystem::TaskId ScriptTimerSystem::newInterval(jspp::Local<jspp::Function> callback, int64_t timeout) {
     auto id    = mNextId++;
     auto token = std::make_shared<CancelToken>();
-    ll::coro::keepThis([persint = jspp::Global{callback}, timeout, token]() -> ll::coro::CoroTask<> {
+
+    auto tracked = jspp::TrackedGlobal<jspp::Function>::create(std::move(callback));
+    ll::coro::keepThis([tracked, timeout, token]() -> ll::coro::CoroTask<> {
         while (!token->abort) {
             co_await token->sleep.sleepFor(std::chrono::milliseconds{timeout});
             if (token->abort) {
                 co_return;
             }
 
-            auto _ = jspp::EngineScope{persint.engine()};
+            auto& persint = tracked->global();
+            auto  _       = jspp::EngineScope{persint.engine()};
             try {
                 auto fn = persint.get();
                 (void)fn.call({});

@@ -14,9 +14,9 @@ public:
     explicit ScriptTimerSystem();
     ~ScriptTimerSystem();
 
-    TaskId newTimeout(jspp::Local<jspp::Function> const& callback, int64_t timeout);
+    TaskId newTimeout(jspp::Local<jspp::Function> callback, int64_t timeout);
 
-    TaskId newInterval(jspp::Local<jspp::Function> const& callback, int64_t timeout);
+    TaskId newInterval(jspp::Local<jspp::Function> callback, int64_t timeout);
 
     bool cancelTask(TaskId taskId);
 

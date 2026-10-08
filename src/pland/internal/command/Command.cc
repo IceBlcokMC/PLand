@@ -426,6 +426,14 @@ bool LandCommand::setupAll() {
     }
 #endif
 
+#ifdef PLAND_SCRIPTING
+    h.overload().text("reload").text("scripts").execute(
+        wrapCommandHandler<LandCommandAcceptOrigin<CommandOriginType::DedicatedServer>>(
+            [](CommandOrigin const&, CommandOutput&) { PLand::getInstance().reloadScripting(); }
+        )
+    );
+#endif
+
     return true;
 }
 

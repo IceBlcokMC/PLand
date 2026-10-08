@@ -41,3 +41,6 @@
 // absl
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
+
+// magic_enum
+#include "magic_enum/magic_enum.hpp"
