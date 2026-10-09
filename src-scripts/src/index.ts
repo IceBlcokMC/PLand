@@ -1,6 +1,6 @@
 import {clearInterval, log, setInterval, setTimeout} from "@runtime"
 import {type CommandOrigin, Player} from "@minecraft"
-import {CommandParamKind, CommandRegistrar} from "@levilamina";
+import {CommandParamKind, CommandRegistrar, CustomForm, ModalForm, SimpleForm} from "@levilamina";
 
 function launchTask() {
 
@@ -60,20 +60,46 @@ function setupCommand() {
         registrar.tryRegisterRuntimeEnum(lenumn, lenum as pair<string, number>[]);
     }
 
-    const cmd = registrar.getOrCreateCommand("paxxx")
-
-    let ori: CommandOrigin | null = null;
-    cmd.runtimeOverload()
-        .text("a")
-        .required("enu", CommandParamKind.Enum, lenumn)
-        .required("str", CommandParamKind.String)
-        .execute((origin, output, args) => {
-            log("origin.type={}", origin.originType);
-            output.success("args.enu={}, args.str={}", args.enu, args.str);
-            ori = origin;
-        })
-
-    cmd.runtimeOverload().text("scripts").text("b").required("str", CommandParamKind.String).execute((origin, output, args) => {
-        output.error("type={}", ori?.originType);
+    const cmd = registrar.getOrCreateCommand("pland")
+    cmd.runtimeOverload().text("scripts").text("custom_f").execute((origin, output, args) => {
+        if (!origin.player) {
+            output.error("player not found!");
+            return;
+        }
+        let f = new CustomForm();
+        f.appendLabel("test")
+            .appendDivider()
+            .appendInput("aa", "str", "placl", "def", "tip")
+            .sendTo(origin.player, (player, result, cancelReason) => {
+                log("result={}", result?.aa)
+            })
     })
+    cmd.runtimeOverload().text("scripts").text("modal_f").execute((origin, output, args) => {
+        if (!origin.player) {
+            output.error("player not found!");
+            return;
+        }
+        new ModalForm()
+            .setTitle("modal")
+            .setContent("aaa")
+            .setUpperButton("up")
+            .setLowerButton("down")
+            .sendTo(origin.player, (player, result, cancelReason) => {
+                log("result={}", result);
+            })
+    });
+    cmd.runtimeOverload().text("scripts").text("simple_f").execute((origin, output, args) => {
+        if (!origin.player) {
+            output.error("player not found!");
+            return;
+        }
+        new SimpleForm()
+            .setTitle("simple_f")
+            .appendButton("a", null)
+            .appendButton("b", (player) => {
+                log("b");
+            })
+            .sendTo(origin.player, null);
+    });
+
 }

@@ -17,4 +17,9 @@ declare module "@minecraft" {
         EnumAsChainedCommand = 4,
     }
 
+    export enum ModalFormCancelReason {
+        UserClosed = 0,
+        UserBusy = 1,
+    }
+
 }

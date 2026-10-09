@@ -4,6 +4,7 @@ declare module "@minecraft" {
         readonly originType: CommandOriginType
         readonly blockPosition: BlockPos
         readonly worldPosition: Vec3
+        readonly player: Player | null
 
         private constructor();
     }

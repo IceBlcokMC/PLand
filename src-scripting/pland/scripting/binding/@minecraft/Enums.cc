@@ -6,6 +6,8 @@
 
 #include <mc/server/commands/CommandParameterOption.h>
 
+#include "mc/network/packet/ModalFormCancelReason.h"
+
 namespace land::scripting {
 
 decltype(Modules::kScriptCommandPermissionLevel) Modules::kScriptCommandPermissionLevel =
@@ -13,5 +15,8 @@ decltype(Modules::kScriptCommandPermissionLevel) Modules::kScriptCommandPermissi
 
 decltype(Modules::kScriptCommandParameterOption) Modules::kScriptCommandParameterOption =
     helper::auto_gen_enum_def<CommandParameterOption>("CommandParameterOption");
+
+decltype(Modules::kScriptModalFormCancelReason) Modules::kScriptModalFormCancelReason =
+    helper::auto_gen_enum_def<ModalFormCancelReason>("ModalFormCancelReason");
 
 } // namespace land::scripting

@@ -18,6 +18,7 @@ jspp::ModuleMeta const& Modules::getMinecraftModule() {
                                     .export_class(kScriptCommandOrigin)
                                     .export_class(kScriptCommandOutput)
                                     .export_enum(kScriptCommandOriginType)
+                                    .export_enum(kScriptModalFormCancelReason)
                                     .build();
     return m;
 }
@@ -27,6 +28,10 @@ jspp::ModuleMeta const& Modules::getLeviLaminaModule() {
                                     .export_class(kScriptCommandHandle)
                                     .export_class(kScriptRuntimeOverload)
                                     .export_enum(kScriptCommandParamKind)
+                                    .export_class(kScriptCustomForm)
+                                    .export_class(kScriptModalForm)
+                                    .export_class(kScriptSimpleForm)
+                                    .export_enum(kScriptModalFormSelectedButton)
                                     .build();
     return m;
 }

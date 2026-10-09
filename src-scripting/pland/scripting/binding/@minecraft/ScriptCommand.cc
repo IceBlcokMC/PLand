@@ -13,6 +13,18 @@ decltype(Modules::kScriptCommandOrigin) Modules::kScriptCommandOrigin = //
         .prop_readonly("originType", &CommandOrigin::getOriginType)
         .prop_readonly("blockPosition", &CommandOrigin::getBlockPosition)
         .prop_readonly("worldPosition", &CommandOrigin::getWorldPosition)
+        .prop_readonly(
+            "player",
+            [](CommandOrigin const& origin) -> Player* {
+                if (origin.getOriginType() == CommandOriginType::Player) {
+                    if (auto entity = origin.getEntity(); entity && entity->isPlayer()) {
+                        return static_cast<Player*>(entity);
+                    }
+                }
+                return nullptr;
+            },
+            jspp::binding::ReturnValuePolicy::kReferencePersistent
+        )
         .build();
 
 decltype(Modules::kScriptCommandOriginType) Modules::kScriptCommandOriginType = //
