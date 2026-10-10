@@ -1,6 +1,6 @@
 import {clearInterval, log, setInterval, setTimeout} from "@runtime"
 import {type CommandOrigin, Player} from "@minecraft"
-import {CommandParamKind, CommandRegistrar, CustomForm, ModalForm, SimpleForm} from "@levilamina";
+import {CommandParamKind, CommandRegistrar, CustomForm, ModalForm, PlayerInfo, SimpleForm} from "@levilamina";
 
 function launchTask() {
 
@@ -37,6 +37,8 @@ export default class ScriptMod {
 
     onEnable() {
         log("onEnable called");
+
+        log("PlayerInfo: {}", JSON.stringify(PlayerInfo.fromName("engsr6982")))
 
         launchTask();
 
