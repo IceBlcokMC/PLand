@@ -15,7 +15,7 @@ class ThreadPoolExecutor;
 
 #ifdef PLAND_SCRIPTING
 namespace land::scripting {
-class Bootstrap;
+class ScriptingBootstrap;
 }
 #endif
 
@@ -59,7 +59,7 @@ public: /* public */
 #endif
 
 #ifdef PLAND_SCRIPTING
-    scripting::Bootstrap& getScriptingBootstrap();
+    scripting::ScriptingBootstrap& getScriptingBootstrap();
     void reloadScripting();
 #endif
 

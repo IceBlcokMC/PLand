@@ -20,3 +20,11 @@ declare interface BlockPos {
 declare type DimensionType = number;
 
 declare type UUID = string;
+
+declare interface PluginEntry {
+    onLoad(): void;
+
+    onEnable(): void;
+
+    onDisable(): void;
+}

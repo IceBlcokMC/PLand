@@ -26,7 +26,7 @@ function launchTask() {
     }, 1000)
 }
 
-export default class ScriptMod {
+export default class ScriptMod implements PluginEntry {
     constructor() {
     }
 

@@ -1,0 +1,11 @@
+{
+    "name": "test-pland-script",
+    "entry": "index.js",
+    "version": "0.0.0",
+    "type": "pland-script",
+    "dependencies": [
+        {
+            "name": "PLand"
+        }
+    ]
+}

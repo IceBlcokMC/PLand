@@ -32,7 +32,7 @@
 #endif
 
 #ifdef PLAND_SCRIPTING
-#include "pland/scripting/Bootstrap.h"
+#include "pland/scripting/ScriptingBootstrap.h"
 #endif
 
 namespace land {
@@ -82,7 +82,7 @@ struct PLand::Impl {
 #endif
 
 #ifdef PLAND_SCRIPTING
-    std::unique_ptr<scripting::Bootstrap> mBootstrap{nullptr};
+    std::unique_ptr<scripting::ScriptingBootstrap> mScriptingBootstrap{nullptr};
 #endif
 
     explicit Impl() : mSelf(*ll::mod::NativeMod::current()) {}
@@ -151,7 +151,7 @@ bool PLand::load() {
     // 留给静态析构会落在 DLL 卸载路径的 loader lock 内, 那里 join 线程池会死锁。
     auto rollback = ScopeGuard{[this] {
 #ifdef PLAND_SCRIPTING
-        mImpl->mBootstrap.reset();
+        mImpl->mScriptingBootstrap.reset();
 #endif
         mImpl->mLandRegistry.reset(); // 停掉落盘协程: stop() 以 interrupt(true) 在调用线程就地 resume
         mImpl->destroyThreadPool();
@@ -165,13 +165,13 @@ bool PLand::load() {
 
 #ifdef PLAND_SCRIPTING
     logger.info("Initializing script engine...");
-    mImpl->mBootstrap = std::make_unique<scripting::Bootstrap>(getSelf());
-    if (auto e = mImpl->mBootstrap->initialize(); !e) {
+    mImpl->mScriptingBootstrap = std::make_unique<scripting::ScriptingBootstrap>(getSelf());
+    if (auto e = mImpl->mScriptingBootstrap->initialize(); !e) {
         e.error().log(logger);
         return false; // rollback 就地拆除
     }
     logger.info("Initializing script engine...done");
-    if (auto e = mImpl->mBootstrap->postOnLoad(); !e) {
+    if (auto e = mImpl->mScriptingBootstrap->postPrivateEngineOnLoad(); !e) {
         e.error().log(logger);
     }
 #endif
@@ -224,7 +224,7 @@ bool PLand::enable() {
     }
 #endif
 #ifdef PLAND_SCRIPTING
-    if (auto e = mImpl->mBootstrap->postOnEnable(); !e) {
+    if (auto e = mImpl->mScriptingBootstrap->postPrivateEngineOnEnable(); !e) {
         e.error().log(getSelf().getLogger());
     }
 #endif
@@ -241,14 +241,14 @@ bool PLand::disable() {
     }
 #endif
 #ifdef PLAND_SCRIPTING
-    if (mImpl->mBootstrap) { // load 失败时已由 rollback 拆除
-        if (auto e = mImpl->mBootstrap->postOnDisable(); !e) {
+    if (mImpl->mScriptingBootstrap) { // load 失败时已由 rollback 拆除
+        if (auto e = mImpl->mScriptingBootstrap->postPrivateEngineOnDisable(); !e) {
             e.error().log(logger);
         }
-        if (auto e = mImpl->mBootstrap->shutdown(); !e) {
+        if (auto e = mImpl->mScriptingBootstrap->shutdown(); !e) {
             e.error().log(logger);
         }
-        mImpl->mBootstrap.reset();
+        mImpl->mScriptingBootstrap.reset();
     }
 #endif
 
@@ -320,25 +320,16 @@ void PLand::setDevToolVisible(bool visible) {
 #endif
 
 #ifdef PLAND_SCRIPTING
-scripting::Bootstrap& PLand::getScriptingBootstrap() { return *mImpl->mBootstrap; }
-void                  PLand::reloadScripting() {
+scripting::ScriptingBootstrap& PLand::getScriptingBootstrap() { return *mImpl->mScriptingBootstrap; }
+void                           PLand::reloadScripting() {
     auto& logger = getSelf().getLogger();
     logger.info("Reloading script, please wait...");
-
     auto& boot = getScriptingBootstrap();
-    if (auto ex = boot.reload(); !ex) {
+    if (auto ex = boot.reloadPrivateEngine(); !ex) {
         logger.error("Failed to reload script.");
         ex.error().log(logger);
         return;
     }
-
-    if (auto e = mImpl->mBootstrap->postOnLoad(); !e) {
-        e.error().log(logger);
-    }
-    if (auto e = mImpl->mBootstrap->postOnEnable(); !e) {
-        e.error().log(logger);
-    }
-
     logger.info("done!");
 }
 #endif

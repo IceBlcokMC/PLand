@@ -1,6 +1,6 @@
 #include "pland/PLand.h"
-#include "pland/scripting/Bootstrap.h"
-#include "pland/scripting/EngineOwnData.h"
+#include "pland/scripting/EngineHelper.h"
+#include "pland/scripting/ScriptingBootstrap.h"
 #include "pland/scripting/binding/Helper.h"
 #include "pland/scripting/binding/Modules.h"
 #include "pland/scripting/pch.h"
@@ -23,7 +23,7 @@ jspp::Local<jspp::Value> log(jspp::Arguments const& args) {
 jspp::Local<jspp::Value> self(jspp::Arguments const& arguments) {
     if (auto engine = arguments.runtime()) {
         auto data = engine->getData<EngineOwnData>();
-        return data->scriptMod.get();
+        return data->scriptEntry.get();
     }
     return jspp::Null::newNull();
 }

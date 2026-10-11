@@ -13,6 +13,8 @@
 #include "ll/api/command/Overload.h"
 #include "ll/api/command/runtime/RuntimeOverload.h"
 #include "pland/PLand.h"
+#include "pland/scripting/EngineHelper.h"
+#include "pland/scripting/community/CommunityScriptPlugin.h"
 
 namespace jspp::binding::traits {
 
@@ -226,7 +228,15 @@ decltype(Modules::kScriptCommandHandle) Modules::kScriptCommandHandle = //
         .ctor(nullptr)
         .method(
             "runtimeOverload",
-            [](CommandHandle& h) { return ScriptRuntimeOverloadProxy{h.runtimeOverload()}; },
+            [](CommandHandle& h) {
+                auto& engine = jspp::EngineScope::currentEngineChecked();
+                auto  data   = engine.getData<EngineOwnData>();
+                assert(data);
+                if (data->isPrivateEngine) {
+                    return ScriptRuntimeOverloadProxy{h.runtimeOverload()};
+                }
+                return ScriptRuntimeOverloadProxy{h.runtimeOverload(data->communityScriptPlugin)};
+            },
             jspp::binding::ReturnValuePolicy::kMove
         )
         .method(
