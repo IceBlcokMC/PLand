@@ -49,6 +49,8 @@ decltype(Modules::kScriptPlayer) Modules::kScriptPlayer = //
                 pkt.sendTo(player);
             }
         )
+        .method("setAbility", &Player::setAbility)
+        .method("canUseAbility", &Player::canUseAbility)
         .build();
 
 

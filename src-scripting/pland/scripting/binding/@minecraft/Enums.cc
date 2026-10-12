@@ -2,11 +2,10 @@
 #include "pland/scripting/binding/Modules.h"
 #include "pland/scripting/pch.h"
 
-#include "mc/server/commands/CommandPermissionLevel.h"
-
-#include <mc/server/commands/CommandParameterOption.h>
-
 #include "mc/network/packet/ModalFormCancelReason.h"
+#include "mc/server/commands/CommandPermissionLevel.h"
+#include "mc/world/actor/player/AbilitiesIndex.h"
+#include <mc/server/commands/CommandParameterOption.h>
 
 namespace land::scripting {
 
@@ -18,5 +17,12 @@ decltype(Modules::kScriptCommandParameterOption) Modules::kScriptCommandParamete
 
 decltype(Modules::kScriptModalFormCancelReason) Modules::kScriptModalFormCancelReason =
     helper::auto_gen_enum_def<ModalFormCancelReason>("ModalFormCancelReason");
+
+decltype(Modules::kScriptAbilitiesIndex) Modules::kScriptAbilitiesIndex =
+    helper::auto_gen_enum_def<AbilitiesIndex>("AbilitiesIndex");
+static_assert(
+    static_cast<int>(AbilitiesIndex::AbilityCount) == 20,
+    "please update AbilitiesIndex's typescript enum declare"
+);
 
 } // namespace land::scripting

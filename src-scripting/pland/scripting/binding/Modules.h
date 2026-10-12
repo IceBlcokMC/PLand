@@ -21,6 +21,7 @@ struct Modules {
     static jspp::ClassMeta const kScriptCommandOutput;
     static jspp::EnumMeta const  kScriptCommandOriginType;
     static jspp::EnumMeta const  kScriptModalFormCancelReason;
+    static jspp::EnumMeta const  kScriptAbilitiesIndex;
 
     // @levilamina
     static jspp::ClassMeta const kScriptCommandRegistrar;

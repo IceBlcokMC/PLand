@@ -19,6 +19,7 @@ jspp::ModuleMeta const& Modules::getMinecraftModule() {
                                     .export_class(kScriptCommandOutput)
                                     .export_enum(kScriptCommandOriginType)
                                     .export_enum(kScriptModalFormCancelReason)
+                                    .export_enum(kScriptAbilitiesIndex)
                                     .build();
     return m;
 }
