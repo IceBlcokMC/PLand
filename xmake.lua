@@ -216,6 +216,25 @@ rule("bytecode")
         import("core.project.config")
 
         local tsc = assert(find_tool("tsc.cmd", { shell = true }), "tsc not found")
+
+        -- TODO: Improve qjsc.exe detection
+        -- Current situation:
+        -- 1. After the `quickjs-ng` package is installed, its `bin` folder contains `qjsc.exe`. However,
+        --     due to xmake's dependency isolation mechanism, it cannot be accessed.
+        -- 2. Using a custom package to download a pre-built `qjsc.exe` from a remote repository always
+        --     results in xmake throwing an installation error.
+        -- 3. Rollback approach: Using `find_tool` first followed by a `curl` download encounters
+        --     xmake's caching mechanism, causing subsequent searches to fail upon refresh.
+        --
+        -- Current workaround: Hardcode a check using `os.exists` to verify file existence, conditionally download
+        --  the pre-built artifact from the remote repository via `curl` as needed,
+        --   and finally use `find_tool` to bypass the issues mentioned above.
+        local qjsc_file = path.join(os.projectdir(), "qjsc.exe")
+        if not os.exists(qjsc_file) then
+            cprint("${yellow}warning: ${default}qjsc.exe not found, try download...")
+            local curl = assert(find_tool("curl.exe"), "curl not found")
+            os.vrunv(curl.program, {"-L", "-o", "qjsc.exe", "https://github.com/engsr6982/quickjs-ng/releases/download/v0.15.1/qjsc.exe"})
+        end
         local qjsc = assert(find_tool("qjsc.exe", { norun = true }), "qjsc not found")
 
         -- 1) depend that runs tsc when TS sources change
