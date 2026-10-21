@@ -2,8 +2,11 @@
 
 // 这个头由 pch 引入, 所以自己带齐依赖, 不回头包含 pch
 #include "jspp/binding/NativeInstanceImpl.h"
+#include "jspp/binding/TypeConverter.h"
+#include "jspp/core/Value.h"
 
 #include "mc/deps/ecs/WeakEntityRef.h"
+#include <mc/deps/core/utility/optional_ref.h>
 #include <mc/server/commands/CommandOrigin.h>
 #include <mc/world/actor/player/Player.h>
 
@@ -170,6 +173,18 @@ struct TypeConverter<mce::UUID> {
     static mce::UUID toCpp(Local<Value> const& value) {
         auto str = value.asString().getValue();
         return mce::UUID::fromString(str);
+    }
+};
+template <typename T>
+struct TypeConverter<optional_ref<T>> {
+    static Local<Value> toJs(optional_ref<T> const& v, ReturnValuePolicy policy, Local<Value> const& parent) {
+        if (!v.has_value()) {
+            return jspp::Null::newNull();
+        }
+        return binding::toJs(*v, policy, parent);
+    }
+    static optional_ref<T> toCpp(Local<Value> const& v [[maybe_unused]]) {
+        [[unlikely]] throw jspp::Exception("Cannot convert JS value to optional_ref<T>");
     }
 };
 

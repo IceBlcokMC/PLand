@@ -31,36 +31,11 @@ namespace land::scripting {
 using ll::service::PlayerInfo;
 decltype(Modules::kScriptPlayerInfo) Modules::kScriptPlayerInfo = //
     jspp::binding::defClass<void>("PlayerInfo")
-        .func(
-            "fromUuid",
-            [](std::string const& rawUuid) -> jspp::Local<jspp::Value> {
-                if (mce::UUID::canParse(rawUuid)) {
-                    auto uuid = mce::UUID::fromString(rawUuid);
-                    if (auto info = PlayerInfo::getInstance().fromUuid(uuid)) {
-                        return jspp::binding::toJs(*info);
-                    }
-                }
-                return jspp::Null::newNull();
-            }
-        )
-        .func(
-            "fromXuid",
-            [](std::string const& xuid) -> jspp::Local<jspp::Value> {
-                if (auto info = PlayerInfo::getInstance().fromXuid(xuid)) {
-                    return jspp::binding::toJs(*info);
-                }
-                return jspp::Null::newNull();
-            }
-        )
-        .func(
-            "fromName",
-            [](std::string const& name) -> jspp::Local<jspp::Value> {
-                if (auto info = PlayerInfo::getInstance().fromName(name)) {
-                    return jspp::binding::toJs(*info);
-                }
-                return jspp::Null::newNull();
-            }
-        )
+        .instanceProvider(PlayerInfo::getInstance)
+        // from* -> optional_ref<PlayerInfoEntry> -> TypeConverter<optional_ref<T>> -> TypeConverter<PlayerInfoEntry>
+        .func("fromUuid", &PlayerInfo::fromUuid, jspp::binding::ReturnValuePolicy::kCopy)
+        .func("fromXuid", &PlayerInfo::fromXuid, jspp::binding::ReturnValuePolicy::kCopy)
+        .func("fromName", &PlayerInfo::fromName, jspp::binding::ReturnValuePolicy::kCopy)
         .build();
 
 } // namespace land::scripting

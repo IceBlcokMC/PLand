@@ -29,41 +29,39 @@ constexpr bool isReferenceOnlyType<ll::command::CommandHandle> = true;
 namespace land ::scripting {
 using ll::command::CommandRegistrar;
 decltype(Modules::kScriptCommandRegistrar) Modules::kScriptCommandRegistrar = //
-    jspp::binding::defClass<CommandRegistrar>("CommandRegistrar")
+    jspp::binding::defClass<void>("CommandRegistrar")
+        .instanceProvider(&CommandRegistrar::getServerInstance)
         .func(
-            "getInstance",
-            []() -> auto& { return CommandRegistrar::getInstance(false); },
-            jspp::binding::ReturnValuePolicy::kReferencePersistent
-        )
-        .ctor(nullptr)
-        .method(
             "getOrCreateCommand",
-            [](CommandRegistrar& self, std::string const& name) -> auto& { return self.getOrCreateCommand(name); },
-            [](CommandRegistrar& self, std::string const& name, std::string const& desc) -> auto& {
-                return self.getOrCreateCommand(name, desc);
+            [](std::string const& name) -> auto& {
+                return CommandRegistrar::getServerInstance().getOrCreateCommand(name);
             },
-            [](CommandRegistrar& self, std::string const& name, std::string const& desc, CommandPermissionLevel level)
-                -> auto& { return self.getOrCreateCommand(name, desc, level); },
+            [](std::string const& name, std::string const& desc) -> auto& {
+                return CommandRegistrar::getServerInstance().getOrCreateCommand(name, desc);
+            },
+            [](std::string const& name, std::string const& desc, CommandPermissionLevel level) -> auto& {
+                return CommandRegistrar::getServerInstance().getOrCreateCommand(name, desc, level);
+            },
             jspp::binding::ReturnValuePolicy::kReferencePersistent // CommandHandle&
         )
-        .method("hasEnum", &CommandRegistrar::hasEnum)
-        .method(
+        .func("hasEnum", &CommandRegistrar::hasEnum)
+        .func(
             "tryRegisterRuntimeEnum",
             static_cast<bool (CommandRegistrar::*)(std::string const&, std::vector<std::pair<std::string, uint64>>)>(
                 &CommandRegistrar::tryRegisterRuntimeEnum
             )
         )
-        .method("addRuntimeEnumValues", &CommandRegistrar::addRuntimeEnumValues)
-        .method("hasSoftEnum", &CommandRegistrar::hasSoftEnum)
-        .method(
+        .func("addRuntimeEnumValues", &CommandRegistrar::addRuntimeEnumValues)
+        .func("hasSoftEnum", &CommandRegistrar::hasSoftEnum)
+        .func(
             "tryRegisterSoftEnum",
             static_cast<bool (CommandRegistrar::*)(std::string const&, std::vector<std::string>)>(
                 &CommandRegistrar::tryRegisterSoftEnum
             )
         )
-        .method("addSoftEnumValues", &CommandRegistrar::addSoftEnumValues)
-        .method("removeSoftEnumValues", &CommandRegistrar::removeSoftEnumValues)
-        .method("setSoftEnumValues", &CommandRegistrar::setSoftEnumValues)
+        .func("addSoftEnumValues", &CommandRegistrar::addSoftEnumValues)
+        .func("removeSoftEnumValues", &CommandRegistrar::removeSoftEnumValues)
+        .func("setSoftEnumValues", &CommandRegistrar::setSoftEnumValues)
         .build();
 
 

@@ -1,57 +1,42 @@
 declare module "@levilamina" {
-
     import type {
         CommandOrigin,
         CommandOutput,
         CommandParameterOption,
         CommandPermissionLevel,
-        Player
+        Player,
     } from "@minecraft";
 
     export class CommandRegistrar {
         private constructor();
 
-        static getInstance(): CommandRegistrar;
-
-        getOrCreateCommand(
+        static getOrCreateCommand(
             name: string,
             description?: string,
-            level?: CommandPermissionLevel
-        ): CommandHandle
+            level?: CommandPermissionLevel,
+        ): CommandHandle;
 
-        hasEnum(name: string): boolean;
+        static hasEnum(name: string): boolean;
 
-        tryRegisterRuntimeEnum(
+        static tryRegisterRuntimeEnum(
             name: string,
-            values: pair<string, number>[]
+            values: pair<string, number>[],
         ): boolean;
 
-        addRuntimeEnumValues(
+        static addRuntimeEnumValues(
             name: string,
-            values: pair<string, number>[]
+            values: pair<string, number>[],
         ): boolean;
 
-        hasSoftEnum(name: string): boolean;
+        static hasSoftEnum(name: string): boolean;
 
-        tryRegisterSoftEnum(
-            name: string,
-            values: string[]
-        ): boolean;
+        static tryRegisterSoftEnum(name: string, values: string[]): boolean;
 
-        addSoftEnumValues(
-            name: string,
-            values: string[]
-        ): boolean;
+        static addSoftEnumValues(name: string, values: string[]): boolean;
 
-        removeSoftEnumValues(
-            name: string,
-            values: string[]
-        ): boolean;
+        static removeSoftEnumValues(name: string, values: string[]): boolean;
 
-        setSoftEnumValues(
-            name: string,
-            values: string[]
-        ): boolean;
+        static setSoftEnumValues(name: string, values: string[]): boolean;
     }
 
     export class CommandHandle {
@@ -59,9 +44,9 @@ declare module "@levilamina" {
 
         runtimeOverload(): RuntimeOverload<Params>;
 
-        addAlias(name: string): CommandHandle
+        addAlias(name: string): CommandHandle;
 
-        getAliases(): string[]
+        getAliases(): string[];
     }
 
     export enum CommandParamKind {
@@ -95,17 +80,17 @@ declare module "@levilamina" {
     }
 
     type KindMapping = {
-        [CommandParamKind.Int]: number
-        [CommandParamKind.Float]: number
-        [CommandParamKind.Enum]: number
-        [CommandParamKind.SoftEnum]: string
-        [CommandParamKind.String]: string
-        [CommandParamKind.RawText]: string
-        [CommandParamKind.Bool]: boolean
-        [CommandParamKind.Player]: Player[]
-        [CommandParamKind.BlockPos]: BlockPos
-        [CommandParamKind.Vec3]: Vec3
-    }
+        [CommandParamKind.Int]: number;
+        [CommandParamKind.Float]: number;
+        [CommandParamKind.Enum]: number;
+        [CommandParamKind.SoftEnum]: string;
+        [CommandParamKind.String]: string;
+        [CommandParamKind.RawText]: string;
+        [CommandParamKind.Bool]: boolean;
+        [CommandParamKind.Player]: Player[];
+        [CommandParamKind.BlockPos]: BlockPos;
+        [CommandParamKind.Vec3]: Vec3;
+    };
 
     type SupportedKind = Extract<CommandParamKind, keyof KindMapping>;
     type EnumTypeKind = CommandParamKind.Enum | CommandParamKind.SoftEnum;
@@ -121,46 +106,36 @@ declare module "@levilamina" {
 
         optional<N extends string, K extends NonEnumKind>(
             name: N,
-            kind: K
+            kind: K,
         ): RuntimeOverload<T & { [P in N]?: KindToTypeOptional<K> }>;
 
         required<N extends string, K extends NonEnumKind>(
             name: N,
-            kind: K
+            kind: K,
         ): RuntimeOverload<T & { [P in N]: KindToType<K> }>;
 
         optional<N extends string, K extends EnumTypeKind>(
             name: N,
             enumKind: K,
-            enumName: string
+            enumName: string,
         ): RuntimeOverload<T & { [P in N]: KindToTypeOptional<K> }>;
 
         required<N extends string, K extends EnumTypeKind>(
             name: N,
             enumKind: K,
-            enumName: string
+            enumName: string,
         ): RuntimeOverload<T & { [P in N]: KindToType<K> }>;
 
-        text(
-            text: string
-        ): this;
+        text(text: string): this;
 
-        postfix(
-            postfix: string
-        ): this;
+        postfix(postfix: string): this;
 
-        option(
-            option: CommandParameterOption
-        ): this;
+        option(option: CommandParameterOption): this;
 
-        deoption(
-            option: CommandParameterOption
-        ): this;
+        deoption(option: CommandParameterOption): this;
 
         execute(
-            fn: (origin: CommandOrigin, output: CommandOutput, args: T) => void
+            fn: (origin: CommandOrigin, output: CommandOutput, args: T) => void,
         ): void;
-
     }
-
 }
