@@ -144,6 +144,36 @@ PLand
 
 ```
 
+## 🔨 Compilation Dependency Model
+
+```mermaid
+graph TD
+    subgraph native
+        a[target: core-obj]
+        b[target: devtool-obj]
+        c[target: scripting-obj]
+        d[PLand.dll]
+    end
+
+    subgraph script-layer
+        e[target: scripts]
+        subgraph bytecode
+        	g[tsc] --> h[qjsc.exe]
+        end
+    end
+
+    f[bin dir]
+
+    a --> b --> d
+    a --> d
+    a --> c --> d
+
+    d --> f
+
+    e --> g
+    h --> f
+```
+
 ---
 
 ## 📖 Documentation & Support

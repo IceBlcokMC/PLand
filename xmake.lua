@@ -47,10 +47,13 @@ option("scripting")
     set_showmenu(true)
 
 
-target("PLand")
-    add_rules("@levibuildscript/linkrule")
-    add_rules("plugin.compile_commands.autoupdate")
-    set_kind("shared")
+--------------------------------------------------------------------------
+--
+--------------------------------------------------------------------------
+
+function apply_common_flags()
+    set_policy("check.target_package_licenses", false)
+
     set_languages("c++20")
     set_symbols("debug")
     if is_plat("windows") then
@@ -71,13 +74,7 @@ target("PLand")
             {tools = {"clang_cl"}}
         )
     end
-    add_defines(
-        "LDAPI_EXPORT",
-        "LL_PLAT_S"
-    )
-    add_includedirs("src")
-    add_files("src/**.cpp", "src/**.cc")
-    add_headerfiles("src/(pland/**.h)")
+    add_defines("LDAPI_EXPORT", "LL_PLAT_S")
 
     add_packages(
         "levilamina",
@@ -87,11 +84,6 @@ target("PLand")
         "economy_bridge",
         "abseil"
     )
-
-    set_configvar("BUILD_VARIANT", get_config("devtool") and "devtool" or "headless")
-    set_configvar("HEADLESS", get_config("devtool") and "true" or "false")
-    add_configfiles("src/_version.h.in")
-    set_configdir("src/pland")
 
     if is_mode("debug") then
         add_defines("PLAND_DEBUG")
@@ -103,49 +95,125 @@ target("PLand")
         --)
     end
 
+    -- Subcomponent switches, shared by every target (src/PLand.cpp compiles the lifecycle glue
+    -- behind these ifdefs, so the defines must be present while compiling core too, otherwise
+    -- PLand::getScriptingBootstrap() etc. are never emitted and the final link fails).
+    -- Only clean pimpl headers (ScriptingBootstrap.h / DevToolApp.h) are pulled in from the
+    -- sibling dirs, so jspp/imgui updates still never recompile core.
+    if get_config("devtool") then
+        add_defines("LD_DEVTOOL")
+        add_includedirs("src-devtool")
+    end
+    if get_config("scripting") then
+        add_defines("PLAND_SCRIPTING")
+        add_includedirs("src-scripting")
+    end
+end
+
+-- Parse the latest git tag into PLAND_VERSION_* configvars on `target`; returns the version string.
+-- Shared by core-obj (generates src/pland/_version.h) and PLand (modpacker metadata).
+-- NOTE: must stay a `local` function: on_load callbacks run in the runtime sandbox and can only
+-- reach description-scope names through closure upvalues, not globals.
+local function resolve_pland_version(target)
+    local tag = os.iorun("git describe --tags --abbrev=0 --always")
+    local major, minor, patch, suffix = tag:match("v(%d+)%.(%d+)%.(%d+)(.*)")
+    if not major then
+        print("Failed to parse version tag, using 0.0.0")
+        major, minor, patch = 0, 0, 0
+    end
+    local versionStr =  major.."."..minor.."."..patch
+    if suffix then
+        prerelease = suffix:match("-(.*)")
+        if prerelease then
+            prerelease = prerelease:gsub("\n", "")
+        end
+        if prerelease then
+            target:set("configvar", "PLAND_VERSION_PRERELEASE", prerelease)
+            versionStr = versionStr.."-"..prerelease
+        end
+    end
+    target:set("configvar", "PLAND_VERSION_MAJOR", major)
+    target:set("configvar", "PLAND_VERSION_MINOR", minor)
+    target:set("configvar", "PLAND_VERSION_PATCH", patch)
+    return versionStr
+end
+
+target("core-obj")
+    set_kind("object")
+
+    apply_common_flags()
+
+    add_includedirs("src", {public = true})
+    add_files("src/**.cpp", "src/**.cc")
+    add_headerfiles("src/(pland/**.h)")
+
+    -- Generate src/pland/_version.h here: core sources (PLand.cpp, Telemetry.cc) include it and
+    -- core-obj builds before the final PLand target would generate it.
+    set_configvar("BUILD_VARIANT", get_config("devtool") and "devtool" or "headless")
+    set_configvar("HEADLESS", get_config("devtool") and "true" or "false")
+    add_configfiles("src/_version.h.in")
+    set_configdir("src/pland")
+
+    on_load(resolve_pland_version)
+target_end()
+
+
+target("devtool-obj")
+    set_kind("object")
+    add_deps("core-obj")
+    set_default(get_config("devtool"))
+
+    apply_common_flags()
+
+    add_files("src-devtool/**.cc")
+
+    add_packages(
+        "imgui",
+        "glew",
+        "imgui_color_text_edit",
+        {public = true}
+    )
+target_end()
+
+target("scripting-obj")
+    set_kind("object")
+    add_deps("core-obj")
+    set_default(get_config("scripting"))
+
+    apply_common_flags()
+
+    add_files("src-scripting/**.cc")
+
+    add_packages("jspp", {public = true})
+target_end()
+
+target("PLand")
+    add_rules("@levibuildscript/linkrule")
+    add_rules("plugin.compile_commands.autoupdate")
+    -- FIX: after splitting sources into pland-*-obj targets, this target only compiles
+    -- BinaryMeta.win.rc, so xmake builds its linker from the `msrc` language, whose
+    -- nameflags have no target.links/linkdirs/shflags entries -> every package/dep
+    -- library silently disappeared from the link command. Attaching the c++ rule
+    -- (it declares set_sourcekinds("cxx")) restores a c++ linker with full nameflags.
+    add_rules("c++")
+
+    set_kind("shared")
+    add_deps("core-obj")
+    if get_config("devtool") then
+        add_deps("devtool-obj")
+    end
+    if get_config("scripting") then
+        add_deps("scripting-obj")
+    end
+
+    apply_common_flags()
+
     if is_plat("windows") then
         add_files("src/BinaryMeta.win.rc")
     end
 
-    if get_config("devtool") then
-        add_packages(
-            "imgui",
-            "glew",
-            "imgui_color_text_edit"
-        )
-        add_includedirs("src-devtool")
-        add_files("src-devtool/**.cc")
-        add_defines("LD_DEVTOOL")
-    end
-
-    if get_config("scripting") then
-        add_packages("jspp")
-        add_includedirs("src-scripting")
-        add_files("src-scripting/**.cc")
-        add_defines("PLAND_SCRIPTING")
-    end
-
     on_load(function (target)
-        local tag = os.iorun("git describe --tags --abbrev=0 --always")
-        local major, minor, patch, suffix = tag:match("v(%d+)%.(%d+)%.(%d+)(.*)")
-        if not major then
-            print("Failed to parse version tag, using 0.0.0")
-            major, minor, patch = 0, 0, 0
-        end
-        local versionStr =  major.."."..minor.."."..patch
-        if suffix then
-            prerelease = suffix:match("-(.*)")
-            if prerelease then
-                prerelease = prerelease:gsub("\n", "")
-            end
-            if prerelease then
-                target:set("configvar", "PLAND_VERSION_PRERELEASE", prerelease)
-                versionStr = versionStr.."-"..prerelease
-            end
-        end
-        target:set("configvar", "PLAND_VERSION_MAJOR", major)
-        target:set("configvar", "PLAND_VERSION_MINOR", minor)
-        target:set("configvar", "PLAND_VERSION_PATCH", patch)
+        local versionStr = resolve_pland_version(target)
 
         target:add("rules", "@levibuildscript/modpacker",{
             modName = target:basename(),
@@ -163,6 +231,7 @@ target("PLand")
         os.mkdir(path.join(outputdir, "lang"))
         os.cp(langDir, outputdir)
     end)
+target_end()
 
 package("jspp")
     set_urls("https://github.com/engsr6982/jspp.git")
@@ -194,128 +263,6 @@ package("jspp")
 
         import("package.tools.cmake").install(package, configs)
     end)
+package_end()
 
-
--- src-scripts --TS--> Node.js --tsc--> qjs.exe --bin--> build --after_build--> bin/PLand/scripts
-rule("bytecode")
-    set_extensions(".ts")
-
-    on_load(function (target)
-        import("core.project.config")
-        -- register cleanfiles (tsc outdir and qjsc outdir)
-        local dist_top = path.join(config.builddir(), ".dist")
-        target:add("cleanfiles", path.absolute(dist_top, os.projectdir()))
-        local qjsc_top = path.join(config.builddir(), ".qjsc")
-        target:add("cleanfiles", path.absolute(qjsc_top, os.projectdir()))
-    end)
-
-    on_build_files(function (target, sourcebatch, opt)
-        import("lib.detect.find_tool")
-        import("core.project.depend")
-        import("utils.progress")
-        import("core.project.config")
-
-        local tsc = assert(find_tool("tsc.cmd", { shell = true }), "tsc not found")
-
-        -- TODO: Improve qjsc.exe detection
-        -- Current situation:
-        -- 1. After the `quickjs-ng` package is installed, its `bin` folder contains `qjsc.exe`. However,
-        --     due to xmake's dependency isolation mechanism, it cannot be accessed.
-        -- 2. Using a custom package to download a pre-built `qjsc.exe` from a remote repository always
-        --     results in xmake throwing an installation error.
-        -- 3. Rollback approach: Using `find_tool` first followed by a `curl` download encounters
-        --     xmake's caching mechanism, causing subsequent searches to fail upon refresh.
-        --
-        -- Current workaround: Hardcode a check using `os.exists` to verify file existence, conditionally download
-        --  the pre-built artifact from the remote repository via `curl` as needed,
-        --   and finally use `find_tool` to bypass the issues mentioned above.
-        local qjsc_file = path.join(os.projectdir(), "qjsc.exe")
-        if not os.exists(qjsc_file) then
-            cprint("${yellow}warning: ${default}qjsc.exe not found, try download...")
-            local curl = assert(find_tool("curl.exe"), "curl not found")
-            os.vrunv(curl.program, {"-L", "-o", "qjsc.exe", "https://github.com/engsr6982/quickjs-ng/releases/download/v0.15.1/qjsc.exe"})
-        end
-        local qjsc = assert(find_tool("qjsc.exe", { norun = true }), "qjsc not found")
-
-        -- 1) depend that runs tsc when TS sources change
-
-        local tsconfig_files = {}
-        local root_ts = path.join(os.projectdir(), "tsconfig.json")
-        if os.isfile(root_ts) then
-            table.insert(tsconfig_files, root_ts)
-        end
-
-        local tsc_inputs = table.join(sourcebatch.sourcefiles, tsconfig_files)
-
-        depend.on_changed(function ()
-            progress.show(opt.progress, "${color.build.target}build.tsc %s", "src-scripts")
-            os.vrunv(tsc.program, {}, { shell = true })
-        end, {
-            files = tsc_inputs,
-            changed = target:is_rebuilt()
-        })
-
-        -- 2) depend that scans JS outputs and runs qjsc when JS files changed
-        local js_outdir = path.absolute(path.join(config.builddir(), ".dist"), os.projectdir())
-        local jsfiles = os.files(path.join(js_outdir, "**.js")) or {}
-
-        -- scan all native module, avoid qjsc resolve it failed
-        local scan_files = os.files("src-scripts/types/**.d.ts") or {}
-        local scan_seen, ignore_module_args = {}, {}
-        local scan_pattern = "^%s*declare%s+module%s+['\"](.-)['\"]"
-        for _, f in ipairs(scan_files) do
-            local content = io.readfile(f)
-            if content then
-                for line in content:gmatch("[^\r\n]+") do
-                    local name = line:match(scan_pattern)
-                    if name and not scan_seen[name] then
-                        scan_seen[name] = true
-                        table.insert(ignore_module_args, "-M")
-                        table.insert(ignore_module_args, name)
-                    end
-                end
-            end
-        end
-
-        local bin_outdir = path.absolute(path.join(config.builddir(), ".qjsc"), os.projectdir());
-        os.mkdir(bin_outdir)
-        for _, js in ipairs(jsfiles) do
-            local out_name = path.basename(js) .. ".bin";
-            local outfile = path.join(bin_outdir, out_name)
-
-            depend.on_changed(function ()
-                local rel_js = path.relative(js, os.projectdir()) or js
-                progress.show(opt.progress, "${color.build.target}build.qjsc %s", rel_js)
-
-                -- run qjsc in js's directory so relative imports resolve
-                local oldir = os.cd(path.directory(js))
-
-                local args = table.join(ignore_module_args, {"-b", "-o", outfile, path.filename(js)})
-                os.vrunv(qjsc.program, args)
-
-                os.cd(oldir)
-            end, {
-                files = { js },
-                lastmtime = os.mtime(outfile),
-                changed = target:is_rebuilt()
-            })
-        end
-    end)
-
-target("scripts")
-    set_kind("object")
-    set_default(get_config("scripting"))
-    add_files("src-scripts/**.ts", { rule = "bytecode" })
-
-    --copy build/.qjsc into bin/PLand/scripts
-    after_build(function(target)
-        local projectdir = os.projectdir()
-        local bindir = path.join(projectdir, "bin")
-        local outputdir = path.join(bindir, "PLand", "scripts")
-
-        os.mkdir(outputdir)
-
-        local builddir = path.join(projectdir, "build")
-        local qjscdir = path.join(builddir, ".qjsc/*")
-        os.cp(qjscdir, outputdir)
-    end)
+includes("src-scripts")
