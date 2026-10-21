@@ -8,6 +8,7 @@ import {
     PlayerInfo,
     SimpleForm,
 } from "@levilamina";
+import { LandRegistry } from "@pland";
 
 function launchTask() {
     setTimeout(() => log("timeout called"), 1000);
@@ -38,6 +39,8 @@ export default class ScriptMod implements PluginEntry {
     onLoad() {
         log("onLoad called");
         log("onLoad called, {}", 123);
+
+        log(LandRegistry.toString());
     }
 
     onEnable() {

@@ -33,6 +33,10 @@ struct Modules {
     static jspp::ClassMeta const kScriptSimpleForm;
     static jspp::EnumMeta const  kScriptModalFormSelectedButton;
     static jspp::ClassMeta const kScriptPlayerInfo;
+
+    // @pland
+    static jspp::ClassMeta const kScriptLandRegistry;
+
 };
 
 
