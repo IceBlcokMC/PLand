@@ -1,4 +1,3 @@
-#include "pland/scripting/binding/Helper.h"
 #include "pland/scripting/binding/Modules.h"
 #include "pland/scripting/pch.h"
 
