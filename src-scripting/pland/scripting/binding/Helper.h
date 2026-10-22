@@ -25,17 +25,21 @@ jspp::EnumMeta auto_gen_enum_def(std::string_view ename) {
     return def.build();
 }
 
+// fmt_start_offset is the index of the first argument to be formatted
+template <size_t fmt_start_offset = 0>
 inline std::string format(jspp::Arguments const& args) {
-    auto len = args.length();
-    if (len == 0) [[unlikely]] {
+    auto argc = args.length();
+    if (argc <= fmt_start_offset) [[unlikely]] {
         throw jspp::Exception{"log/format requires at least one argument", jspp::ExceptionType::TypeError};
     }
 
-    auto f       = args[0];
+    auto f       = args[fmt_start_offset];
     auto fmt_str = f.asString().getValue();
 
+    constexpr auto skip_offset = fmt_start_offset + 1;
+
     fmt::dynamic_format_arg_store<fmt::format_context> store;
-    for (size_t i = 1; i < len; ++i) {
+    for (size_t i = skip_offset; i < argc; ++i) {
         auto v = args[i];
         store.push_back(v.toString().getValue());
     }

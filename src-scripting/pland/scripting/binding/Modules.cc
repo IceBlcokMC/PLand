@@ -34,6 +34,8 @@ jspp::ModuleMeta const& Modules::getLeviLaminaModule() {
                                     .export_class(kScriptSimpleForm)
                                     .export_enum(kScriptModalFormSelectedButton)
                                     .export_class(kScriptPlayerInfo)
+                                    .export_class(kScriptLogger)
+                                    .export_enum(kScriptLogLevel)
                                     .build();
     return m;
 }

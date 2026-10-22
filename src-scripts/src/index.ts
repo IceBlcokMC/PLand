@@ -4,6 +4,7 @@ import {
     CommandParamKind,
     CommandRegistrar,
     CustomForm,
+    logger,
     ModalForm,
     PlayerInfo,
     SimpleForm,
@@ -39,6 +40,7 @@ export default class ScriptMod implements PluginEntry {
     onLoad() {
         log("onLoad called");
         log("onLoad called, {}", 123);
+        logger.warn("scripting ok, {}", 12345);
 
         log(LandRegistry.toString());
     }
