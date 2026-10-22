@@ -35,6 +35,7 @@ struct Modules {
     static jspp::ClassMeta const kScriptPlayerInfo;
     static jspp::ClassMeta const kScriptLogger;
     static jspp::EnumMeta const  kScriptLogLevel;
+    static jspp::ClassMeta const kScriptI18n;
 
     // @pland
     static jspp::ClassMeta const kScriptLandRegistry;

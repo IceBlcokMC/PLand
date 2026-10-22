@@ -36,6 +36,7 @@ jspp::ModuleMeta const& Modules::getLeviLaminaModule() {
                                     .export_class(kScriptPlayerInfo)
                                     .export_class(kScriptLogger)
                                     .export_enum(kScriptLogLevel)
+                                    .export_class(kScriptI18n)
                                     .build();
     return m;
 }
