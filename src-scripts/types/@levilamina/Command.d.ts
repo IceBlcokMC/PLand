@@ -7,37 +7,36 @@ declare module "@levilamina" {
         Player,
     } from "@minecraft";
 
-    export class CommandRegistrar {
-        private constructor();
-
-        static getOrCreateCommand(
+    export interface CommandRegistrarAPI {
+        getOrCreateCommand(
             name: string,
             description?: string,
             level?: CommandPermissionLevel,
         ): CommandHandle;
 
-        static hasEnum(name: string): boolean;
+        hasEnum(name: string): boolean;
 
-        static tryRegisterRuntimeEnum(
+        tryRegisterRuntimeEnum(
             name: string,
             values: pair<string, number>[],
         ): boolean;
 
-        static addRuntimeEnumValues(
+        addRuntimeEnumValues(
             name: string,
             values: pair<string, number>[],
         ): boolean;
 
-        static hasSoftEnum(name: string): boolean;
+        hasSoftEnum(name: string): boolean;
 
-        static tryRegisterSoftEnum(name: string, values: string[]): boolean;
+        tryRegisterSoftEnum(name: string, values: string[]): boolean;
 
-        static addSoftEnumValues(name: string, values: string[]): boolean;
+        addSoftEnumValues(name: string, values: string[]): boolean;
 
-        static removeSoftEnumValues(name: string, values: string[]): boolean;
+        removeSoftEnumValues(name: string, values: string[]): boolean;
 
-        static setSoftEnumValues(name: string, values: string[]): boolean;
+        setSoftEnumValues(name: string, values: string[]): boolean;
     }
+    export const CommandRegistrar: CommandRegistrarAPI;
 
     export class CommandHandle {
         private constructor();
