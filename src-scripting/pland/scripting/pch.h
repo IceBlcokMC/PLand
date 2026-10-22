@@ -1,9 +1,13 @@
 #pragma once
 
 // std
+#include <filesystem>
+#include <fstream>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>

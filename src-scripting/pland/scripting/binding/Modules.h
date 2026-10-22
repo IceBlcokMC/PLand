@@ -13,6 +13,9 @@ struct Modules {
     [[nodiscard]] static jspp::ModuleMeta const& getLeviLaminaModule();
     [[nodiscard]] static jspp::ModuleMeta const& getPLandModule();
 
+    // @runtime
+    static jspp::ClassMeta const kScriptFileSystem;
+
     // @minecraft
     static jspp::ClassMeta const kScriptPlayer;
     static jspp::EnumMeta const  kScriptCommandPermissionLevel;
@@ -39,7 +42,6 @@ struct Modules {
 
     // @pland
     static jspp::ClassMeta const kScriptLandRegistry;
-
 };
 
 
