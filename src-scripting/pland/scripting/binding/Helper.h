@@ -26,6 +26,18 @@ jspp::EnumMeta auto_gen_enum_def(std::string_view ename) {
 }
 
 // fmt_start_offset is the index of the first argument to be formatted
+
+// format("hello {0}", "world") -> "hello world"
+template <size_t format_params_start_offset = 1>
+inline std::string formatImpl(std::string_view fmt_str, jspp::Arguments const& args) {
+    fmt::dynamic_format_arg_store<fmt::format_context> store;
+    for (size_t i = format_params_start_offset; i < args.length(); ++i) {
+        auto v = args[i];
+        store.push_back(v.toString().getValue());
+    }
+    return fmt::vformat(fmt_str, store);
+}
+
 template <size_t fmt_start_offset = 0>
 inline std::string format(jspp::Arguments const& args) {
     auto argc = args.length();
@@ -37,13 +49,7 @@ inline std::string format(jspp::Arguments const& args) {
     auto fmt_str = f.asString().getValue();
 
     constexpr auto skip_offset = fmt_start_offset + 1;
-
-    fmt::dynamic_format_arg_store<fmt::format_context> store;
-    for (size_t i = skip_offset; i < argc; ++i) {
-        auto v = args[i];
-        store.push_back(v.toString().getValue());
-    }
-    return fmt::vformat(fmt_str, store);
+    return formatImpl<skip_offset>(fmt_str, args);
 }
 
 } // namespace land::scripting::helper
