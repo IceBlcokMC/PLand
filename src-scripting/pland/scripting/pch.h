@@ -1,8 +1,11 @@
 #pragma once
 
 // std
+#include <algorithm>
+#include <cassert>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <memory>
 #include <optional>
 #include <string>

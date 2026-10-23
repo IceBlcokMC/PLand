@@ -78,6 +78,7 @@ jspp::ModuleMeta const& Modules::getRuntimeModule() {
                                     .export_function("clearTimeout", &clearTimeout)
                                     .export_function("clearInterval", &clearTimeout)
                                     .export_class(kScriptFileSystem)
+                                    .export_class(kScriptPath)
                                     .build();
     return m;
 }

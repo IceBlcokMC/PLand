@@ -14,7 +14,8 @@ struct Modules {
     [[nodiscard]] static jspp::ModuleMeta const& getPLandModule();
 
     // @runtime
-    static jspp::ClassMeta const kScriptFileSystem;
+    static jspp::ClassMeta const kScriptFileSystem; // fs
+    static jspp::ClassMeta const kScriptPath;       // path
 
     // @minecraft
     static jspp::ClassMeta const kScriptPlayer;
