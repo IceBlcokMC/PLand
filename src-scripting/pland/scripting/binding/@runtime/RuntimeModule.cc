@@ -3,6 +3,7 @@
 #include "pland/scripting/ScriptingBootstrap.h"
 #include "pland/scripting/binding/Helper.h"
 #include "pland/scripting/binding/Modules.h"
+#include "pland/scripting/community/CommunityScriptPlugin.h"
 #include "pland/scripting/pch.h"
 #include "pland/scripting/system/ScriptTimerSystem.h"
 
@@ -66,6 +67,45 @@ bool                     clearTimeout(uint32_t id) {
     return timer.cancelTask(id);
 }
 
+
+// helper
+ll::mod::Mod& resolveMod() {
+    auto data = jspp::EngineScope::currentEngineChecked().getData<EngineOwnData>();
+    if (data->isPrivateEngine) {
+        return PLand::getInstance().getSelf();
+    }
+    assert(data->communityScriptPlugin);
+    return *data->communityScriptPlugin;
+}
+jspp::Local<jspp::Value> newPluginCtx() {
+    auto ctx = jspp::Object::newObject();
+
+    auto setStr = [&](std::string const& key, std::string const& value) {
+        (void)ctx.defineOwnProperty(
+            jspp::String::newString(key),
+            jspp::String::newString(value),
+            jspp::PropertyAttribute::ReadOnly | jspp::PropertyAttribute::DontDelete
+        );
+    };
+    auto setPath = [&](std::string const& key, std::filesystem::path const& value) {
+        (void)ctx.defineOwnProperty(
+            jspp::String::newString(key),
+            jspp::String::newString(helper::toPOSIXPath(value)),
+            jspp::PropertyAttribute::ReadOnly | jspp::PropertyAttribute::DontDelete
+        );
+    };
+
+    auto& mod = resolveMod();
+    setStr("name", mod.getName());
+    setStr("type", mod.getType());
+    setPath("dir", mod.getModDir());
+    setPath("dataDir", mod.getDataDir());
+    setPath("configDir", mod.getConfigDir());
+    setPath("langDir", mod.getLangDir());
+    return ctx;
+}
+static_assert(jspp::binding::traits::isGetterCallback_v<decltype(newPluginCtx)>);
+
 } // namespace
 
 jspp::ModuleMeta const& Modules::getRuntimeModule() {
@@ -77,6 +117,10 @@ jspp::ModuleMeta const& Modules::getRuntimeModule() {
                                     .export_function("setInterval", &setInterval)
                                     .export_function("clearTimeout", &clearTimeout)
                                     .export_function("clearInterval", &clearTimeout)
+
+                                    .export_constant("pluginsRoot", ll::mod::getModsRoot)
+                                    .export_constant("pluginCtx", newPluginCtx)
+
                                     .export_class(kScriptFileSystem)
                                     .export_class(kScriptPath)
                                     .build();

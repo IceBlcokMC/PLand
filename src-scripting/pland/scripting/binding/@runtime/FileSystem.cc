@@ -1,5 +1,7 @@
+#include "pland/scripting/binding/Helper.h"
 #include "pland/scripting/binding/Modules.h"
 #include "pland/scripting/pch.h"
+
 
 #include <ll/api/io/FileUtils.h>
 
@@ -18,13 +20,6 @@ inline std::string normalizeSeparators(std::string s) {
 
 inline fs::path nativePath(std::string_view scriptPath) {
     return ll::file_utils::u8path(normalizeSeparators(std::string(scriptPath)));
-}
-
-inline std::string toPOSIXPath(fs::path const& p) {
-    auto        u8 = p.generic_u8string();
-    std::string s(reinterpret_cast<char const*>(u8.data()), u8.size());
-    assert(s.find('\\') == std::string::npos); // 防呆：反斜杠不允许外泄到脚本
-    return s;
 }
 
 // > fs module impl
@@ -125,9 +120,7 @@ inline bool appendFile(std::string const& path, std::string const& content, bool
     out.flush();
     return out.good();
 }
-inline bool appendFile(std::string const& path, std::string const& content) {
-    return appendFile(path, content, false);
-}
+inline bool appendFile(std::string const& path, std::string const& content) { return appendFile(path, content, false); }
 
 // 删除：始终递归，返回是否有条目被删除。
 inline bool remove(std::string const& path) { return fs::remove_all(nativePath(path)) > 0; }
@@ -172,8 +165,7 @@ std::string normalizeString(std::string_view path, bool allowAboveRoot) {
                         } else {
                             res.resize(static_cast<size_t>(lastSlashIndex));
                             auto lastSep      = res.find_last_of('/');
-                            lastSegmentLength = (lastSep == std::string::npos) ? res.size()
-                                                                               : res.size() - 1 - lastSep;
+                            lastSegmentLength = (lastSep == std::string::npos) ? res.size() : res.size() - 1 - lastSep;
                         }
                         lastSlash = static_cast<ptrdiff_t>(i);
                         dots      = 0;
@@ -187,8 +179,8 @@ std::string normalizeString(std::string_view path, bool allowAboveRoot) {
                     }
                 }
                 if (allowAboveRoot) {
-                    res += res.empty() ? ".." : "/..";
-                    lastSegmentLength = 2;
+                    res               += res.empty() ? ".." : "/..";
+                    lastSegmentLength  = 2;
                 }
             } else {
                 if (!res.empty()) {
@@ -251,8 +243,8 @@ static_assert(jspp::binding::traits::isFunctionCallback_v<decltype(join)>);
 // 对齐 Node.js path.posix.basename()
 std::string basename(std::string const& path) {
     std::string const normalized = normalizeSeparators(path);
-    std::string_view v{normalized};
-    size_t           end = v.size();
+    std::string_view  v{normalized};
+    size_t            end = v.size();
     while (end > 0 && v[end - 1] == '/') {
         --end;
     }
@@ -269,7 +261,7 @@ std::string basename(std::string const& path) {
 // 对齐 Node.js path.posix.dirname()
 std::string dirname(std::string const& path) {
     std::string const normalized = normalizeSeparators(path);
-    std::string_view v{normalized};
+    std::string_view  v{normalized};
     if (v.empty()) {
         return ".";
     }
@@ -302,12 +294,12 @@ std::string dirname(std::string const& path) {
 // 对齐 Node.js path.posix.extname()。纯字符串，不经过 fs::path。
 std::string extname(std::string const& path) {
     std::string const normalized = normalizeSeparators(path);
-    std::string_view v{normalized};
-    std::ptrdiff_t   startPart    = 0;
-    std::ptrdiff_t   startDot     = -1;
-    std::ptrdiff_t   end          = -1;
-    bool             matchedSlash = true;
-    int              preDotState  = 0;
+    std::string_view  v{normalized};
+    std::ptrdiff_t    startPart    = 0;
+    std::ptrdiff_t    startDot     = -1;
+    std::ptrdiff_t    end          = -1;
+    bool              matchedSlash = true;
+    int               preDotState  = 0;
 
     for (std::ptrdiff_t i = static_cast<std::ptrdiff_t>(v.size()) - 1; i >= 0; --i) {
         char c = v[static_cast<size_t>(i)];
@@ -347,8 +339,8 @@ inline fs::path absoluteNormalized(std::string const& path) {
     if (p.empty()) {
         p = fs::current_path();
     }
-    std::string s = toPOSIXPath(p);
-    bool isRootForm = (s == "/") || (s == "//") || (s.size() == 3 && s[1] == ':' && s[2] == '/');
+    std::string s          = helper::toPOSIXPath(p);
+    bool        isRootForm = (s == "/") || (s == "//") || (s.size() == 3 && s[1] == ':' && s[2] == '/');
     if (!isRootForm && !s.empty() && s.back() == '/') {
         s.pop_back();
     }
@@ -358,10 +350,10 @@ inline fs::path absoluteNormalized(std::string const& path) {
 std::string relative(std::string const& from, std::string const& to) {
     auto absFrom = absoluteNormalized(from);
     auto absTo   = absoluteNormalized(to);
-    return toPOSIXPath(absTo.lexically_relative(absFrom));
+    return helper::toPOSIXPath(absTo.lexically_relative(absFrom));
 }
 
-std::string absolute(std::string const& path) { return toPOSIXPath(absoluteNormalized(path)); }
+std::string absolute(std::string const& path) { return helper::toPOSIXPath(absoluteNormalized(path)); }
 
 } // namespace
 

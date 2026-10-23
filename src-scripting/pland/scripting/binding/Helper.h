@@ -25,6 +25,13 @@ jspp::EnumMeta auto_gen_enum_def(std::string_view ename) {
     return def.build();
 }
 
+inline std::string toPOSIXPath(std::filesystem::path const& p) {
+    auto        u8 = p.generic_u8string();
+    std::string s(reinterpret_cast<char const*>(u8.data()), u8.size());
+    assert(s.find('\\') == std::string::npos); // 防呆：反斜杠不允许外泄到脚本
+    return s;
+}
+
 // fmt_start_offset is the index of the first argument to be formatted
 
 // format("hello {0}", "world") -> "hello world"
