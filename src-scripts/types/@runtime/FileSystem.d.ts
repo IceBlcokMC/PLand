@@ -1,10 +1,10 @@
 declare module "@runtime" {
-    // Contract: The default starting path for the file system interface is the plugin's private folder.
-    // For example, if the plugin is named foo, the starting path would be <cwd>/<plugins-root>/foo.
+    // Contract: relative paths are resolved against the server's current working directory,
+    // like Node.js fs. Absolute paths are used as-is.
     //
     // Paths are POSIX-style: '/' is the separator and a leading '/' means an absolute path.
     // Windows-style input is also accepted: '\' is treated as a separator, and "X:/…" / "X:\…" are absolute.
-    // There is no sandbox: absolute paths and ".." can reach outside the plugin folder.
+    // There is no sandbox: absolute paths and ".." can reach anywhere the server process can.
     //
     // Bool returns mean "the operation succeeded"; OS-level rejections (permission denied, etc.)
     // are thrown as exceptions instead.

@@ -1,11 +1,6 @@
-#include "pland/scripting/EngineHelper.h"
 #include "pland/scripting/binding/Modules.h"
 #include "pland/scripting/pch.h"
 
-#include "pland/PLand.h"
-#include "pland/scripting/community/CommunityScriptPlugin.h"
-
-#include "ll/api/mod/Mod.h"
 #include <ll/api/io/FileUtils.h>
 
 namespace land::scripting {
@@ -14,74 +9,36 @@ namespace {
 
 namespace fs = std::filesystem;
 
-inline fs::path resolvePluginBaseDir() {
-    auto data = jspp::EngineScope::currentEngineChecked().getData<EngineOwnData>();
-    assert(data != nullptr);
-
-    auto plugins = fs::current_path() / ll::mod::getModsRoot();
-    if (data->isPrivateEngine) {
-        return plugins / PLand::getInstance().getSelf().getName();
-    }
-
-    assert(data->communityScriptPlugin != nullptr);
-    assert(data->communityPluginName == data->communityScriptPlugin->getName());
-    return plugins / data->communityPluginName;
-}
-
-// 脚本侧路径契约：POSIX 风格为主，'/' 为分隔符；兼容 Windows 风格输入
-// （'\' 同样视作分隔符，"X:/…" / "X:\…" 视作绝对路径），入口处统一归一为 '/' 再解析。
-inline bool isAsciiAlpha(char c) { return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'); }
-
+// 脚本侧路径契约：POSIX 风格为主，'/' 为分隔符；兼容 Windows 风格输入（'\' 同样视作分隔符）。
+// 相对路径不做基目录解析，由操作系统按进程 cwd 解析（与 Node.js fs 一致）。
 inline std::string normalizeSeparators(std::string s) {
     std::replace(s.begin(), s.end(), '\\', '/');
     return s;
 }
 
-inline fs::path resolveScriptPath(std::string_view scriptPath) {
-    std::string normalized = normalizeSeparators(std::string(scriptPath));
-
-    auto base = resolvePluginBaseDir();
-    if (normalized.empty()) {
-        return base; // 避免 base / "" 带上尾分隔符
-    }
-    fs::path p = ll::file_utils::u8path(normalized);
-
-    if (!normalized.empty() && normalized.front() == '/') {
-        // POSIX 绝对路径（含归一化后的 UNC "//…"）。Windows 上 "/x" 缺少盘符，锚定到插件目录所在盘。
-        if (p.is_absolute()) {
-            return p;
-        }
-        return base.root_name() / p;
-    }
-    bool driveForm = normalized.size() >= 2 && isAsciiAlpha(normalized[0]) && normalized[1] == ':';
-    if (driveForm && p.is_absolute()) {
-        return p; // Windows 盘符绝对路径（"D:/a/b"）
-    }
-    // 其余一律按相对路径处理（含 Linux 上的 "D:/a/b" 与盘符相对 "C:foo"）。
-    // "./" 前缀抵消 Windows 对 "C:foo" 的根名解析，保证其只是 base 下的普通名字。
-    if (driveForm) {
-        return base / ("./" + normalized);
-    }
-    return base / p;
+inline fs::path nativePath(std::string_view scriptPath) {
+    return ll::file_utils::u8path(normalizeSeparators(std::string(scriptPath)));
 }
 
 inline std::string toPOSIXPath(fs::path const& p) {
-    auto u8 = p.generic_u8string();
-    return ll::string_utils::u8str2str(u8);
+    auto        u8 = p.generic_u8string();
+    std::string s(reinterpret_cast<char const*>(u8.data()), u8.size());
+    assert(s.find('\\') == std::string::npos); // 防呆：反斜杠不允许外泄到脚本
+    return s;
 }
 
 // > fs module impl
 // ================================
 
-inline bool exists(std::string const& path) { return fs::exists(resolveScriptPath(path)); }
+inline bool exists(std::string const& path) { return fs::exists(nativePath(path)); }
 
 // 文本模式读取。非普通文件（不存在、目录等）统一返回 nullopt，保证平台一致。
 inline std::optional<std::string> readFile(std::string const& path) {
-    auto abs = resolveScriptPath(path);
-    if (!fs::is_regular_file(abs)) {
+    fs::path p = nativePath(path);
+    if (!fs::is_regular_file(p)) {
         return std::nullopt;
     }
-    std::ifstream in(abs); // 文本模式
+    std::ifstream in(p); // 文本模式
     if (!in) {
         return std::nullopt;
     }
@@ -101,9 +58,9 @@ inline void createParentDirs(fs::path const& p) {
 }
 
 inline bool writeFile(std::string const& path, std::string const& content) {
-    auto abs = resolveScriptPath(path);
-    createParentDirs(abs);
-    std::ofstream out(abs); // 文本模式
+    fs::path p = nativePath(path);
+    createParentDirs(p);
+    std::ofstream out(p); // 文本模式
     if (!out) {
         return false;
     }
@@ -114,53 +71,53 @@ inline bool writeFile(std::string const& path, std::string const& content) {
 
 // 文件或目录树拷贝：src 为目录时其内容被拷贝到 dst 下（dst 不存在则创建）。
 inline bool copy(std::string const& src, std::string const& dst) {
-    auto absSrc = resolveScriptPath(src);
-    auto absDst = resolveScriptPath(dst);
-    createParentDirs(absDst);
-    if (fs::is_directory(absSrc)) {
-        fs::copy(absSrc, absDst, fs::copy_options::recursive | fs::copy_options::overwrite_existing);
+    fs::path srcP = nativePath(src);
+    fs::path dstP = nativePath(dst);
+    createParentDirs(dstP);
+    if (fs::is_directory(srcP)) {
+        fs::copy(srcP, dstP, fs::copy_options::recursive | fs::copy_options::overwrite_existing);
         return true;
     }
-    return fs::copy_file(absSrc, absDst, fs::copy_options::overwrite_existing);
+    return fs::copy_file(srcP, dstP, fs::copy_options::overwrite_existing);
 }
 
 // 真实 move：同卷直接 rename；跨卷（POSIX 挂载点 EXDEV）回退为递归拷贝后删除。
 inline bool move(std::string const& src, std::string const& dst) {
-    auto absSrc = resolveScriptPath(src);
-    auto absDst = resolveScriptPath(dst);
-    createParentDirs(absDst);
+    fs::path srcP = nativePath(src);
+    fs::path dstP = nativePath(dst);
+    createParentDirs(dstP);
     try {
-        fs::rename(absSrc, absDst);
+        fs::rename(srcP, dstP);
         return true;
     } catch (fs::filesystem_error const& e) {
         if (e.code() != std::errc::cross_device_link) {
             throw; // 操作系统拒绝（权限等），原样抛给脚本
         }
     }
-    fs::copy(absSrc, absDst, fs::copy_options::recursive | fs::copy_options::overwrite_existing);
-    fs::remove_all(absSrc);
+    fs::copy(srcP, dstP, fs::copy_options::recursive | fs::copy_options::overwrite_existing);
+    fs::remove_all(srcP);
     return true;
 }
 
-inline bool mkdir(std::string const& path) { return fs::create_directory(resolveScriptPath(path)); }
+inline bool mkdir(std::string const& path) { return fs::create_directory(nativePath(path)); }
 inline bool mkdir(std::string const& path, bool recursive) {
-    auto abs = resolveScriptPath(path);
+    fs::path p = nativePath(path);
     if (recursive) {
-        return fs::create_directories(abs);
+        return fs::create_directories(p);
     }
-    return fs::create_directory(abs);
+    return fs::create_directory(p);
 }
 
 // 追加写：内容原样写入（不做换行转换），换行符由脚本自行处理。
 inline bool appendFile(std::string const& path, std::string const& content, bool createIfNotExists) {
-    auto abs = resolveScriptPath(path);
-    if (!createIfNotExists && !fs::exists(abs)) {
+    fs::path p = nativePath(path);
+    if (!createIfNotExists && !fs::exists(p)) {
         return false;
     }
     if (createIfNotExists) {
-        createParentDirs(abs);
+        createParentDirs(p);
     }
-    std::ofstream out(abs, std::ios::binary | std::ios::app);
+    std::ofstream out(p, std::ios::binary | std::ios::app);
     if (!out) {
         return false;
     }
@@ -168,14 +125,16 @@ inline bool appendFile(std::string const& path, std::string const& content, bool
     out.flush();
     return out.good();
 }
-inline bool appendFile(std::string const& path, std::string const& content) { return appendFile(path, content, false); }
+inline bool appendFile(std::string const& path, std::string const& content) {
+    return appendFile(path, content, false);
+}
 
 // 删除：始终递归，返回是否有条目被删除。
-inline bool remove(std::string const& path) { return fs::remove_all(resolveScriptPath(path)) > 0; }
+inline bool remove(std::string const& path) { return fs::remove_all(nativePath(path)) > 0; }
 
-inline bool isDirectory(std::string const& path) { return fs::is_directory(resolveScriptPath(path)); }
+inline bool isDirectory(std::string const& path) { return fs::is_directory(nativePath(path)); }
 
-inline bool isFile(std::string const& path) { return fs::is_regular_file(resolveScriptPath(path)); }
+inline bool isFile(std::string const& path) { return fs::is_regular_file(nativePath(path)); }
 
 
 // > path module impl（纯字符串 POSIX，对齐 Node.js path.posix）
@@ -213,7 +172,8 @@ std::string normalizeString(std::string_view path, bool allowAboveRoot) {
                         } else {
                             res.resize(static_cast<size_t>(lastSlashIndex));
                             auto lastSep      = res.find_last_of('/');
-                            lastSegmentLength = (lastSep == std::string::npos) ? res.size() : res.size() - 1 - lastSep;
+                            lastSegmentLength = (lastSep == std::string::npos) ? res.size()
+                                                                               : res.size() - 1 - lastSep;
                         }
                         lastSlash = static_cast<ptrdiff_t>(i);
                         dots      = 0;
@@ -227,8 +187,8 @@ std::string normalizeString(std::string_view path, bool allowAboveRoot) {
                     }
                 }
                 if (allowAboveRoot) {
-                    res               += res.empty() ? ".." : "/..";
-                    lastSegmentLength  = 2;
+                    res += res.empty() ? ".." : "/..";
+                    lastSegmentLength = 2;
                 }
             } else {
                 if (!res.empty()) {
@@ -381,13 +341,27 @@ std::string extname(std::string const& path) {
     return std::string(v.substr(static_cast<size_t>(startDot), static_cast<size_t>(end - startDot)));
 }
 
+// 基于 cwd 的绝对化（对齐 Node path.resolve）：空输入回退 cwd，不保留尾分隔符（根形式除外）。
+inline fs::path absoluteNormalized(std::string const& path) {
+    fs::path p = fs::absolute(nativePath(path)).lexically_normal();
+    if (p.empty()) {
+        p = fs::current_path();
+    }
+    std::string s = toPOSIXPath(p);
+    bool isRootForm = (s == "/") || (s == "//") || (s.size() == 3 && s[1] == ':' && s[2] == '/');
+    if (!isRootForm && !s.empty() && s.back() == '/') {
+        s.pop_back();
+    }
+    return ll::file_utils::u8path(s);
+}
+
 std::string relative(std::string const& from, std::string const& to) {
-    auto absFrom = resolveScriptPath(from).lexically_normal();
-    auto absTo   = resolveScriptPath(to).lexically_normal();
+    auto absFrom = absoluteNormalized(from);
+    auto absTo   = absoluteNormalized(to);
     return toPOSIXPath(absTo.lexically_relative(absFrom));
 }
 
-std::string absolute(std::string const& path) { return toPOSIXPath(resolveScriptPath(path).lexically_normal()); }
+std::string absolute(std::string const& path) { return toPOSIXPath(absoluteNormalized(path)); }
 
 } // namespace
 
