@@ -5,15 +5,18 @@ namespace land::scripting {
 
 class CommunityScriptPlugin;
 
-struct EngineOwnData {
+struct EngineOwnData final {
     bool const                 isPrivateEngine{false}; // only PLand bult-in logic engine trusted
     jspp::Global<jspp::Object> scriptEntry{};          // script default export's class instance
 
     std::string                            communityPluginName{};          // only community plugin
     std::shared_ptr<CommunityScriptPlugin> communityScriptPlugin{nullptr}; // only community plugin
 
+    std::vector<uint32_t> runningTimers{};
+
     EngineOwnData() = default;
     EngineOwnData(bool ispriv) : isPrivateEngine(ispriv) {}
+    ~EngineOwnData(); // call on engine destruction
 };
 
 struct EngineHelper {

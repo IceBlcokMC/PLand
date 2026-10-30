@@ -1,9 +1,30 @@
 #include "EngineHelper.h"
-
-#include "EngineHelper.h"
+#include "ScriptingBootstrap.h"
 #include "binding/Modules.h"
 
+#include "pland/PLand.h"
+#include "pland/scripting/system/ScriptTimerSystem.h"
+
 namespace land::scripting {
+
+EngineOwnData::~EngineOwnData() {
+    auto& bootstrap = PLand::getInstance().getScriptingBootstrap();
+    {
+        auto& timer = bootstrap.getScriptTimerSystem();
+
+        auto copy = this->runningTimers; // copy to avoid iterator invalidation
+        for (auto id : copy) {
+            timer.cancelTask(id); // stop all running timers
+        }
+
+        // clang-format off
+        //                                                /-> native layer:cancelTask -> Coro Exit -> Finalizer -> erase runningTimers by id
+        // script layer: clearTimeout/clearInterval(id) -/         ↑
+        //                                                         |
+        // ~Engine -> ~EngineOwnData -> cancel all running timers -/
+        // clang-format on
+    }
+}
 
 std::unique_ptr<jspp::Engine> EngineHelper::newEngine(bool trust) {
     auto engine = std::make_unique<jspp::Engine>();

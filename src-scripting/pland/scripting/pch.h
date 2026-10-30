@@ -3,8 +3,10 @@
 // std
 #include <algorithm>
 #include <cassert>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <iterator>
 #include <memory>
 #include <optional>

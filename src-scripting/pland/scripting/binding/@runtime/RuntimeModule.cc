@@ -56,7 +56,15 @@ jspp::Local<jspp::Value> setTimerImpl(jspp::Arguments const& arguments, bool int
 
     auto& timer = PLand::getInstance().getScriptingBootstrap().getScriptTimerSystem();
 
-    auto id = interval ? timer.newInterval(fn, timeout) : timer.newTimeout(fn, timeout);
+    auto engine = arguments.runtime();
+    assert(engine);
+
+    auto finalizer = [engine](ScriptTimerSystem::TaskId id) {
+        std::erase(engine->getData<EngineOwnData>()->runningTimers, id);
+    };
+
+    auto id = interval ? timer.newInterval(fn, timeout, finalizer) : timer.newTimeout(fn, timeout, finalizer);
+    engine->getData<EngineOwnData>()->runningTimers.push_back(id);
     return jspp::binding::toJs(id);
 }
 

@@ -10,7 +10,8 @@ namespace land::scripting {
 ScriptTimerSystem::ScriptTimerSystem() = default;
 ScriptTimerSystem::~ScriptTimerSystem() { clearAll(); }
 
-ScriptTimerSystem::TaskId ScriptTimerSystem::newTimeout(jspp::Local<jspp::Function> callback, int64_t timeout) {
+ScriptTimerSystem::TaskId
+ScriptTimerSystem::newTimeout(jspp::Local<jspp::Function> callback, int64_t timeout, Finalizer finalizer) {
     auto id    = mNextId++;
     auto token = std::make_shared<CancelToken>();
 
@@ -30,7 +31,10 @@ ScriptTimerSystem::TaskId ScriptTimerSystem::newTimeout(jspp::Local<jspp::Functi
             PLand::getInstance().getSelf().getLogger().error("Uncaught Exception: {}\n{}", e.what(), e.stacktrace());
         }
         co_return;
-    }).launch(ll::thread::ServerThreadExecutor::getDefault(), [this, id](auto) { this->mCancelTokens.erase(id); });
+    }).launch(ll::thread::ServerThreadExecutor::getDefault(), [this, id, finalizer = std::move(finalizer)](auto) {
+        this->mCancelTokens.erase(id);
+        if (finalizer) finalizer(id);
+    });
     if (!mCancelTokens.emplace(id, std::move(token)).second) {
         token->abort = true;
         token->sleep.interrupt(true);
@@ -39,7 +43,8 @@ ScriptTimerSystem::TaskId ScriptTimerSystem::newTimeout(jspp::Local<jspp::Functi
     return id;
 }
 
-ScriptTimerSystem::TaskId ScriptTimerSystem::newInterval(jspp::Local<jspp::Function> callback, int64_t timeout) {
+ScriptTimerSystem::TaskId
+ScriptTimerSystem::newInterval(jspp::Local<jspp::Function> callback, int64_t timeout, Finalizer finalizer) {
     auto id    = mNextId++;
     auto token = std::make_shared<CancelToken>();
 
@@ -65,7 +70,10 @@ ScriptTimerSystem::TaskId ScriptTimerSystem::newInterval(jspp::Local<jspp::Funct
             }
         }
         co_return;
-    }).launch(ll::thread::ServerThreadExecutor::getDefault(), [this, id](auto) { this->mCancelTokens.erase(id); });
+    }).launch(ll::thread::ServerThreadExecutor::getDefault(), [this, id, finalizer = std::move(finalizer)](auto) {
+        this->mCancelTokens.erase(id);
+        if (finalizer) finalizer(id);
+    });
     if (!mCancelTokens.emplace(id, std::move(token)).second) {
         token->abort = true;
         token->sleep.interrupt(true);

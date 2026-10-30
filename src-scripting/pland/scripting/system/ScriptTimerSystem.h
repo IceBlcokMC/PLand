@@ -1,6 +1,7 @@
 #pragma once
 #include "pland/scripting/pch.h"
 
+#include <ll/api/Expected.h>
 #include <ll/api/coro/CoroPromise.h>
 #include <ll/api/coro/InterruptableSleep.h>
 
@@ -14,9 +15,11 @@ public:
     explicit ScriptTimerSystem();
     ~ScriptTimerSystem();
 
-    TaskId newTimeout(jspp::Local<jspp::Function> callback, int64_t timeout);
+    using Finalizer = std::function<void(TaskId id)>;
 
-    TaskId newInterval(jspp::Local<jspp::Function> callback, int64_t timeout);
+    TaskId newTimeout(jspp::Local<jspp::Function> callback, int64_t timeout, Finalizer finalizer = nullptr);
+
+    TaskId newInterval(jspp::Local<jspp::Function> callback, int64_t timeout, Finalizer finalizer = nullptr);
 
     bool cancelTask(TaskId taskId);
 
