@@ -68,64 +68,6 @@ void open_admin_mgr(CommandOrigin const& ori, CommandOutput& /* out */) {
     gui::OperatorManager::sendMainMenu(player);
 }
 
-void list_admins(CommandOrigin const& /* origin */, CommandOutput& output) {
-    auto operators = PLand::getInstance().getLandRegistry().getOperators();
-    if (operators.empty()) {
-        feedback_utils::sendErrorText(output, "当前没有管理员"_tr());
-        return;
-    }
-
-    std::ostringstream oss;
-    oss << "管理员: "_tr();
-    auto& infoDb = ll::service::PlayerInfo::getInstance();
-    for (auto& oper : operators) {
-        auto info = infoDb.fromUuid(oper);
-        if (info) {
-            oss << info->name;
-        } else {
-            oss << oper.asString();
-        }
-        oss << " | ";
-    }
-    feedback_utils::sendText(output, oss.str());
-}
-
-struct AdminActionParam {
-    enum class Action { add, remove } action;
-    CommandSelector<Player> targets;
-};
-void admin_add_remove(CommandOrigin const& ori, CommandOutput& out, AdminActionParam const& param) {
-    auto& db  = PLand::getInstance().getLandRegistry();
-    auto  pls = param.targets.results(ori).data;
-
-    if (pls->empty()) {
-        feedback_utils::sendErrorText(out, "未找到任何玩家，请确保玩家在线后重试"_tr());
-        return;
-    }
-
-    for (auto& pl : *pls) {
-        if (!pl) {
-            continue;
-        }
-        auto& uid  = pl->getUuid();
-        auto  name = pl->getRealName();
-        if (param.action == AdminActionParam::Action::add) {
-            if (db.isOperator(uid)) {
-                feedback_utils::sendErrorText(out, "{} 已经是管理员，请不要重复添加"_tr(name));
-            } else {
-                if (db.addOperator(uid)) feedback_utils::sendText(out, "{} 已经被添加为管理员"_tr(name));
-            }
-        } else {
-            if (db.isOperator(uid)) {
-                if (db.removeOperator(uid)) feedback_utils::sendText(out, "{} 已经被移除管理员"_tr(name));
-            } else {
-                feedback_utils::sendErrorText(out, "{} 不是管理员，无需移除"_tr(name));
-            }
-        }
-    }
-}
-
-
 struct NewLandParam {
     enum class NewType : int { Default = 0, SubLand } type{NewType::Default};
 };
@@ -340,16 +282,6 @@ bool LandCommand::setupAll() {
     // pland mgr 领地管理GUI
     h.overload().text("mgr").execute(
         wrapCommandHandler<&handlers::open_admin_mgr, LandCommandAcceptOrigin<CommandOriginType::Player>>()
-    );
-
-    // pland admin list 列出所有管理员
-    h.overload().text("admin").text("list").execute(
-        wrapCommandHandler<&handlers::list_admins, LandCommandAcceptOrigin<CommandOriginType::DedicatedServer>>()
-    );
-
-    // pland admin <add|remove> <targets> 添加/移除管理员
-    h.overload<handlers::AdminActionParam>().text("admin").required("action").required("targets").execute(
-        wrapCommandHandler<&handlers::admin_add_remove, LandCommandAcceptOrigin<CommandOriginType::DedicatedServer>>()
     );
 
     // pland new [NewType: type] 新建一个领地

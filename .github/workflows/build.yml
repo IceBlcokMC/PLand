@@ -53,7 +53,7 @@ jobs:
           key: xmake-${{ hashFiles('xmake.lua') }}
           restore-keys: |
             xmake-
-  
+
       - name: Setup LLVM
         uses: ZhongRuoyu/setup-llvm@v0
         with:
@@ -84,7 +84,7 @@ jobs:
           include-hidden-files: true
           path: |
             build/.dist
-            build/.qjsc
+            build/.scriptc
             src-scripts/
 
   build-gate:

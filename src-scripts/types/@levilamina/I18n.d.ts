@@ -15,8 +15,8 @@ declare module "@levilamina" {
 
         set(localeCode: string, key: string, value: string): void;
 
-        tr(key: string, ...params: string[]): string;
-        trl(localeCode: string, key: string, ...params: string[]): string;
+        tr(key: string, ...params: any[]): string;
+        trl(localeCode: string, key: string, ...params: any[]): string;
 
         static readonly defaultLocaleCode: string;
     }

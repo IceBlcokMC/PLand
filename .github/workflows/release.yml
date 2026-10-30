@@ -57,7 +57,7 @@ jobs:
           include-hidden-files: true
           path: |
             build/.dist
-            build/.qjsc
+            build/.scriptc
             src-scripts/
 
   update-release-notes:

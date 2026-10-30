@@ -21,7 +21,7 @@ ll::Expected<> EngineHelper::loadScript(std::filesystem::path const& entry, jspp
     try {
         auto ns = [&] -> jspp::Local<jspp::Object> {
             if (bytecode) {
-                return engine.loadByteCodeNamespace(entry, true);
+                return engine.loadByteCodeContainerNamespace(entry, true);
             } else {
                 return engine.loadModule(entry);
             }

@@ -1,20 +1,20 @@
+#include "pland/PLand.h"
+#include "pland/scripting/EngineHelper.h"
 #include "pland/scripting/binding/Helper.h"
 #include "pland/scripting/binding/Modules.h"
+#include "pland/scripting/community/CommunityScriptPlugin.h"
 #include "pland/scripting/pch.h"
 
 #include "mc/world/level/Level.h"
 #include <mc/world/actor/player/Player.h>
-
-#include "ll/api/service/Bedrock.h"
 
 #include "ll/api/command/Command.h"
 #include "ll/api/command/CommandHandle.h"
 #include "ll/api/command/CommandRegistrar.h"
 #include "ll/api/command/Overload.h"
 #include "ll/api/command/runtime/RuntimeOverload.h"
-#include "pland/PLand.h"
-#include "pland/scripting/EngineHelper.h"
-#include "pland/scripting/community/CommunityScriptPlugin.h"
+#include "ll/api/service/Bedrock.h"
+
 
 namespace jspp::binding::traits {
 
@@ -177,7 +177,9 @@ private:
             return jspp::Null::newNull();
         }
         if (storage.hold(CommandParamKind::Enum)) {
-            return jspp::binding::toJs(std::get<ll::command::RuntimeEnum>(storage.value()).index);
+            return jspp::binding::toJs(
+                static_cast<uint32_t>(std::get<ll::command::RuntimeEnum>(storage.value()).index)
+            );
         }
         if (storage.hold(CommandParamKind::SoftEnum)) {
             return jspp::binding::toJs(std::get<ll::command::RuntimeSoftEnum>(storage.value()));

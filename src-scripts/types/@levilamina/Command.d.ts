@@ -8,23 +8,13 @@ declare module "@levilamina" {
     } from "@minecraft";
 
     export interface CommandRegistrarAPI {
-        getOrCreateCommand(
-            name: string,
-            description?: string,
-            level?: CommandPermissionLevel,
-        ): CommandHandle;
+        getOrCreateCommand(name: string, description?: string, level?: CommandPermissionLevel): CommandHandle;
 
         hasEnum(name: string): boolean;
 
-        tryRegisterRuntimeEnum(
-            name: string,
-            values: pair<string, number>[],
-        ): boolean;
+        tryRegisterRuntimeEnum(name: string, values: pair<string, number>[]): boolean;
 
-        addRuntimeEnumValues(
-            name: string,
-            values: pair<string, number>[],
-        ): boolean;
+        addRuntimeEnumValues(name: string, values: pair<string, number>[]): boolean;
 
         hasSoftEnum(name: string): boolean;
 
@@ -49,33 +39,32 @@ declare module "@levilamina" {
     }
 
     export enum CommandParamKind {
-        Int,
-        Bool,
-        Float,
-        Dimension,
-        String,
-        Enum,
-        SoftEnum,
-        Actor,
-        Player,
-        BlockPos,
-        Vec3,
-        RawText,
-        Message,
-        JsonValue,
-        Item,
-        BlockName,
-        BlockState,
-        Effect,
-        ActorType,
-        Command,
-        RelativeFloat,
-        IntegerRange,
-        FilePath,
-        WildcardInt,
-        WildcardActor,
-        // New types can only be added here, to keep the ABI stable.
-        Count,
+        Int = 0,
+        Bool = 1,
+        Float = 2,
+        Dimension = 3,
+        String = 4,
+        Enum = 5,
+        SoftEnum = 6,
+        Actor = 7,
+        Player = 8,
+        BlockPos = 9,
+        Vec3 = 10,
+        RawText = 11,
+        Message = 12,
+        JsonValue = 13,
+        Item = 14,
+        BlockName = 15,
+        BlockState = 16,
+        Effect = 17,
+        ActorType = 18,
+        Command = 19,
+        RelativeFloat = 20,
+        IntegerRange = 21,
+        FilePath = 22,
+        WildcardInt = 23,
+        WildcardActor = 24,
+        Count = 25,
     }
 
     type KindMapping = {
@@ -133,8 +122,6 @@ declare module "@levilamina" {
 
         deoption(option: CommandParameterOption): this;
 
-        execute(
-            fn: (origin: CommandOrigin, output: CommandOutput, args: T) => void,
-        ): void;
+        execute(fn: (origin: CommandOrigin, output: CommandOutput, args: T) => void): void;
     }
 }

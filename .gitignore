@@ -569,3 +569,6 @@ src/pland/_version.h
 !src/pland/debug/
 
 CLAUDE.md
+
+.zcode
+.claude

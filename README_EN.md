@@ -158,7 +158,7 @@ graph TD
     subgraph script-layer
         e[target: scripts]
         subgraph bytecode
-        	g[tsc] --> h[qjsc.exe]
+        	g[tsc] --> h[scriptc.exe]
         end
     end
 

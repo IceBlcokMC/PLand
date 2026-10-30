@@ -6,7 +6,7 @@ declare module "@pland" {
 
         removeAdmin(uuid: UUID): boolean;
 
-        getAdmins(uuid: UUID): boolean;
+        getAdmins(): UUID[];
     }
     export const LandRegistry: LandRegistryAPI;
 }

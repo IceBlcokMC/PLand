@@ -26,7 +26,7 @@ if has_config("devtool") then
     add_requires("imgui_color_text_edit")
 end
 if has_config("scripting") then
-    add_requires("jspp b259bdaf2182b3a7b7fb84d0c0fd1ddf98b00bc1")
+    add_requires("jspp 065fb832e12f29992fca94af834265912c93c986")
 end
 
 
@@ -246,10 +246,22 @@ package("jspp")
         if package:debug() then
             package:add("defines", "JSPP_DEBUG")
         end
+
+        -- Expose the scriptc bytecode compiler (installed by JSPP_BUILD_TOOLS)
+        -- on PATH. quickjs bytecode embeds a build-dependent checksum, so the
+        -- compiler must come from the same quickjs build as the runtime.
+        local scriptc = package:is_plat("windows") and "scriptc.exe" or "scriptc"
+        if os.isfile(path.join(package:installdir(), "bin", scriptc)) then
+            if package.add_bindirs then
+                package:add_bindirs("bin")
+            else
+                package:addenv("PATH", "bin")
+            end
+        end
     end)
 
     on_install(function (package)
-        local configs = { "-DJSPP_BACKEND=quickjs" }
+        local configs = { "-DJSPP_BACKEND=quickjs", "-DJSPP_BUILD_TOOLS=ON" }
 
         local pkg = package:dep("quickjs-ng")
         if pkg then
