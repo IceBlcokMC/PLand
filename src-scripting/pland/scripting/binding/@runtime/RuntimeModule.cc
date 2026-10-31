@@ -22,7 +22,7 @@ jspp::Local<jspp::Value> log(jspp::Arguments const& args) {
 }
 
 jspp::Local<jspp::Value> self(jspp::Arguments const& arguments) {
-    if (auto engine = arguments.runtime()) {
+    if (auto engine = arguments.engine()) {
         auto data = engine->getData<EngineOwnData>();
         return data->scriptEntry.get();
     }
@@ -56,12 +56,12 @@ jspp::Local<jspp::Value> setTimerImpl(jspp::Arguments const& arguments, bool int
 
     auto& timer = PLand::getInstance().getScriptingBootstrap().getScriptTimerSystem();
 
-    auto engine = arguments.runtime();
+    auto engine = arguments.engine();
     assert(engine);
 
     auto finalizer = [engine](ScriptTimerSystem::TaskId id) {
         if (!engine->isDestroying()) {
-        std::erase(engine->getData<EngineOwnData>()->runningTimers, id);
+            std::erase(engine->getData<EngineOwnData>()->runningTimers, id);
         }
     };
 
@@ -142,6 +142,7 @@ jspp::ModuleMeta const& Modules::getRuntimeModule() {
 
                                     .export_class(kScriptFileSystem)
                                     .export_class(kScriptPath)
+                                    .export_class(kScriptBridge)
                                     .build();
     return m;
 }

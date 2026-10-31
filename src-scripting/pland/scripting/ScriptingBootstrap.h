@@ -12,6 +12,7 @@ namespace land::scripting {
 class EngineManager;
 class CommunityPluginLoader;
 class ScriptTimerSystem;
+class InteropHub;
 
 class ScriptingBootstrap {
     class Impl;
@@ -22,6 +23,7 @@ public:
     ~ScriptingBootstrap();
 
     [[nodiscard]] ScriptTimerSystem&                     getScriptTimerSystem() const;
+    [[nodiscard]] InteropHub&                            getInteropHub() const;
     [[nodiscard]] std::shared_ptr<CommunityPluginLoader> getPluginLoader() const;
 
     // initialize / shutdown scripting sub system

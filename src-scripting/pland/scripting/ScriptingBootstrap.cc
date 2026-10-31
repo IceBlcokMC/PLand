@@ -3,6 +3,7 @@
 #include "pland/scripting/EngineHelper.h"
 #include "pland/scripting/community/CommunityPluginLoader.h"
 #include "pland/scripting/pch.h"
+#include "pland/scripting/system/InteropHub.h"
 #include "pland/scripting/system/ScriptTimerSystem.h"
 
 #include "ll/api/mod/ModManagerRegistry.h"
@@ -21,6 +22,7 @@ class ScriptingBootstrap::Impl {
 public:
     ll::mod::Mod&                          mEntry;
     std::unique_ptr<ScriptTimerSystem>     mTimerSystem{nullptr};
+    std::unique_ptr<InteropHub>            mInteropHub{nullptr};
     std::shared_ptr<CommunityPluginLoader> mCommunityPluginLoader{nullptr};
     std::unique_ptr<jspp::Engine>          mPrivateEngine{nullptr};
 
@@ -41,6 +43,7 @@ ScriptingBootstrap::ScriptingBootstrap(ll::mod::Mod& mod) : impl(std::make_uniqu
 ScriptingBootstrap::~ScriptingBootstrap() { (void)shutdown(); }
 
 ScriptTimerSystem&                     ScriptingBootstrap::getScriptTimerSystem() const { return *impl->mTimerSystem; }
+InteropHub&                            ScriptingBootstrap::getInteropHub() const { return *impl->mInteropHub; }
 std::shared_ptr<CommunityPluginLoader> ScriptingBootstrap::getPluginLoader() const {
     return impl->mCommunityPluginLoader;
 }
@@ -52,6 +55,7 @@ ll::Expected<> ScriptingBootstrap::initialize(bool initCommunityPluginLoader) {
     gIsInitialized = true;
 
     impl->mTimerSystem = std::make_unique<ScriptTimerSystem>();
+    impl->mInteropHub  = std::unique_ptr<InteropHub>{new InteropHub()};
 
     if (auto ok = impl->initPrivateEngine(); !ok) {
         return ok;
@@ -80,6 +84,7 @@ ll::Expected<> ScriptingBootstrap::shutdown() {
         impl->mCommunityPluginLoader.reset();
     }
 
+    impl->mInteropHub.reset();
     impl->mTimerSystem.reset();
     return {};
 }

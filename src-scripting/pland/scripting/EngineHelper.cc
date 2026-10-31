@@ -3,6 +3,7 @@
 #include "binding/Modules.h"
 
 #include "pland/PLand.h"
+#include "pland/scripting/system/InteropHub.h"
 #include "pland/scripting/system/ScriptTimerSystem.h"
 
 namespace land::scripting {
@@ -26,11 +27,15 @@ EngineOwnData::~EngineOwnData() {
         //    \------------ std::erase(getData<EngineOwnData>->runningTimers, id) ---------------------------------------------------/
         // clang-format on
     }
+    {
+        auto& hub = bootstrap.getInteropHub();
+        hub.clearExports(this->self); // clear all interop exports
+    }
 }
 
 std::unique_ptr<jspp::Engine> EngineHelper::newEngine(bool trust) {
     auto engine = std::make_unique<jspp::Engine>();
-    engine->setData(std::make_shared<EngineOwnData>(trust));
+    engine->setData(std::make_shared<EngineOwnData>(engine.get(), trust));
     Modules::bind(*engine);
     return engine;
 }

@@ -130,7 +130,7 @@ public:
         auto fn      = arguments[0].asFunction();
         auto tracked = jspp::TrackedGlobal<jspp::Function>::create(std::move(fn));
 
-        impl.execute([tracked, engine = arguments.runtime(), params = std::move(params)](
+        impl.execute([tracked, engine = arguments.engine(), params = std::move(params)](
                          CommandOrigin const&               origin,
                          CommandOutput&                     output,
                          ll::command::RuntimeCommand const& cmd

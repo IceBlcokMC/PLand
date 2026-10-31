@@ -16,6 +16,7 @@ struct Modules {
     // @runtime
     static jspp::ClassMeta const kScriptFileSystem; // fs
     static jspp::ClassMeta const kScriptPath;       // path
+    static jspp::ClassMeta const kScriptBridge;
 
     // @minecraft
     static jspp::ClassMeta const kScriptPlayer;

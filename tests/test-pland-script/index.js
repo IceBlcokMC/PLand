@@ -1,16 +1,16 @@
-import { log } from "@runtime"
+import { logger, LogLevel } from "@levilamina";
 
 export default class Entry {
+  onLoad() {
+    logger.setLevel(LogLevel.Debug);
+    logger.info("onLoad called");
+  }
 
-    onLoad() {
-        log("onLoad called, test-pland-script")
-    }
+  onEnable() {
+    logger.info("onEnable called");
+  }
 
-    onEnable() {
-        log("onEnable called, test-pland-script")
-    }
-
-    onDisable() {
-        log("onDisable called, test-pland-script")
-    }
+  onDisable() {
+    logger.info("onDisable called");
+  }
 }
