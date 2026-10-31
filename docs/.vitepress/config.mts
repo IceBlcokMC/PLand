@@ -54,8 +54,18 @@ export default withMermaid(
               ],
             },
             {
-              text: "脚本开发(PLand-LRCA)",
+              text: "脚本开发(内置引擎)",
               collapsed: false,
+              items: [
+                {
+                  text: "概览",
+                  link: "developer_guide/script/builtin/index.md",
+                },
+              ],
+            },
+            {
+              text: "脚本开发(LSE 引擎)",
+              collapsed: true,
               items: [
                 {
                   text: "概览",
