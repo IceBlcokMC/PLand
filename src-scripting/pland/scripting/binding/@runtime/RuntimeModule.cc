@@ -116,6 +116,13 @@ jspp::Local<jspp::Value> newPluginCtx() {
 }
 static_assert(jspp::binding::traits::isGetterCallback_v<decltype(newPluginCtx)>);
 
+
+void aassert(bool cond, std::string_view msg) {
+    if (!cond) {
+        throw jspp::Exception{std::string{msg}};
+    }
+}
+
 } // namespace
 
 jspp::ModuleMeta const& Modules::getRuntimeModule() {
@@ -130,6 +137,8 @@ jspp::ModuleMeta const& Modules::getRuntimeModule() {
 
                                     .export_constant("pluginsRoot", ll::mod::getModsRoot)
                                     .export_constant("pluginCtx", newPluginCtx)
+
+                                    .export_function("assert", &aassert)
 
                                     .export_class(kScriptFileSystem)
                                     .export_class(kScriptPath)

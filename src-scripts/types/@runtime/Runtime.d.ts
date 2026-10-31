@@ -23,4 +23,6 @@ declare module "@runtime" {
     }
     export const pluginsRoot: string;
     export const pluginCtx: PluginContext;
+
+    export function assert(cond: boolean, msg: string): void;
 }
