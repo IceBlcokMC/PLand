@@ -18,10 +18,12 @@ EngineOwnData::~EngineOwnData() {
         }
 
         // clang-format off
-        //                                                /-> native layer:cancelTask -> Coro Exit -> Finalizer -> erase runningTimers by id
-        // script layer: clearTimeout/clearInterval(id) -/         ↑
-        //                                                         |
-        // ~Engine -> ~EngineOwnData -> cancel all running timers -/
+        //                                                /-> native layer:cancelTask -> Coro Exit -> Finalizer -> isDestroying ? skip : erase runningTimers by id
+        // script layer: clearTimeout/clearInterval(id) -/         ↑                                                                     |
+        //                                                         \------------------------|                                           /
+        // ~Engine -> shared_ptr<>::reset() -> ~EngineOwnData -> cancel all running timers -/                                          /
+        //    ↑                                                                                                                       /
+        //    \------------ std::erase(getData<EngineOwnData>->runningTimers, id) ---------------------------------------------------/
         // clang-format on
     }
 }

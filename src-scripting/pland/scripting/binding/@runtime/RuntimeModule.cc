@@ -60,7 +60,9 @@ jspp::Local<jspp::Value> setTimerImpl(jspp::Arguments const& arguments, bool int
     assert(engine);
 
     auto finalizer = [engine](ScriptTimerSystem::TaskId id) {
+        if (!engine->isDestroying()) {
         std::erase(engine->getData<EngineOwnData>()->runningTimers, id);
+        }
     };
 
     auto id = interval ? timer.newInterval(fn, timeout, finalizer) : timer.newTimeout(fn, timeout, finalizer);

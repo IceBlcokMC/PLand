@@ -89,7 +89,10 @@ bool ScriptTimerSystem::cancelTask(TaskId taskId) {
     }
     iter->second->abort = true;
     iter->second->sleep.interrupt(true);
-    mCancelTokens.erase(iter);
+    // !Resources aren't cleaned up here;
+    // they'll be cleaned up after the coroutine exits.
+    // Cleaning them up here would break the iterator.
+    // mCancelTokens.erase(iter); // Don't erase it here
     return true;
 }
 

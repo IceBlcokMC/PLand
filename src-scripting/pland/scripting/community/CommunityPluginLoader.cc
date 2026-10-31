@@ -3,10 +3,11 @@
 #include "CommunityScriptPlugin.h"
 #include "pland/PLand.h"
 #include "pland/scripting/EngineHelper.h"
-#include "pland/scripting/EngineHelper.h"
 #include "pland/scripting/ScriptingBootstrap.h"
 
+
 #include "ll/api/service/GamingStatus.h"
+#include <ll/api/Expected.h>
 
 namespace land::scripting {
 
@@ -93,8 +94,10 @@ ll::Expected<> CommunityPluginLoader::load(ll::mod::Manifest manifest) {
                 }
                 return {}; // staring
             })
-            .or_else([manifest, this](ll::Error err [[maybe_unused]]) -> ll::Expected<> {
-                return this->unload(manifest.name); // cleanup
+            .or_else([manifest, this](ll::Error err) -> ll::Expected<> {
+                mEngines.erase(manifest.name);
+                eraseMod(manifest.name);
+                return ll::forwardError(err);
             });
     } catch (jspp::Exception const& exception) {
         mEngines.erase(manifest.name);
