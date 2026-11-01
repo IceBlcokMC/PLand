@@ -46,6 +46,11 @@ public:
         return std::make_shared<Land>(std::forward<Args>(args)...);
     }
 
+    /**
+     * @brief Check if the current territory is registered with the LandRegistry
+     */
+    LDNDAPI bool isRegistered() const;
+
     LDNDAPI observer::ILandObserver* tryGetObserver() const;
 
     LDNDAPI LandAABB const& getAABB() const;
@@ -222,7 +227,7 @@ public:
 
     LDNDAPI bool isCollision(BlockPos const& pos, int radius) const;
 
-    LDNDAPI bool isCollision(BlockPos const& pos1, BlockPos const& pos2) const;
+    LDNDAPI bool isCollision(LandAABB const& aabb) const;
 
     /**
      * @brief 数据是否被修改

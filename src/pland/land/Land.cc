@@ -128,6 +128,8 @@ Land::Land(LandAABB const& pos, LandDimid dimid, bool is3D, mce::UUID const& own
 }
 Land::~Land() = default;
 
+bool Land::isRegistered() const { return impl->mObserver != nullptr; }
+
 LandAABB const& Land::getAABB() const { return impl->mContext.mPos; }
 
 LandPos const& Land::getTeleportPos() const { return impl->mContext.mTeleportPos; }
@@ -329,28 +331,21 @@ int Land::getNestedLevel() const { return impl->mCacheNestedLevel.value_or(0); }
 
 
 bool Land::isCollision(BlockPos const& pos, int radius) const {
-    BlockPos minPos(
+    LandPos minPos(
         pos.x - radius,
         impl->mContext.mIs3DLand ? pos.y - radius : impl->mContext.mPos.min.y,
         pos.z - radius
     );
-    BlockPos maxPos(
+    LandPos maxPos(
         pos.x + radius,
         impl->mContext.mIs3DLand ? pos.y + radius : impl->mContext.mPos.max.y,
         pos.z + radius
     );
-    return isCollision(minPos, maxPos);
+    auto aabb = LandAABB(minPos, maxPos);
+    return isCollision(aabb);
 }
 
-bool Land::isCollision(BlockPos const& pos1, BlockPos const& pos2) const {
-    return LandAABB::isCollision(
-        impl->mContext.mPos,
-        LandAABB{
-            LandPos{pos1.x, pos1.y, pos1.z},
-            LandPos{pos2.x, pos2.y, pos2.z}
-    }
-    );
-}
+bool Land::isCollision(LandAABB const& aabb) const { return LandAABB::isCollision(impl->mContext.mPos, aabb); }
 
 
 LandPermType Land::getPermType(mce::UUID const& uuid) const { return getEffectiveRole(uuid); }

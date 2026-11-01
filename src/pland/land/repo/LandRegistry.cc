@@ -765,7 +765,7 @@ std::shared_ptr<Land> LandRegistry::getLand(LandID id) const {
 void LandRegistry::forEachLand(std::function<bool(std::shared_ptr<Land> const&)> const& visitor) const {
     std::shared_lock lock(impl->mDataMutex);
 
-    for (const auto& land : impl->mLandCache | std::views::values) {
+    for (auto const& land : impl->mLandCache | std::views::values) {
         if (!visitor(land)) {
             return;
         }
@@ -986,6 +986,7 @@ LandRegistry::getLandAt(BlockPos const& pos1, BlockPos const& pos2, LandDimid di
     int maxChunkX = std::max(pos1.x, pos2.x) >> 4;
     int maxChunkZ = std::max(pos1.z, pos2.z) >> 4;
 
+    auto aabb = LandAABB::make(LandPos::make(pos1), LandPos::make(pos2));
     for (int x = minChunkX; x <= maxChunkX; ++x) {
         for (int z = minChunkZ; z <= maxChunkZ; ++z) {
             internal::ChunkID chunkId = internal::ChunkEncoder::encode(x, z);
@@ -1001,7 +1002,7 @@ LandRegistry::getLandAt(BlockPos const& pos1, BlockPos const& pos2, LandDimid di
 
             for (auto const& id : *landsIds) {
                 if (auto iter = impl->mLandCache.find(id); iter != impl->mLandCache.end()) {
-                    if (auto const& land = iter->second; land->isCollision(pos1, pos2)) {
+                    if (auto const& land = iter->second; land->isCollision(aabb)) {
                         lands.insert(land);
                     }
                 }
