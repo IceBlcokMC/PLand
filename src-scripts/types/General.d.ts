@@ -21,6 +21,19 @@ declare type DimensionType = number;
 
 declare type UUID = string;
 
+/**
+ * 只读视图类型
+ * @template T 原始类型
+ * @template ReadonlyKeys 只读键
+ * @template OmittedKeys 剔除键
+ */
+type ReadonlyView<T, ReadonlyKeys extends keyof T = never, OmittedKeys extends keyof T = never> = Omit<
+    T,
+    ReadonlyKeys | OmittedKeys
+> & {
+    readonly [K in ReadonlyKeys]: T[K];
+};
+
 declare interface PluginEntry {
     onLoad(): void;
 

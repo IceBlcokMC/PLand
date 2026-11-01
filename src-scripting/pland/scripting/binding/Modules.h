@@ -44,6 +44,13 @@ struct Modules {
 
     // @pland
     static jspp::ClassMeta const kScriptLandRegistry;
+    static jspp::ClassMeta const kScriptAABB;
+    static jspp::ClassMeta const kScriptLand;
+    static jspp::EnumMeta const  kScriptLandOwnershipKind;
+    static jspp::EnumMeta const  kScriptLandHoldType;
+    static jspp::EnumMeta const  kScriptLeaseState;
+    static jspp::EnumMeta const  kScriptLandType;
+    static jspp::EnumMeta const  kScriptLandRole;
 };
 
 

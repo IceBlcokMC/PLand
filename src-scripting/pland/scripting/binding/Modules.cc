@@ -40,11 +40,5 @@ jspp::ModuleMeta const& Modules::getLeviLaminaModule() {
                                     .build();
     return m;
 }
-jspp::ModuleMeta const& Modules::getPLandModule() {
-    static jspp::ModuleMeta m = jspp::binding::defModule("@pland") //
-                                    .export_class(kScriptLandRegistry)
-                                    .build();
-    return m;
-}
 
 } // namespace land::scripting
