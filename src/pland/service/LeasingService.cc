@@ -3,12 +3,13 @@
 #include "LandPriceService.h"
 #include "SelectionService.h"
 
+#include "ll/api/coro/ConditionVariable.h"
 #include "ll/api/coro/CoroTask.h"
-#include "ll/api/coro/InterruptableSleep.h"
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/player/PlayerJoinEvent.h"
 #include "ll/api/thread/ServerThreadExecutor.h"
 #include <ll/api/service/Bedrock.h>
+
 
 #include "pland/PLand.h"
 #include "pland/economy/EconomySystem.h"
@@ -49,8 +50,8 @@ struct LeasingService::Impl {
     ll::event::ListenerPtr mPlayerJoinListener{nullptr};
     ll::event::ListenerPtr mPlayerEnterLandListener{nullptr};
 
-    std::shared_ptr<std::atomic<bool>>            mQuit{nullptr};
-    std::shared_ptr<ll::coro::InterruptableSleep> mSleep{nullptr};
+    std::shared_ptr<std::atomic<bool>>           mQuit{nullptr};
+    std::shared_ptr<ll::coro::ConditionVariable> mSleep{nullptr};
 
     explicit Impl(LandRegistry& registry, LandPriceService& priceService, SelectionService& selectionService)
     : mRegistry(registry),
@@ -92,7 +93,7 @@ LeasingService::LeasingService(
     auto& bus = ll::event::EventBus::getInstance();
 
     impl->mQuit  = std::make_shared<std::atomic<bool>>(false);
-    impl->mSleep = std::make_shared<ll::coro::InterruptableSleep>();
+    impl->mSleep = std::make_shared<ll::coro::ConditionVariable>();
 
     if (conf.notifications.loginTip)
         impl->mPlayerJoinListener =
@@ -202,7 +203,7 @@ LeasingService::LeasingService(
 
     ll::coro::keepThis([quit = impl->mQuit, sleep = impl->mSleep, this]() -> ll::coro::CoroTask<> {
         while (!quit->load()) {
-            co_await sleep->sleepFor(std::chrono::seconds{5});
+            co_await sleep->waitFor(std::chrono::seconds{5});
             if (quit->load()) {
                 break;
             }
@@ -254,7 +255,7 @@ LeasingService::~LeasingService() {
         bus.removeListener(impl->mPlayerJoinListener);
         bus.removeListener(impl->mPlayerEnterLandListener);
         impl->mQuit->store(true);
-        impl->mSleep->interrupt(true);
+        impl->mSleep->notifyAll(true);
     }
 }
 

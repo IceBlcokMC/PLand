@@ -6,10 +6,12 @@
 
 #include "ll/api/chrono/GameChrono.h"
 #include "ll/api/thread/ServerThreadExecutor.h"
+#include <cassert>
+#include <ll/api/coro/ConditionVariable.h>
 #include <ll/api/coro/CoroTask.h>
-#include <ll/api/coro/InterruptableSleep.h>
 #include <ll/api/thread/ServerThreadExecutor.h>
 #include <ll/api/thread/ThreadPoolExecutor.h>
+
 
 #include "mc/deps/ecs/WeakEntityRef.h"
 #include "mc/network/packet/SetTitlePacket.h"
@@ -154,7 +156,7 @@ class Task {
 public:
     LD_DISABLE_COPY_AND_MOVE(Task);
 
-    bool operator==(const Task& other) const { return mId == other.mId; }
+    bool operator==(Task const& other) const { return mId == other.mId; }
 
     explicit Task() = delete;
     explicit Task(Player& player, DimensionPos targetPos)
@@ -224,9 +226,11 @@ public:
         if (!dim) {
             return false;
         }
-        auto& chunkSource = dim->getChunkSource();
-        if (!chunkSource.isWithinWorldLimit(mTargetChunkPos)) return true;
-        auto chunk = chunkSource.getOrLoadChunk(mTargetChunkPos, ::ChunkSource::LoadMode::None, true);
+
+        auto chunkSource = dim->mChunkSource.get();
+        assert(chunkSource);
+        if (!chunkSource->isWithinWorldLimit(mTargetChunkPos)) return true;
+        auto chunk = chunkSource->getOrLoadChunk(mTargetChunkPos, ::ChunkSource::LoadMode::None, true);
         return chunk && static_cast<int>(chunk->mLoadState->load()) >= static_cast<int>(ChunkState::Loaded)
             && !chunk->mIsEmptyClientChunk && chunk->mIsRedstoneLoaded;
     }
@@ -270,8 +274,8 @@ using SharedTask = std::shared_ptr<Task>;
 struct SafeTeleport::Impl {
     std::unordered_map<TaskId, SharedTask> mTasks;
 
-    std::shared_ptr<ll::coro::InterruptableSleep> mInterruptableSleep{nullptr};
-    std::shared_ptr<std::atomic_bool>             mPollingAbortFlag{nullptr};
+    std::shared_ptr<ll::coro::ConditionVariable> mInterruptableSleep{nullptr};
+    std::shared_ptr<std::atomic_bool>            mPollingAbortFlag{nullptr};
 
 
     void polling() {
@@ -354,13 +358,13 @@ struct SafeTeleport::Impl {
 };
 
 SafeTeleport::SafeTeleport() : impl(std::make_unique<Impl>()) {
-    impl->mInterruptableSleep = std::make_shared<ll::coro::InterruptableSleep>();
+    impl->mInterruptableSleep = std::make_shared<ll::coro::ConditionVariable>();
     impl->mPollingAbortFlag   = std::make_shared<std::atomic_bool>(false);
 
     ll::coro::keepThis(
         [this, sleep = impl->mInterruptableSleep, abortFlag = impl->mPollingAbortFlag]() -> ll::coro::CoroTask<> {
             while (!abortFlag->load()) {
-                co_await sleep->sleepFor(ll::chrono::ticks{10});
+                co_await sleep->waitFor(ll::chrono::ticks{10});
                 if (abortFlag->load()) break;
                 try {
                     impl->polling();
@@ -377,7 +381,7 @@ SafeTeleport::SafeTeleport() : impl(std::make_unique<Impl>()) {
 
 SafeTeleport::~SafeTeleport() {
     impl->mPollingAbortFlag->store(true);
-    impl->mInterruptableSleep->interrupt(true);
+    impl->mInterruptableSleep->notifyAll(true);
     for (auto& task : impl->mTasks | std::views::values) {
         task->abort();
     }
