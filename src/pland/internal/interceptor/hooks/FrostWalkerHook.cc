@@ -1,82 +1,84 @@
-#include "HookRegistry.h"
-#include "pland/PLand.h"
-#include "pland/internal/interceptor/EventInterceptor.h"
-#include "pland/internal/interceptor/InterceptorConfig.h"
-#include "pland/internal/interceptor/helper/InterceptorHelper.h"
+// // TODO: 26.60 版本 Mob::frostWalk 函数消失，需要重新实现
 
-#include "ll/api/memory/Hook.h"
+// #include "HookRegistry.h"
+// #include "pland/PLand.h"
+// #include "pland/internal/interceptor/EventInterceptor.h"
+// #include "pland/internal/interceptor/InterceptorConfig.h"
+// #include "pland/internal/interceptor/helper/InterceptorHelper.h"
 
-#include "mc/world/actor/Mob.h"
-#include "mc/world/actor/player/Player.h"
-#include "mc/world/level/BlockSource.h"
-#include "mc/world/level/block/Block.h"
-#include "mc/world/level/block/BlockChangeContext.h"
-#include <mc/deps/core/string/HashedString.h>
-#include <mc/world/level/block/VanillaBlockTypeIds.h>
+// #include "ll/api/memory/Hook.h"
 
-namespace land::internal::interceptor {
+// #include "mc/world/actor/Mob.h"
+// #include "mc/world/actor/player/Player.h"
+// #include "mc/world/level/BlockSource.h"
+// #include "mc/world/level/block/Block.h"
+// #include "mc/world/level/block/BlockChangeContext.h"
+// #include <mc/deps/core/string/HashedString.h>
+// #include <mc/world/level/block/VanillaBlockTypeIds.h>
 
-// https://github.com/IceBlcokMC/PLand/issues/250
-// 由于冰霜行者范围计算在 frostWalk 内部，采用2阶段 Hook 拦截
+// namespace land::internal::interceptor {
 
-namespace {
+// // https://github.com/IceBlcokMC/PLand/issues/250
+// // 由于冰霜行者范围计算在 frostWalk 内部，采用2阶段 Hook 拦截
 
-thread_local Mob* tFrostWalker = nullptr;
+// namespace {
 
-struct FrostWalkerGuard {
-    Mob* previous;
+// thread_local Mob* tFrostWalker = nullptr;
 
-    explicit FrostWalkerGuard(Mob& mob) : previous(tFrostWalker) { tFrostWalker = &mob; }
-    ~FrostWalkerGuard() { tFrostWalker = previous; }
-};
+// struct FrostWalkerGuard {
+//     Mob* previous;
 
-using FrostWalkerSetBlockFn = bool (BlockSource::*)(
-    BlockPos const&,
-    Block const&,
-    int,
-    std::shared_ptr<BlockActor>,
-    ActorBlockSyncMessage const*,
-    BlockChangeContext const&
-);
+//     explicit FrostWalkerGuard(Mob& mob) : previous(tFrostWalker) { tFrostWalker = &mob; }
+//     ~FrostWalkerGuard() { tFrostWalker = previous; }
+// };
 
-} // namespace
+// using FrostWalkerSetBlockFn = bool (BlockSource::*)(
+//     BlockPos const&,
+//     Block const&,
+//     int,
+//     std::shared_ptr<BlockActor>,
+//     ActorBlockSyncMessage const*,
+//     BlockChangeContext const&
+// );
 
-LL_TYPE_INSTANCE_HOOK(FrostWalkerHook, ll::memory::HookPriority::Normal, Mob, &Mob::frostWalk, void) {
-    FrostWalkerGuard guard{*this};
-    origin();
-}
+// } // namespace
 
-LL_TYPE_INSTANCE_HOOK(
-    FrostWalkerSetBlockHook,
-    ll::memory::HookPriority::Normal,
-    BlockSource,
-    static_cast<FrostWalkerSetBlockFn>(&BlockSource::setBlock),
-    bool,
-    BlockPos const&              pos,
-    Block const&                 block,
-    int                          updateFlags,
-    std::shared_ptr<BlockActor>  blockActor,
-    ActorBlockSyncMessage const* syncMsg,
-    BlockChangeContext const&    changeSourceContext
-) {
-    if (tFrostWalker && block.getBlockType().mNameInfo->mFullName.get() == VanillaBlockTypeIds::FrostedIce()) {
-        auto& registry = PLand::getInstance().getLandRegistry();
-        auto  land     = registry.getLandAt(pos, this->getDimensionId());
+// LL_TYPE_INSTANCE_HOOK(FrostWalkerHook, ll::memory::HookPriority::Normal, Mob, &Mob::frostWalk, void) {
+//     FrostWalkerGuard guard{*this};
+//     origin();
+// }
 
-        if (tFrostWalker->getEntityTypeId() == ActorType::Player) {
-            auto& player = static_cast<Player&>(*tFrostWalker);
-            if (!hasRolePermission<&RolePerms::allowFrostWalker>(land, player.getUuid())) {
-                return false;
-            }
-        } else if (!hasGuestPermission<&RolePerms::allowFrostWalker>(land)) {
-            return false;
-        }
-    }
-    return origin(pos, block, updateFlags, std::move(blockActor), syncMsg, changeSourceContext);
-}
+// LL_TYPE_INSTANCE_HOOK(
+//     FrostWalkerSetBlockHook,
+//     ll::memory::HookPriority::Normal,
+//     BlockSource,
+//     static_cast<FrostWalkerSetBlockFn>(&BlockSource::setBlock),
+//     bool,
+//     BlockPos const&              pos,
+//     Block const&                 block,
+//     int                          updateFlags,
+//     std::shared_ptr<BlockActor>  blockActor,
+//     ActorBlockSyncMessage const* syncMsg,
+//     BlockChangeContext const&    changeSourceContext
+// ) {
+//     if (tFrostWalker && block.getBlockType().mNameInfo->mFullName.get() == VanillaBlockTypeIds::FrostedIce()) {
+//         auto& registry = PLand::getInstance().getLandRegistry();
+//         auto  land     = registry.getLandAt(pos, this->getDimensionId());
 
-LAND_REGISTER_HOOK([](EventInterceptor& interceptor) {
-    interceptor.registerHookIf<&HookConfig::FrostWalkerHook, FrostWalkerHook, FrostWalkerSetBlockHook>();
-});
+//         if (tFrostWalker->getEntityTypeId() == ActorType::Player) {
+//             auto& player = static_cast<Player&>(*tFrostWalker);
+//             if (!hasRolePermission<&RolePerms::allowFrostWalker>(land, player.getUuid())) {
+//                 return false;
+//             }
+//         } else if (!hasGuestPermission<&RolePerms::allowFrostWalker>(land)) {
+//             return false;
+//         }
+//     }
+//     return origin(pos, block, updateFlags, std::move(blockActor), syncMsg, changeSourceContext);
+// }
 
-} // namespace land::internal::interceptor
+// LAND_REGISTER_HOOK([](EventInterceptor& interceptor) {
+//     interceptor.registerHookIf<&HookConfig::FrostWalkerHook, FrostWalkerHook, FrostWalkerSetBlockHook>();
+// });
+
+// } // namespace land::internal::interceptor
