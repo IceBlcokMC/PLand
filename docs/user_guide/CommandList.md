@@ -263,7 +263,7 @@
 
 - `dirName` 快照保存目录名（如果留空则使用时间戳）
 
-> 所有快照均保存在 `plugins/PLand/data/snapshots/<dirName>` 目录下
+> 所有快照均保存在 `mods/PLand/data/snapshots/<dirName>` 目录下
 >
 > 如果任务未完成，目录下会存在 `.incomplete` 文件，表示任务正在进行中
 
