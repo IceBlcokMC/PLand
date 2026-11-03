@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### 🐛 问题修复
+
+- 修复配置文件 `allowDimensions`,`dimensionalPriceMultiplier`,`leaseOnlyRanges`,`forbiddenRanges` 字段无法编辑 [#264] @engsr6982
+
 ### 🧩 其他改动
 
 - 适配 LeviLamina v26.60.x @engsr6982
@@ -815,6 +819,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 [#211]: https://github.com/IceBlcokMC/PLand/issues/211
 [#217]: https://github.com/IceBlcokMC/PLand/issues/217
 [#221]: https://github.com/IceBlcokMC/PLand/issues/221
+[#264]: https://github.com/IceBlcokMC/PLand/issues/264
 
 <!-- Release -->
 
