@@ -12,6 +12,22 @@
 namespace land {
 
 
+struct ConfigMutableObjectPredicate {
+    // https://github.com/IceBlcokMC/PLand/issues/264
+    static constexpr std::array<std::string_view, 5> kMutableObjectPaths = {
+        "/constraints/forbiddenRanges",
+        "/constraints/leaseOnlyRanges",
+        "/business/dimensionalPriceMultiplier",
+        "/business/bought/allowDimensions",
+        "/business/leasing/allowDimensions",
+    };
+    template <typename T>
+    bool operator()(std::string_view path, T const&) const {
+        return std::find(kMutableObjectPaths.begin(), kMutableObjectPaths.end(), path) != kMutableObjectPaths.end();
+    }
+};
+
+
 // 禁止创建领地的范围结构体
 struct ForbiddenRange {
     LandAABB aabb;        // 领地坐标范围

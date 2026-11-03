@@ -7,16 +7,24 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### 🐛 问题修复
+
+- 修复配置文件 `allowDimensions`,`dimensionalPriceMultiplier`,`leaseOnlyRanges`,`forbiddenRanges` 字段无法编辑 [#264] @engsr6982
+
+### 🧩 其他改动
+
+- 适配 LeviLamina v26.60.x @engsr6982
+
 ## [0.25.0] - 2026-10-03
 
 ### ✨ 新增功能
 
 - 无主领地功能 @yangyangzhong82
-- 新增冰霜行者冻结冰权限 [#250](https://github.com/IceBlcokMC/PLand/issues/250) @yangyangzhong82
+- 新增冰霜行者冻结冰权限 [#250] @yangyangzhong82
 
 ### 🐛 问题修复
 
-- 修复玩家可从领地外点击脚手架延伸到领地内 [#251](https://github.com/IceBlcokMC/PLand/issues/251) @yangyangzhong82
+- 修复玩家可从领地外点击脚手架延伸到领地内 [#251] @yangyangzhong82
 
 ### 🧩 其他改动
 
@@ -26,8 +34,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### 🐛 问题修复
 
-- 修复 `DispenserDispenseFromHook` 引发的崩溃 (发射器) [#258](https://github.com/IceBlcokMC/PLand/issues/258) @lwenk
-- 修复 `KineticDamageSystemHook` 启用失败 (矛冲锋) [#257](https://github.com/IceBlcokMC/PLand/issues/257) @lwenk
+- 修复 `DispenserDispenseFromHook` 引发的崩溃 (发射器) [#258] @lwenk
+- 修复 `KineticDamageSystemHook` 启用失败 (矛冲锋) [#257] @lwenk
 
 ## [0.24.0] - 2026-09-23
 
@@ -40,23 +48,23 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### 🐛 问题修复
 
-- 修复 `KineticDamageSystemHook` 在 26.40 版本下引发崩溃 [#231](https://github.com/IceBlcokMC/PLand/issues/231) @ShrBox
+- 修复 `KineticDamageSystemHook` 在 26.40 版本下引发崩溃 [#231] @ShrBox
 - 再次修正 tooth.json 的仓库链接错误 @engsr6982
 
 ## [0.23.0] - 2026-09-18
 
 ### ⚠ 已知问题
 
-- KineticDamageSystemHook 在 26.40 版本下引发崩溃 (默认关闭) [#231](https://github.com/IceBlcokMC/PLand/issues/231)  
+- KineticDamageSystemHook 在 26.40 版本下引发崩溃 (默认关闭) [#231]  
   此 Hook 失效导致矛冲锋可对实体造成伤害
 
 ### 🐛 问题修复
 
-- 修复重力方块掉落权限 [#242](https://github.com/IceBlcokMC/PLand/issues/242) @engsr6982
-- 修复领地边缘使用发射器可以无视权限向领地内放置流体 [#231](https://github.com/IceBlcokMC/PLand/issues/231) @engsr6982
-- 修复领地内玩家使用长矛冲锋对实体造成伤害 [#231](https://github.com/IceBlcokMC/PLand/issues/231) @engsr6982
-- 尝试修复动物+怪物骑士生成 [#185](https://github.com/IceBlcokMC/PLand/issues/185) @engsr6982
-- 修复在领地边缘有概率无权限放置木门 [#244](https://github.com/IceBlcokMC/PLand/issues/244) @engsr6982
+- 修复重力方块掉落权限 [#242] @engsr6982
+- 修复领地边缘使用发射器可以无视权限向领地内放置流体 [#231] @engsr6982
+- 修复领地内玩家使用长矛冲锋对实体造成伤害 [#231] @engsr6982
+- 尝试修复动物+怪物骑士生成 [#185] @engsr6982
+- 修复在领地边缘有概率无权限放置木门 [#244] @engsr6982
 
 ### 🧩 其他改动
 
@@ -82,28 +90,27 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### ✨ 新增功能
 
-- 支持自定义领地边框绘制颜色 @engsr6982 [#224](https://github.com/IceBlcokMC/PLand/issues/224)
+- 支持自定义领地边框绘制颜色 @engsr6982 [#224]
 
 ### 🚀 性能优化
 
 - 改进对实体受伤、玩家攻击时的动态实体分组，减少不必要的多次查表并优化调试日志 @engsr6982
-- 优化缓存数据回写，降低崩溃丢失数据概率 @engsr6982 [#215](https://github.com/IceBlcokMC/PLand/issues/215)
-- 更换数据库存储格式，降低磁盘占用，提升读写性能 @engsr6982 [#215](https://github.com/IceBlcokMC/PLand/issues/215)
+- 优化缓存数据回写，降低崩溃丢失数据概率 @engsr6982 [#215]
+- 更换数据库存储格式，降低磁盘占用，提升读写性能 @engsr6982 [#215]
 - 优化事件拦截器热重载逻辑，增量注册/移除监听器，优化重载速度 @engsr6982
 
 ### 🧩 其他改动
 
-- 补充遗漏的实体、方块权限配置
-  @engsr6982 [#216](https://github.com/IceBlcokMC/PLand/issues/216) [#212](https://github.com/IceBlcokMC/PLand/issues/212)
+- 补充遗漏的实体、方块权限配置 @engsr6982 [#216] [#212]
 - 改进配置文件合并逻辑 @engsr6982
 - 删除一堆脱裤子放屁的代码 @engsr6982
 
 ### 🐛 问题修复
 
-- 修复 PC 端选区时有概率多次触发选择 @engsr6982 [#228](https://github.com/IceBlcokMC/PLand/issues/228)
+- 修复 PC 端选区时有概率多次触发选择 @engsr6982 [#228]
 - 移除不必要的维度校验，修复 DefaultParticle 后端绘制领地范围不显示 @engsr6982
-- 修复熄屏下开启 DevTool 工具启动服务端崩溃 @engsr6982 [#223](https://github.com/IceBlcokMC/PLand/issues/223)
-- 修复领地重新选区时删除领地再提交新范围时崩溃 @engsr6982 [#235](https://github.com/IceBlcokMC/PLand/issues/235)
+- 修复熄屏下开启 DevTool 工具启动服务端崩溃 @engsr6982 [#223]
+- 修复领地重新选区时删除领地再提交新范围时崩溃 @engsr6982 [#235]
 - 修复创建子领地时删除父领地再购买子领地导致崩溃 @engsr6982
 
 ## [0.21.1] - 2026-07-21
@@ -133,7 +140,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### 🐛 问题修复
 
-- 修复领地保存不成功的问题 #209 @yangyangzhong82
+- 修复领地保存不成功的问题 [#209] @yangyangzhong82
 
 ## [0.20.1] - 2026-04-12
 
@@ -159,18 +166,18 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### ✨ 新增功能
 
-- 租赁模式 @engsr6982 #154
-- 数据库快照 @engsr6982 #165
-- 添加 **大型垂滴叶触发权限** @engsr6982 #192
+- 租赁模式 @engsr6982 [#154]
+- 数据库快照 @engsr6982 [#165]
+- 添加 **大型垂滴叶触发权限** @engsr6982 [#192]
 
 ### 🐛 问题修复
 
 - 修复 DevTool 领地编辑器非等宽字体显示错位 @engsr6982
-- 提高防抖阈值修复PC端选区时可能出现的多次触发 @engsr6982 #199
+- 提高防抖阈值修复PC端选区时可能出现的多次触发 @engsr6982 [#199]
 
 ### 🚀 性能优化
 
-- 新增领地 Owner、Member 索引优化性能 @engsr6982 #204
+- 新增领地 Owner、Member 索引优化性能 @engsr6982 [#204]
 
 ### 🧩 其他改动
 
@@ -190,14 +197,14 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### ✨ 新增功能
 
-- 增强拾取物品权限，其他非掉落物可拾取实体 (三叉戟等)拾取需要权限 @yangyangzhong82 #193
+- 增强拾取物品权限，其他非掉落物可拾取实体 (三叉戟等)拾取需要权限 @yangyangzhong82 [#193]
 
 ### 🐛 问题修复
 
-- 修复领地价格计算错误的问题 @engsr6982 #189
-- 修复耕地环境权限无法防止自然退化的问题 @yangyangzhong82 #191
-- 修复PlayerDropItemBeforeEvent报错 @yangyangzhong82 #157
-- 修复其他模组监听 ActorHurtEvent 会重复监听两次的问题 @yangyangzhong82 #196
+- 修复领地价格计算错误的问题 @engsr6982 [#189]
+- 修复耕地环境权限无法防止自然退化的问题 @yangyangzhong82 [#191]
+- 修复PlayerDropItemBeforeEvent报错 @yangyangzhong82 [#157]
+- 修复其他模组监听 ActorHurtEvent 会重复监听两次的问题 @yangyangzhong82 [#196]
 
 ## [0.18.1] - 2026-02-15
 
@@ -220,25 +227,25 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - 新增领地 **名称**、 **描述** 可配置检查 @engsr6982
 - DevTool 新增领地树可视化 @engsr6982
 - 管理 GUI：
-    - 管理玩家表单支持分页和搜索（#129）@engsr6982
-    - 支持按领地 ID 查找领地 @engsr6982
+  - 管理玩家表单支持分页和搜索（[#129]）@engsr6982
+  - 支持按领地 ID 查找领地 @engsr6982
 - 权限系统:
-    - 区分环境权限与角色权限 #170 @engsr6982
-    - 成员支持独立权限配置 #170 @engsr6982
-- 添加实体拾取物品事件 (关联`allowMobGrief`权限) #171 @engsr6982
-- 分离拦截配置 (InterceptorConfig.json)和领地配置 (Config.json)，改进权限映射 #169 @engsr6982
+  - 区分环境权限与角色权限 [#170] @engsr6982
+  - 成员支持独立权限配置 [#170] @engsr6982
+- 添加实体拾取物品事件 (关联`allowMobGrief`权限) [#171] @engsr6982
+- 分离拦截配置 (InterceptorConfig.json)和领地配置 (Config.json)，改进权限映射 [#169] @engsr6982
 
 ### 🐛 问题修复
 
 - 修复领地最小间距计算错误 @engsr6982
 - 修复领地检查错误信息翻译失败 @engsr6982
-- 重命名权限语义解决弹射物吞物品问题 #139 @engsr6982
-- 修复远程武器攻击领地内实体问题 #177 @engsr6982
-- 修复闪电造成领地内方块、实体状态更新 #167 @engsr6982
+- 重命名权限语义解决弹射物吞物品问题 [#139] @engsr6982
+- 修复远程武器攻击领地内实体问题 [#177] @engsr6982
+- 修复闪电造成领地内方块、实体状态更新 [#167] @engsr6982
 - 修复领地价格表达式解析失败时可能导致经济异常结算的问题 @engsr6982
-- 修复玩家可以无权限放置、取下讲台书本 #143 @engsr6982
-- 修复渗浆和盘丝药水在生物死亡后还是能使用 #59 @engsr6982
-- 修复漏斗矿车可以吸取领地内物品 #55 @engsr6982
+- 修复玩家可以无权限放置、取下讲台书本 [#143] @engsr6982
+- 修复渗浆和盘丝药水在生物死亡后还是能使用 [#59] @engsr6982
+- 修复漏斗矿车可以吸取领地内物品 [#55] @engsr6982
 
 ### 🧩 逻辑优化
 
@@ -249,13 +256,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - 领地管理 GUI 新增 **创建子领地** 按钮 @engsr6982
 - 移除 `pland set language` 命令 @engsr6982
 - 移除对 **iLand** 领地数据转换支持 @engsr6982
-- 移除领地描述相关配置与编辑入口（该功能无实际使用场景）#181 @engsr6982
+- 移除领地描述相关配置与编辑入口（该功能无实际使用场景）[#181] @engsr6982
 
 ### 🛠️ 开发者相关
 
-- 重构代码，清理历史代码，引入 Service、pImpl 模式 (#166) @engsr6982
+- 重构代码，清理历史代码，引入 Service、pImpl 模式 ([#166]) @engsr6982
 - 调整项目工程结构 @engsr6982
-- 改进内置领地表单系统 (#144) @engsr6982
+- 改进内置领地表单系统 ([#144]) @engsr6982
 
 #### 🔔 事件更改
 
@@ -400,13 +407,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### ✨ 新增功能
 
-- 新增 DebugShape 绘制后端 #135 @engsr6982
-- 新增 `land.drawHandleBackend` 配置项，用于选择绘制后端 #135 @engsr6982
+- 新增 DebugShape 绘制后端 [#135] @engsr6982
+- 新增 `land.drawHandleBackend` 配置项，用于选择绘制后端 [#135] @engsr6982
 - 选择领地表单新增 **重置过滤器** 按钮 @engsr6982
 
 ### 🐛 问题修复
 
-- 修复子领地爆炸权限无效 #133 @yangyangzhong82
+- 修复子领地爆炸权限无效 [#133] @yangyangzhong82
 - 修复拦截液体流动导致刷物品问题 @engsr6982
 - 修复移除子领地时可能的崩溃 @engsr6982
 - 修复创建子领地 `land.subLand.minSpacingIncludeY` 配置项未生效问题 @engsr6982
@@ -419,13 +426,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### ✨ 新增功能
 
-- 将交互权限检查的映射表移至配置文件，不再硬编码 @yangyangzhong82 #130
+- 将交互权限检查的映射表移至配置文件，不再硬编码 @yangyangzhong82 [#130]
 
 ### 🐛 问题修复
 
-- 修复玩家转让领地能绕过领地最大数量限制的问题 @yangyangzhong82 #131
+- 修复玩家转让领地能绕过领地最大数量限制的问题 @yangyangzhong82 [#131]
 - 修复未选择领地范围进行购买领地导致崩溃 @engsr6982
-- 修复特定情况下使用领地传送可能传送到异常坐标 #127 @engsr6982 @yangyangzhong82
+- 修复特定情况下使用领地传送可能传送到异常坐标 [#127] @engsr6982 @yangyangzhong82
 
 ## [0.12.0-rc.2] - 2025-7-19
 
@@ -449,34 +456,34 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### 🐛 问题修复
 
 - 修复领地重新选区购买表单价格显示错误 @engsr6982
-- 修复未设置领地传送点进行跨纬度传送失败 #106 @engsr6982
-- 修复领地最小间距未生效问题 #115 @engsr6982
-- 修复领地边界活塞权限的判断问题 #119 @yangyangzhong82
-- 修复子领地创建时高度判断的错误 #117 @yangyangzhong82
+- 修复未设置领地传送点进行跨纬度传送失败 [#106] @engsr6982
+- 修复领地最小间距未生效问题 [#115] @engsr6982
+- 修复领地边界活塞权限的判断问题 [#119] @yangyangzhong82
+- 修复子领地创建时高度判断的错误 [#117] @yangyangzhong82
 
 ### ✨ 新增功能
 
-- 管理 GUI 支持分页 #107 @engsr6982
-- 领地转让和添加领地成员支持离线玩家添加，添加需要手动输入名称 #77 @yangyangzhong82
-- 实现脏数据计数 #95 @engsr6982
+- 管理 GUI 支持分页 [#107] @engsr6982
+- 领地转让和添加领地成员支持离线玩家添加，添加需要手动输入名称 [#77] @yangyangzhong82
+- 实现脏数据计数 [#95] @engsr6982
 - 重构经济系统，LegacyMoney 更改为可选依赖 @engsr6982
-- 重构绘制系统，BedrockServerClientInterface 更改为可选依赖 #114 @engsr6982
-- 选择领地表单支持 **分页、搜索、过滤** #107 #101 @engsr6982
-- 新增配置项 `land.minSpacingIncludeY` #115 @engsr6982
-- 支持领地管理员修改默认权限配置 #110 @yangyangzhong82 @engsr6982
+- 重构绘制系统，BedrockServerClientInterface 更改为可选依赖 [#114] @engsr6982
+- 选择领地表单支持 **分页、搜索、过滤** [#107] [#101] @engsr6982
+- 新增配置项 `land.minSpacingIncludeY` [#115] @engsr6982
+- 支持领地管理员修改默认权限配置 [#110] @yangyangzhong82 @engsr6982
 
 ### 🧹 其他改动
 
-- 调整工程结构并重构代码 #111 @engsr6982
-- 调整默认配置文件 #104 @yangyangzhong82
-- 抽离领地创建逻辑，并改进错误提示 #102 @engsr6982
+- 调整工程结构并重构代码 [#111] @engsr6982
+- 调整默认配置文件 [#104] @yangyangzhong82
+- 抽离领地创建逻辑，并改进错误提示 [#102] @engsr6982
 
 ## [0.10.0] - 2025-6-18
 
 ### 🐛 问题修复
 
-- 修复选区器析构时没有正确清理已渲染的选区 #94 @engsr6982
-- 对生物受伤权限进行优化，删除 ActorHurtEvent 事件，并改为仅对玩家的伤害进行判断 #96 #97 @yangyangzhong82
+- 修复选区器析构时没有正确清理已渲染的选区 [#94] @engsr6982
+- 对生物受伤权限进行优化，删除 ActorHurtEvent 事件，并改为仅对玩家的伤害进行判断 [#96] [#97] @yangyangzhong82
 
 ### 🧹 其他改动
 
@@ -490,15 +497,15 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - 修复 xmake 打包语言文件路径错误问题 @engsr6982
 - 修复新创建的领地数据库误识别为旧版数据库 @engsr6982
 - 修复弹射物事件在某些情况下的报错 @yangyangzhong82
-- 修复领地传送功能可在部分关闭的情况下使用 #89 @engsr6982
+- 修复领地传送功能可在部分关闭的情况下使用 [#89] @engsr6982
 
 ### 🧩 权限与逻辑优化
 
-- 将生物的类别修改为配置文件可自定义的列表，不再依赖 family 来判断生物类别 #84 @yangyangzhong82
+- 将生物的类别修改为配置文件可自定义的列表，不再依赖 family 来判断生物类别 [#84] @yangyangzhong82
 
 ### 🧹 其他改动
 
-- 优化领地重叠冲突时的消息提醒，现在会显示和哪些领地冲突 #85 @yangyangzhong82
+- 优化领地重叠冲突时的消息提醒，现在会显示和哪些领地冲突 [#85] @yangyangzhong82
 - `pland reload` 支持重载事件监听器 @engsr6982
 - 适配 LeviLamina v1.2.1 & ilistenattentively v0.5.0-rc.1 @engsr6982
 
@@ -506,7 +513,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### 🐛 问题修复
 
-- 修复玩家可在无权限情况下将拴绳系在领地内栅栏上 #72 @engsr6982
+- 修复玩家可在无权限情况下将拴绳系在领地内栅栏上 [#72] @engsr6982
 
 ---
 
@@ -518,42 +525,42 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### ✨ 新增功能
 
-- 增加生物交互权限（#43）@yangyangzhong82
-- 增加末影人搬运、实体破坏、方块下落事件的权限控制（#44）@yangyangzhong82 @engsr6982
-- 增加龙蛋交互事件支持，并修复关闭权限后龙蛋仍然能被交互的问题（#39）@yangyangzhong82
+- 增加生物交互权限（[#43]）@yangyangzhong82
+- 增加末影人搬运、实体破坏、方块下落事件的权限控制（[#44]）@yangyangzhong82 @engsr6982
+- 增加龙蛋交互事件支持，并修复关闭权限后龙蛋仍然能被交互的问题（[#39]）@yangyangzhong82
 - 增加 getLandsByOwner API 与重载方法@engsr6982
 - 领地 UI 表单增加设置传送点设置的按钮@yangyangzhong82
-- 增加 使用合成器,雕纹书架,红石比较器,红石中继器,潜影盒五种方块交互权限，并修复权限判断问题 (#48)@yangyangzhong82
-- 增加 玩家破坏画、矿车、船的权限控制 (#48)@yangyangzhong82
-- 增加 放置船和矿车权限 （#41）@yangyangzhong82
+- 增加 使用合成器,雕纹书架,红石比较器,红石中继器,潜影盒五种方块交互权限，并修复权限判断问题 ([#48])@yangyangzhong82
+- 增加 玩家破坏画、矿车、船的权限控制 ([#48])@yangyangzhong82
+- 增加 放置船和矿车权限 （[#41]）@yangyangzhong82
 - 增加 对特殊实体造成伤害 权限 @engsr6982
-- 增加试炼宝库和蜂巢蜂箱的权限控制 #62 #64 @yangyangzhong82
+- 增加试炼宝库和蜂巢蜂箱的权限控制 [#62] [#64] @yangyangzhong82
 - `PriceCalculate` 支持调用随机数 @engsr6982
-- 增加配置选项控制`forbiddenRanges` ，用于禁止普通玩家在某个区域创建领地 #37 @yangyangzhong82
+- 增加配置选项控制`forbiddenRanges` ，用于禁止普通玩家在某个区域创建领地 [#37] @yangyangzhong82
 - 增加配置选项控制`dimensionPriceCoefficients` ，用于自定义每个维度的价格系数，默认为 1.0 @yangyangzhong82
 
 ---
 
 ### 🐛 问题修复
 
-- 修复悬挂告示牌权限判断缺失的问题（#40）@yangyangzhong82
+- 修复悬挂告示牌权限判断缺失的问题（[#40]）@yangyangzhong82
 - 修复部分事件未正确取消导致的逻辑穿透问题 @engsr6982
 - 修复语言文件打包路径错误问题 @engsr6982
 - 修复玩家长时间停留 GUI 导致 `Player` 悬空引用问题@engsr6982
-- 修复玩家乘骑实体权限判断的问题，现在以被乘骑实体的坐标来判断领地而非操作玩家的坐标 (#50)@yangyangzhong82
-- 修复无权限玩家在领地外仍然能用弹射物伤害领地内生物的问题 (#50) @yangyangzhong82
+- 修复玩家乘骑实体权限判断的问题，现在以被乘骑实体的坐标来判断领地而非操作玩家的坐标 ([#50])@yangyangzhong82
+- 修复无权限玩家在领地外仍然能用弹射物伤害领地内生物的问题 ([#50]) @yangyangzhong82
 - 修复领地主人无法用伤害药水伤害领地生物的问题 @yangyangzhong82
-- 修复河豚可对领地生物造成伤害 #68 @engsr6982
-- 修复甜浆果丛可被交互 #63 @engsr6982
+- 修复河豚可对领地生物造成伤害 [#68] @engsr6982
+- 修复甜浆果丛可被交互 [#63] @engsr6982
 - 修复 `pland set <a/b>` 命令在未开启选区时访问空指针引发异常 @engsr6982
 
 ---
 
 ### 🧩 权限与逻辑优化
 
-- 修改生物判断逻辑，将非 monster 类型统一视为动物,避免某些生物没有归类导致判断问题 (#35) @yangyangzhong82
+- 修改生物判断逻辑，将非 monster 类型统一视为动物,避免某些生物没有归类导致判断问题 ([#35]) @yangyangzhong82
 - 优化弹射物权限判定流程，将除了钓鱼竿之外的弹射物权限全部合并至发射弹射物权限中@yangyangzhong82
-- 将液体流动事件替换为 `LiquidFlowBeforeEvent`，提升性能 @yangyangzhong82 (#44)
+- 将液体流动事件替换为 `LiquidFlowBeforeEvent`，提升性能 @yangyangzhong82 ([#44])
 - 将活塞和液体流动修改为只对边界判断@yangyangzhong82 @engsr6982
 - 优化领地创建时对数量与范围限制的判断：允许领地管理员无视配置文件的限制创建领地 @yangyangzhong82
 - 优化权限判定,对部分方块和物品不再单纯使用类型名进行判断，使其判断更加灵活@yangyangzhong82
@@ -569,7 +576,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - 同步语言文件，统一命名规范@engsr6982
 - 移除 `zh_Classical.json` 语言文件 -- 千呼万唤始出来，删之 @engsr6982
 - 重命名 `PosBase`、`LandPos` 为 `LandPos`、`LandAABB` @engsr6982
-- 玩家进入领地时，默认使用领地名作为子标题 #76 @engsr6982
+- 玩家进入领地时，默认使用领地名作为子标题 [#76] @engsr6982
 
 ## [0.7.1] - 2025-04-11
 
@@ -590,11 +597,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- 新增 `en_US`、`ru_RU` 语言文件 #17
-- 新增 `/pland list op` 命令 #15
-- 新增 `/pland set language` 命令 #19
+- 新增 `en_US`、`ru_RU` 语言文件 [#17]
+- 新增 `/pland list op` 命令 [#15]
+- 新增 `/pland set language` 命令 [#19]
 - 新增 `/pland this` 命令
-- `Config` 添加 `subLand` 子领地相配置 #18
+- `Config` 添加 `subLand` 子领地相配置 [#18]
 - 支持子领地
 
 ### Changed
@@ -602,16 +609,16 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - 移除 `Particle`、`LandDraw`
 - 优化 `PLand::getLandAt` 查询
 - 重构 `Calculate` 为 `PriceCalculate`
-- 适配事件库 v0.4.0 #24
+- 适配事件库 v0.4.0 [#24]
 - 重构 `PLand DevTools` 开发者工具
 - 重构部分代码
 
 ### Fixed
 
-- 修复潜影贝无法生成潜影弹 #23
-- 修复部分实体无法受到任何伤害 #22
-- 修复创造模式无法破坏领地内方块 #20
-- 修复无法正常打开末影箱 #25
+- 修复潜影贝无法生成潜影弹 [#23]
+- 修复部分实体无法受到任何伤害 [#22]
+- 修复创造模式无法破坏领地内方块 [#20]
+- 修复无法正常打开末影箱 [#25]
 
 ## [0.6.0] - 2025-03-01
 
@@ -628,19 +635,19 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
-- 修复部分环境下 `DevTools` 初始化失败引发的崩溃 #13
+- 修复部分环境下 `DevTools` 初始化失败引发的崩溃 [#13]
 
 ## [0.5.0] - 2025-02-19
 
 ### Added
 
-- 领地选区支持再次点击打开购买界面 #9
+- 领地选区支持再次点击打开购买界面 [#9]
 - 支持热卸载
-- 领地管理界面新增传送按钮 #9
-- 支持自定义领地传送点 #9
-- OP 领地管理支持模糊搜索 #9
+- 领地管理界面新增传送按钮 [#9]
+- 支持自定义领地传送点 [#9]
+- OP 领地管理支持模糊搜索 [#9]
 - 新增事件监听器开关
-- 新增权限 `allowMonsterSpawn`、`allowAnimalSpawn` #11
+- 新增权限 `allowMonsterSpawn`、`allowAnimalSpawn` [#11]
 
 ### Changed
 
@@ -651,9 +658,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 
 - 修复与菜单插件可能的兼容性问题
-- 修复领地主人无法攻击实体 #10
-- 修复领地主任无法投掷弹射物 #10
-- 修复可能的告示牌越权编辑问题 #12
+- 修复领地主人无法攻击实体 [#10]
+- 修复领地主任无法投掷弹射物 [#10]
+- 修复可能的告示牌越权编辑问题 [#12]
 - 修复传送失败返回原位置维度错误
 
 ## [0.4.1] - 2025-01-30
@@ -806,15 +813,186 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Initial beta release
 
-<!-- Issue / Pull Request -->
+<!-- Issue / Pull Request Reference -->
 
+[#5]: https://github.com/IceBlcokMC/PLand/issues/5
+[#9]: https://github.com/IceBlcokMC/PLand/issues/9
+[#10]: https://github.com/IceBlcokMC/PLand/issues/10
+[#11]: https://github.com/IceBlcokMC/PLand/issues/11
+[#12]: https://github.com/IceBlcokMC/PLand/issues/12
+[#13]: https://github.com/IceBlcokMC/PLand/issues/13
+[#15]: https://github.com/IceBlcokMC/PLand/issues/15
+[#17]: https://github.com/IceBlcokMC/PLand/issues/17
+[#18]: https://github.com/IceBlcokMC/PLand/issues/18
+[#19]: https://github.com/IceBlcokMC/PLand/issues/19
+[#20]: https://github.com/IceBlcokMC/PLand/issues/20
+[#22]: https://github.com/IceBlcokMC/PLand/issues/22
+[#23]: https://github.com/IceBlcokMC/PLand/issues/23
+[#24]: https://github.com/IceBlcokMC/PLand/issues/24
+[#25]: https://github.com/IceBlcokMC/PLand/issues/25
+[#26]: https://github.com/IceBlcokMC/PLand/issues/26
+[#28]: https://github.com/IceBlcokMC/PLand/issues/28
+[#29]: https://github.com/IceBlcokMC/PLand/issues/29
+[#31]: https://github.com/IceBlcokMC/PLand/issues/31
+[#32]: https://github.com/IceBlcokMC/PLand/issues/32
+[#35]: https://github.com/IceBlcokMC/PLand/issues/35
+[#37]: https://github.com/IceBlcokMC/PLand/issues/37
+[#39]: https://github.com/IceBlcokMC/PLand/issues/39
+[#40]: https://github.com/IceBlcokMC/PLand/issues/40
+[#41]: https://github.com/IceBlcokMC/PLand/issues/41
+[#43]: https://github.com/IceBlcokMC/PLand/issues/43
+[#44]: https://github.com/IceBlcokMC/PLand/issues/44
+[#48]: https://github.com/IceBlcokMC/PLand/issues/48
+[#50]: https://github.com/IceBlcokMC/PLand/issues/50
+[#55]: https://github.com/IceBlcokMC/PLand/issues/55
+[#56]: https://github.com/IceBlcokMC/PLand/issues/56
+[#59]: https://github.com/IceBlcokMC/PLand/issues/59
+[#62]: https://github.com/IceBlcokMC/PLand/issues/62
+[#63]: https://github.com/IceBlcokMC/PLand/issues/63
+[#64]: https://github.com/IceBlcokMC/PLand/issues/64
+[#68]: https://github.com/IceBlcokMC/PLand/issues/68
+[#69]: https://github.com/IceBlcokMC/PLand/issues/69
+[#72]: https://github.com/IceBlcokMC/PLand/issues/72
+[#76]: https://github.com/IceBlcokMC/PLand/issues/76
+[#77]: https://github.com/IceBlcokMC/PLand/issues/77
+[#84]: https://github.com/IceBlcokMC/PLand/issues/84
+[#85]: https://github.com/IceBlcokMC/PLand/issues/85
+[#89]: https://github.com/IceBlcokMC/PLand/issues/89
+[#90]: https://github.com/IceBlcokMC/PLand/issues/90
+[#94]: https://github.com/IceBlcokMC/PLand/issues/94
+[#95]: https://github.com/IceBlcokMC/PLand/issues/95
+[#96]: https://github.com/IceBlcokMC/PLand/issues/96
+[#97]: https://github.com/IceBlcokMC/PLand/issues/97
+[#101]: https://github.com/IceBlcokMC/PLand/issues/101
+[#102]: https://github.com/IceBlcokMC/PLand/issues/102
+[#104]: https://github.com/IceBlcokMC/PLand/issues/104
+[#106]: https://github.com/IceBlcokMC/PLand/issues/106
+[#107]: https://github.com/IceBlcokMC/PLand/issues/107
+[#110]: https://github.com/IceBlcokMC/PLand/issues/110
+[#111]: https://github.com/IceBlcokMC/PLand/issues/111
+[#114]: https://github.com/IceBlcokMC/PLand/issues/114
+[#115]: https://github.com/IceBlcokMC/PLand/issues/115
+[#117]: https://github.com/IceBlcokMC/PLand/issues/117
+[#119]: https://github.com/IceBlcokMC/PLand/issues/119
+[#127]: https://github.com/IceBlcokMC/PLand/issues/127
+[#129]: https://github.com/IceBlcokMC/PLand/issues/129
+[#130]: https://github.com/IceBlcokMC/PLand/issues/130
+[#131]: https://github.com/IceBlcokMC/PLand/issues/131
+[#133]: https://github.com/IceBlcokMC/PLand/issues/133
+[#135]: https://github.com/IceBlcokMC/PLand/issues/135
+[#136]: https://github.com/IceBlcokMC/PLand/issues/136
+[#138]: https://github.com/IceBlcokMC/PLand/issues/138
+[#139]: https://github.com/IceBlcokMC/PLand/issues/139
+[#140]: https://github.com/IceBlcokMC/PLand/issues/140
+[#143]: https://github.com/IceBlcokMC/PLand/issues/143
+[#144]: https://github.com/IceBlcokMC/PLand/issues/144
+[#147]: https://github.com/IceBlcokMC/PLand/issues/147
+[#148]: https://github.com/IceBlcokMC/PLand/issues/148
+[#149]: https://github.com/IceBlcokMC/PLand/issues/149
+[#150]: https://github.com/IceBlcokMC/PLand/issues/150
+[#154]: https://github.com/IceBlcokMC/PLand/issues/154
+[#156]: https://github.com/IceBlcokMC/PLand/issues/156
+[#157]: https://github.com/IceBlcokMC/PLand/issues/157
+[#158]: https://github.com/IceBlcokMC/PLand/issues/158
+[#159]: https://github.com/IceBlcokMC/PLand/issues/159
+[#161]: https://github.com/IceBlcokMC/PLand/issues/161
+[#162]: https://github.com/IceBlcokMC/PLand/issues/162
+[#163]: https://github.com/IceBlcokMC/PLand/issues/163
+[#165]: https://github.com/IceBlcokMC/PLand/issues/165
+[#166]: https://github.com/IceBlcokMC/PLand/issues/166
+[#167]: https://github.com/IceBlcokMC/PLand/issues/167
+[#169]: https://github.com/IceBlcokMC/PLand/issues/169
+[#170]: https://github.com/IceBlcokMC/PLand/issues/170
+[#171]: https://github.com/IceBlcokMC/PLand/issues/171
+[#177]: https://github.com/IceBlcokMC/PLand/issues/177
+[#181]: https://github.com/IceBlcokMC/PLand/issues/181
+[#185]: https://github.com/IceBlcokMC/PLand/issues/185
+[#189]: https://github.com/IceBlcokMC/PLand/issues/189
+[#191]: https://github.com/IceBlcokMC/PLand/issues/191
+[#192]: https://github.com/IceBlcokMC/PLand/issues/192
+[#193]: https://github.com/IceBlcokMC/PLand/issues/193
+[#196]: https://github.com/IceBlcokMC/PLand/issues/196
+[#199]: https://github.com/IceBlcokMC/PLand/issues/199
+[#204]: https://github.com/IceBlcokMC/PLand/issues/204
+[#209]: https://github.com/IceBlcokMC/PLand/issues/209
 [#211]: https://github.com/IceBlcokMC/PLand/issues/211
+[#212]: https://github.com/IceBlcokMC/PLand/issues/212
+[#215]: https://github.com/IceBlcokMC/PLand/issues/215
+[#216]: https://github.com/IceBlcokMC/PLand/issues/216
 [#217]: https://github.com/IceBlcokMC/PLand/issues/217
 [#221]: https://github.com/IceBlcokMC/PLand/issues/221
+[#223]: https://github.com/IceBlcokMC/PLand/issues/223
+[#224]: https://github.com/IceBlcokMC/PLand/issues/224
+[#228]: https://github.com/IceBlcokMC/PLand/issues/228
+[#231]: https://github.com/IceBlcokMC/PLand/issues/231
+[#235]: https://github.com/IceBlcokMC/PLand/issues/235
+[#242]: https://github.com/IceBlcokMC/PLand/issues/242
+[#244]: https://github.com/IceBlcokMC/PLand/issues/244
+[#246]: https://github.com/IceBlcokMC/PLand/pull/246
+[#250]: https://github.com/IceBlcokMC/PLand/issues/250
+[#251]: https://github.com/IceBlcokMC/PLand/issues/251
+[#254]: https://github.com/IceBlcokMC/PLand/pull/254
+[#257]: https://github.com/IceBlcokMC/PLand/issues/257
+[#258]: https://github.com/IceBlcokMC/PLand/issues/258
+[#264]: https://github.com/IceBlcokMC/PLand/issues/264
 
-<!-- Release -->
+<!-- Release Reference -->
 
-[0.20.3]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.20.3
-[0.20.2]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.20.2
-[0.0.2]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.0.2
 [0.0.1]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.0.1
+[0.0.2]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.0.2
+[0.0.3]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.0.3
+[0.1.0]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.1.0
+[0.2.0]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.2.0
+[0.2.1]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.2.1
+[0.2.2]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.2.2
+[0.2.3]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.2.3
+[0.2.4]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.2.4
+[0.2.5]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.2.5
+[0.2.6]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.2.6
+[0.2.7]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.2.7
+[0.3.0]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.3.0
+[0.3.1]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.3.1
+[0.4.0-rc.1]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.4.0-rc.1
+[0.4.0-rc.2]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.4.0-rc.2
+[0.4.0]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.4.0
+[0.4.1]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.4.1
+[0.5.0]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.5.0
+[0.5.1]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.5.1
+[0.6.0]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.6.0
+[0.7.0]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.7.0
+[0.7.1]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.7.1
+[0.8.0]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.8.0
+[0.8.1]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.8.1
+[0.9.0]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.9.0
+[0.10.0]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.10.0
+[0.11.0-rc.1]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.11.0-rc.1
+[0.12.0-rc.1]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.12.0-rc.1
+[0.12.0-rc.2]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.12.0-rc.2
+[0.12.0]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.12.0
+[0.13.0]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.13.0
+[0.14.0]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.14.0
+[0.14.1]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.14.1
+[0.15.0]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.15.0
+[0.16.0]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.16.0
+[0.17.0]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.17.0
+[0.17.1]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.17.1
+[0.17.2]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.17.2
+[0.18.0]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.18.0
+[0.18.1]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.18.1
+[0.18.2]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.18.2
+[0.19.0-beta.1]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.19.0-beta.1
+[0.19.0-rc.1]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.19.0-rc.1
+[0.20.0]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.20.0
+[0.20.1]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.20.1
+[0.20.2]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.20.2
+[0.20.3]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.20.3
+[0.21.0]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.21.0
+[0.21.1]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.21.1
+[0.22.0]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.22.0
+[0.22.1]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.22.1
+[0.22.2]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.22.2
+[0.23.0]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.23.0
+[0.23.1]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.23.1
+[0.24.0]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.24.0
+[0.24.1]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.24.1
+[0.25.0]: https://github.com/IceBlcokMC/PLand/releases/tag/v0.25.0

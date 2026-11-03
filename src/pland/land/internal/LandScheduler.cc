@@ -1,8 +1,8 @@
 #include "LandScheduler.h"
 
 #include "ll/api/chrono/GameChrono.h"
+#include "ll/api/coro/ConditionVariable.h"
 #include "ll/api/coro/CoroTask.h"
-#include "ll/api/coro/InterruptableSleep.h"
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/ListenerBase.h"
 #include "ll/api/event/player/PlayerDisconnectEvent.h"
@@ -44,9 +44,9 @@ struct LandScheduler::Impl {
     ll::event::ListenerPtr mPlayerDisconnectListener{nullptr};
     ll::event::ListenerPtr mPlayerEnterLandListener{nullptr};
 
-    std::shared_ptr<std::atomic<bool>>            mQuit{nullptr};
-    std::shared_ptr<ll::coro::InterruptableSleep> mEventSchedulingSleep{nullptr};
-    std::shared_ptr<ll::coro::InterruptableSleep> mLandTipSchedulingSleep{nullptr};
+    std::shared_ptr<std::atomic<bool>>           mQuit{nullptr};
+    std::shared_ptr<ll::coro::ConditionVariable> mEventSchedulingSleep{nullptr};
+    std::shared_ptr<ll::coro::ConditionVariable> mLandTipSchedulingSleep{nullptr};
 
     void tickEvent() {
         auto& bus      = ll::event::EventBus::getInstance();
@@ -150,8 +150,8 @@ LandScheduler::LandScheduler() : impl(std::make_unique<Impl>()) {
     auto& bus = ll::event::EventBus::getInstance();
 
     impl->mQuit                   = std::make_shared<std::atomic<bool>>(false);
-    impl->mEventSchedulingSleep   = std::make_shared<ll::coro::InterruptableSleep>();
-    impl->mLandTipSchedulingSleep = std::make_shared<ll::coro::InterruptableSleep>();
+    impl->mEventSchedulingSleep   = std::make_shared<ll::coro::ConditionVariable>();
+    impl->mLandTipSchedulingSleep = std::make_shared<ll::coro::ConditionVariable>();
 
     impl->mPlayerJoinServerListener =
         bus.emplaceListener<ll::event::PlayerJoinEvent>([this](ll::event::PlayerJoinEvent& ev) {
@@ -234,7 +234,7 @@ LandScheduler::LandScheduler() : impl(std::make_unique<Impl>()) {
 
     ll::coro::keepThis([quit = impl->mQuit, sleep = impl->mEventSchedulingSleep, this]() -> ll::coro::CoroTask<> {
         while (!quit->load()) {
-            co_await sleep->sleepFor(ll::chrono::ticks{5});
+            co_await sleep->waitFor(ll::chrono::ticks{5});
             if (quit->load()) {
                 break;
             }
@@ -263,7 +263,7 @@ LandScheduler::LandScheduler() : impl(std::make_unique<Impl>()) {
     if (conf.bottomContinuousTip) {
         ll::coro::keepThis([quit = impl->mQuit, sleep = impl->mLandTipSchedulingSleep, this]() -> ll::coro::CoroTask<> {
             while (!quit->load()) {
-                co_await sleep->sleepFor(
+                co_await sleep->waitFor(
                     ConfigProvider::getNotificationsConfig().bottomTipCycle * ll::chrono::ticks{20}
                 );
                 if (quit->load()) {
@@ -297,8 +297,8 @@ LandScheduler::~LandScheduler() {
     bus.removeListener(impl->mPlayerJoinServerListener);
     bus.removeListener(impl->mPlayerDisconnectListener);
     impl->mQuit->store(true);
-    impl->mEventSchedulingSleep->interrupt(true);
-    impl->mLandTipSchedulingSleep->interrupt(true);
+    impl->mEventSchedulingSleep->notifyAll(true);
+    impl->mLandTipSchedulingSleep->notifyAll(true);
     impl->mPlayers.clear();
     impl->mDimensionMap.clear();
     impl->mLandIdMap.clear();

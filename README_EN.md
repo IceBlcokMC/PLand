@@ -65,7 +65,7 @@ PLand offers precise controls over both **Player Actions** and **Environmental E
 
 ### 💰 Economy & Pricing System
 
-- **Dual Economy Engines**: Flexibly integrates with server economy plugins (Scoreboard, LegacyMoney, etc.).
+- **Dual Economy Engines**: Flexibly integrates with server economy mods (Scoreboard, LegacyMoney, etc.).
 - **Custom Formulas**: Independent pricing formulas and multipliers configurable per claim type and dimension.
 - **Discounts & Refunds**: Full configuration support for purchase discounts and claim surrender/lease refund rates.
 

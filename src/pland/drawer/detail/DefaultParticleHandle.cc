@@ -6,8 +6,8 @@
 #include "pland/land/Land.h"
 
 #include "ll/api/chrono/GameChrono.h"
+#include "ll/api/coro/ConditionVariable.h"
 #include "ll/api/coro/CoroTask.h"
-#include "ll/api/coro/InterruptableSleep.h"
 #include "ll/api/thread/ServerThreadExecutor.h"
 
 #include "mc/network/packet/SpawnParticleEffectPacket.h"
@@ -20,7 +20,7 @@ namespace land::drawer::detail {
 
 
 class ParticleSpawner {
-    GeoId                                  mId;
+    GeoId                                                   mId;
     std::vector<std::unique_ptr<SpawnParticleEffectPacket>> mPackets;
 
     static GeoId getNextGeoId() {
@@ -32,12 +32,14 @@ class ParticleSpawner {
         auto points = aabb.getBorder();
         mPackets.reserve(points.size());
         for (auto& point : points) {
-            mPackets.emplace_back(std::make_unique<SpawnParticleEffectPacket>(
-                Vec3{point.x + 0.5, point.y + 0.5, point.z + 0.5},
-                particle,
-                dimId,
-                std::nullopt
-            ));
+            mPackets.emplace_back(
+                std::make_unique<SpawnParticleEffectPacket>(
+                    Vec3{point.x + 0.5, point.y + 0.5, point.z + 0.5},
+                    particle,
+                    dimId,
+                    std::nullopt
+                )
+            );
         }
     }
 
@@ -65,20 +67,20 @@ public:
 };
 
 class DefaultParticleHandle::Impl {
-    std::unordered_map<GeoId, ParticleSpawner>    mSpawners;
-    std::unordered_map<LandID, GeoId>             mDrawedLands;
-    std::shared_ptr<std::atomic<bool>>            mQuit;
-    std::shared_ptr<ll::coro::InterruptableSleep> mSleep;
-    DefaultParticleHandle&                        mOwner;
+    std::unordered_map<GeoId, ParticleSpawner>   mSpawners;
+    std::unordered_map<LandID, GeoId>            mDrawedLands;
+    std::shared_ptr<std::atomic<bool>>           mQuit;
+    std::shared_ptr<ll::coro::ConditionVariable> mCV;
+    DefaultParticleHandle&                       mOwner;
 
 public:
     explicit Impl(DefaultParticleHandle& owner) : mOwner(owner) {
-        mQuit  = std::make_shared<std::atomic<bool>>(false);
-        mSleep = std::make_shared<ll::coro::InterruptableSleep>();
+        mQuit = std::make_shared<std::atomic<bool>>(false);
+        mCV   = std::make_shared<ll::coro::ConditionVariable>();
 
-        ll::coro::keepThis([quit = mQuit, sleep = mSleep, this]() -> ll::coro::CoroTask<> {
+        ll::coro::keepThis([quit = mQuit, sleep = mCV, this]() -> ll::coro::CoroTask<> {
             while (!quit->load()) {
-                co_await sleep->sleepFor(ll::chrono::ticks{30});
+                co_await sleep->waitFor(ll::chrono::ticks{30});
                 if (quit->load()) {
                     break;
                 }
@@ -94,7 +96,7 @@ public:
 
     ~Impl() {
         mQuit->store(true);
-        mSleep->interrupt(true);
+        mCV->notifyAll(true);
     }
 
     GeoId draw(LandAABB const& aabb, LandDimid dimId) {
