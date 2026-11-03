@@ -88,6 +88,11 @@ ll::Expected<> CommunityPluginLoader::load(ll::mod::Manifest manifest) {
         mEngines.emplace(manifest.name, std::move(engine));
         return plugin->onLoad()
             .transform([this, manifest, plugin] mutable { addMod(manifest.name, plugin); })
+            .and_then([this, manifest]() {
+                auto engine = this->mEngines.at(manifest.name).get();
+                assert(engine != nullptr);
+                return EngineHelper::launchEventLoopFor(*engine);
+            })
             .and_then([plugin]() -> ll::Expected<> {
                 if (ll::getGamingStatus() == ll::GamingStatus::Running) {
                     return plugin->onEnable(); // hot load

@@ -35,6 +35,8 @@ public:
             mPrivateEngine = nullptr;
             return ok;
         }
+        auto expected = EngineHelper::launchEventLoopFor(*mPrivateEngine);
+        assert(expected);
         return {};
     }
 };

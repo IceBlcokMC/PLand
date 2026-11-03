@@ -6,10 +6,24 @@
 #include "pland/scripting/system/InteropHub.h"
 #include "pland/scripting/system/ScriptTimerSystem.h"
 
+#include <ll/api/Expected.h>
+#include <ll/api/chrono/GameChrono.h>
+#include <ll/api/coro/ConditionVariable.h>
+#include <ll/api/coro/CoroTask.h>
+#include <ll/api/thread/ServerThreadExecutor.h>
+
+#include "jspp-backend/queue/JobQueue.h" // for event loop (JobQueue)
+
 namespace land::scripting {
 
 EngineOwnData::~EngineOwnData() {
     auto& bootstrap = PLand::getInstance().getScriptingBootstrap();
+    {
+        if (auto control = this->eventLoopControl) {
+            control->abort.store(true);
+            control->cv.notifyAll(true); // wake up the event loop
+        }
+    }
     {
         auto& timer = bootstrap.getScriptTimerSystem();
 
@@ -116,5 +130,43 @@ ll::Expected<> EngineHelper::callScriptLifecycleHook(jspp::Engine& engine, Lifec
         );
     }
 }
+
+ll::Expected<> EngineHelper::launchEventLoopFor(jspp::Engine& engine) {
+    auto data = engine.getData<EngineOwnData>();
+    assert(data != nullptr); // not null
+
+    if (data->eventLoopControl != nullptr) {
+        return ll::makeStringError("event loop already running");
+    }
+
+    data->eventLoopControl = std::make_shared<EventLoopControl>();
+    ll::coro::keepThis([engine = &engine, control = data->eventLoopControl]() -> ll::coro::CoroTask<> {
+        while (!control->abort.load()) {
+            co_await control->cv.waitFor(ll::chrono::ticks{1});
+            if (control->abort.load()) {
+                break;
+            }
+            try {
+                engine->getJobQueue()->loopOnce(); // pumpPendingJobs internally entered EngineScope
+            } catch (jspp::Exception const& e) {
+                PLand::getInstance().getSelf().getLogger().error(
+                    "An uncaught jspp::Exception occurred in the event loop: {}\n{}",
+                    e.what(),
+                    e.stacktrace()
+                );
+            } catch (std::exception const& e) {
+                PLand::getInstance().getSelf().getLogger().error(
+                    "An uncaught std::exception occurred in the event loop: {}",
+                    e.what()
+                );
+            } catch (...) {
+                PLand::getInstance().getSelf().getLogger().error("An uncaught exception occurred in the event loop");
+            }
+        }
+        co_return;
+    }).launch(ll::thread::ServerThreadExecutor::getDefault());
+    return {};
+}
+
 
 } // namespace land::scripting

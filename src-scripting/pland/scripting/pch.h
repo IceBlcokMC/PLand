@@ -2,6 +2,7 @@
 
 // std
 #include <algorithm>
+#include <atomic>
 #include <cassert>
 #include <cstdint>
 #include <filesystem>
@@ -16,6 +17,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
 
 // jspp
 #include "jspp/Jspp.h"
