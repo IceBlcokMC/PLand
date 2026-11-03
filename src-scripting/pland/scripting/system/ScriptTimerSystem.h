@@ -2,8 +2,9 @@
 #include "pland/scripting/pch.h"
 
 #include <ll/api/Expected.h>
+#include <ll/api/coro/ConditionVariable.h>
 #include <ll/api/coro/CoroPromise.h>
-#include <ll/api/coro/InterruptableSleep.h>
+
 
 namespace land::scripting {
 
@@ -29,8 +30,8 @@ public:
 
 private:
     struct CancelToken {
-        ll::coro::InterruptableSleep sleep{};
-        bool                         abort{false};
+        ll::coro::ConditionVariable sleep{};
+        bool                        abort{false};
     };
     using CancelTokenPtr = std::shared_ptr<CancelToken>;
 

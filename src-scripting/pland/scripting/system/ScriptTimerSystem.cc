@@ -17,7 +17,7 @@ ScriptTimerSystem::newTimeout(jspp::Local<jspp::Function> callback, int64_t time
 
     auto tracked = jspp::TrackedGlobal<jspp::Function>::create(std::move(callback));
     ll::coro::keepThis([tracked, timeout, token]() -> ll::coro::CoroTask<> {
-        co_await token->sleep.sleepFor(std::chrono::milliseconds{timeout});
+        co_await token->sleep.waitFor(std::chrono::milliseconds{timeout});
         if (token->abort) {
             co_return;
         }
@@ -37,7 +37,7 @@ ScriptTimerSystem::newTimeout(jspp::Local<jspp::Function> callback, int64_t time
     });
     if (!mCancelTokens.emplace(id, std::move(token)).second) {
         token->abort = true;
-        token->sleep.interrupt(true);
+        token->sleep.notifyAll(true);
         return kInvalidTaskId;
     }
     return id;
@@ -51,7 +51,7 @@ ScriptTimerSystem::newInterval(jspp::Local<jspp::Function> callback, int64_t tim
     auto tracked = jspp::TrackedGlobal<jspp::Function>::create(std::move(callback));
     ll::coro::keepThis([tracked, timeout, token]() -> ll::coro::CoroTask<> {
         while (!token->abort) {
-            co_await token->sleep.sleepFor(std::chrono::milliseconds{timeout});
+            co_await token->sleep.waitFor(std::chrono::milliseconds{timeout});
             if (token->abort) {
                 co_return;
             }
@@ -76,7 +76,7 @@ ScriptTimerSystem::newInterval(jspp::Local<jspp::Function> callback, int64_t tim
     });
     if (!mCancelTokens.emplace(id, std::move(token)).second) {
         token->abort = true;
-        token->sleep.interrupt(true);
+        token->sleep.notifyAll(true);
         return kInvalidTaskId;
     }
     return id;
@@ -88,7 +88,7 @@ bool ScriptTimerSystem::cancelTask(TaskId taskId) {
         return false;
     }
     iter->second->abort = true;
-    iter->second->sleep.interrupt(true);
+    iter->second->sleep.notifyAll(true);
     // !Resources aren't cleaned up here;
     // they'll be cleaned up after the coroutine exits.
     // Cleaning them up here would break the iterator.
@@ -102,7 +102,7 @@ void ScriptTimerSystem::clearAll() {
     auto copy = mCancelTokens; // 拷贝一份，避免协程清理函数导致迭代器失效
     for (auto& token : copy | std::views::values) {
         token->abort = true;
-        token->sleep.interrupt(true);
+        token->sleep.notifyAll(true);
     }
 }
 
