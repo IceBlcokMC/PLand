@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### 🧩 其他改动
+
+- 适配 LeviLamina v26.60.x @engsr6982
+
 ## [0.25.0] - 2026-10-03
 
 ### ✨ 新增功能
@@ -220,11 +224,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - 新增领地 **名称**、 **描述** 可配置检查 @engsr6982
 - DevTool 新增领地树可视化 @engsr6982
 - 管理 GUI：
-    - 管理玩家表单支持分页和搜索（#129）@engsr6982
-    - 支持按领地 ID 查找领地 @engsr6982
+  - 管理玩家表单支持分页和搜索（#129）@engsr6982
+  - 支持按领地 ID 查找领地 @engsr6982
 - 权限系统:
-    - 区分环境权限与角色权限 #170 @engsr6982
-    - 成员支持独立权限配置 #170 @engsr6982
+  - 区分环境权限与角色权限 #170 @engsr6982
+  - 成员支持独立权限配置 #170 @engsr6982
 - 添加实体拾取物品事件 (关联`allowMobGrief`权限) #171 @engsr6982
 - 分离拦截配置 (InterceptorConfig.json)和领地配置 (Config.json)，改进权限映射 #169 @engsr6982
 
