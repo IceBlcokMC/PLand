@@ -75,12 +75,12 @@ LSE 的 quickjs 后端在加载 **入口模块**（`manifest.json` 中指定的�
 
 #### 推荐：bootstraps.js 引导模式
 
-假设你的插件位于 `plugins/my_plugin/`，实际入口为 `Test.js`：
+假设你的插件位于 `mods/my_plugin/`，实际入口为 `Test.js`：
 
 ```js
-// bootstraps.js（manifest.json 的入口，位于 plugins/my_plugin/）
+// bootstraps.js（manifest.json 的入口，位于 mods/my_plugin/）
 // 入口模块的 import.meta.url 为服务器 CWD，所以使用相对于服务器根目录的路径
-import * as _ from "./plugins/my_plugin/Test.js";
+import * as _ from "./mods/my_plugin/Test.js";
 ```
 
 ```js
@@ -96,7 +96,7 @@ import { LDEvent } from "../PLand-LegacyRemoteCallApi/lib/esm/imports/LDEvents.j
 
 ```js
 // 入口模块（相对于服务器 CWD 解析）
-import { LandRegistry } from "./plugins/PLand-LegacyRemoteCallApi/lib/esm/imports/LandRegistry.js";
+import { LandRegistry } from "./mods/PLand-LegacyRemoteCallApi/lib/esm/imports/LandRegistry.js";
 ```
 
 #### CommonJS 模块

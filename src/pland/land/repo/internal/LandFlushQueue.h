@@ -3,7 +3,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "concurrentqueue.h"
-#include "ll/api/coro/InterruptableSleep.h"
+#include "ll/api/coro/ConditionVariable.h"
 #include "ll/api/thread/ThreadPoolExecutor.h"
 
 #include <atomic>
@@ -20,10 +20,10 @@ struct FlushTask {
     enum class Kind : uint8_t { kLand = 0, kDeleteLand = 1, kAdmins = 2, kBarrier = 3 };
 
     Kind                                mKind{Kind::kLand};
-    LandID                              mId{INVALID_LAND_ID};   // kLand / kDeleteLand
-    uint32_t                            mDirtyCount{0};         // kLand: 快照时刻的脏计数
-    std::string                         mPayload;               // kLand: 序列化后的 CBOR 载荷
-    std::shared_ptr<std::promise<void>> mBarrier;               // kBarrier: 落盘完成信号
+    LandID                              mId{INVALID_LAND_ID}; // kLand / kDeleteLand
+    uint32_t                            mDirtyCount{0};       // kLand: 快照时刻的脏计数
+    std::string                         mPayload;             // kLand: 序列化后的 CBOR 载荷
+    std::shared_ptr<std::promise<void>> mBarrier;             // kBarrier: 落盘完成信号
 };
 
 /**
@@ -33,7 +33,7 @@ struct FlushTask {
  * - 入队时快照: kLand 任务携带调用方序列化好的载荷, worker 只消费载荷,
  *   绝不触碰 Land 对象, 与主线程的 Land 修改无数据竞争
  * - 唤醒合并: 仅在队列从空变为非空时打断一次 sleep, 避免同一 burst 的多次跨线程唤醒
- * - 周期兜底: interrupt 非粘性 (协程不在 sleep 态时调用会被丢弃), 任何丢失的
+ * - 周期兜底: notifyAll 非粘性 (协程不在 sleep 态时调用会被丢弃), 任何丢失的
  *   唤醒在 25ms 内自愈
  * - last-wins 去重: drain 时同一领地的多个任务只保留最后一个; 单生产者 FIFO
  *   保证删除任务排在快照任务之后, 覆盖即删除优先
@@ -76,7 +76,7 @@ private:
 
     Consumer                               mConsumer;
     moodycamel::ConcurrentQueue<FlushTask> mQueue;
-    ll::coro::InterruptableSleep           mInterruptableSleep;
+    ll::coro::ConditionVariable            mInterruptableSleep;
     std::atomic_bool                       mFlushTaskAbort{false};
     std::atomic_bool                       mSignalPending{false};
     std::shared_ptr<std::promise<void>>    mFlushDone;

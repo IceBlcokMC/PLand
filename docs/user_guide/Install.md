@@ -55,7 +55,7 @@ lip install --upgrade github.com/IceBlcokMC/PLand
 
 安装完成后：
 
-1. 在 `plugins` 文件夹中可以看到 PLand 的安装文件
+1. 在 `mods` 文件夹中可以看到 PLand 的安装文件
 2. 双击 `bedrock_server_mod.exe` 启动服务器
 3. 在服务器日志中看到 [PLand 的启动日志](#启动日志) 即安装成功
 
@@ -89,7 +89,7 @@ lip install --upgrade github.com/IceBlcokMC/PLand
 
 2. 解压下载的 `PLand-windows-x64.zip`
 
-3. 将解压后的 `PLand` 文件夹移动到 `plugins` 文件夹下
+3. 将解压后的 `PLand` 文件夹移动到 `mods` 文件夹下
 
 4. 双击 `bedrock_server_mod.exe` 启动服务器
 
@@ -119,7 +119,7 @@ lip install --upgrade github.com/IceBlcokMC/PLand
 
 ### Q：安装后没有看到 PLand 的启动日志？
 
-- 检查 `plugins` 文件夹下是否有 `PLand` 文件夹
+- 检查 `mods` 文件夹下是否有 `PLand` 文件夹
 - 检查是否已安装全部**必须**的前置组件（LeviLamina、iListenAttentively）
 - 查看服务器完整日志，确认是否存在加载失败/崩溃的具体报错
 
@@ -135,7 +135,7 @@ lip install --upgrade github.com/IceBlcokMC/PLand
 ```
 
 ::: warning 升级前请务必备份数据
-将 `plugins/PLand` 下的 `config` 和 `data` 文件夹复制一份保存，以防升级出现问题。
+将 `mods/PLand` 下的 `config` 和 `data` 文件夹复制一份保存，以防升级出现问题。
 :::
 
 ### Q：更多问题？

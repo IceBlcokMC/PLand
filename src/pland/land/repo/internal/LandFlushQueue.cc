@@ -33,7 +33,7 @@ void LandFlushQueue::notifyMetaDirty() {
 void LandFlushQueue::flushAndWait() {
     auto barrier = std::make_shared<std::promise<void>>();
     mQueue.enqueue(FlushTask{FlushTask::Kind::kBarrier, INVALID_LAND_ID, 0, {}, barrier});
-    mInterruptableSleep.interrupt(false); // 总是尝试唤醒, 让 worker 尽快完成本次 drain
+    mInterruptableSleep.notifyAll(false); // 总是尝试唤醒, 让 worker 尽快完成本次 drain
     barrier->get_future().wait();
 }
 
@@ -49,11 +49,11 @@ void LandFlushQueue::start(ll::thread::ThreadPoolExecutor& executor) {
                     continue;
                 }
                 // 周期兜底: 丢失的唤醒在 25ms 内自愈
-                co_await mInterruptableSleep.sleepFor(kFlushInterval);
+                co_await mInterruptableSleep.waitFor(kFlushInterval);
             }
         }
         // 关服: 清空剩余队列并最终落盘
-        // (stop 用 interrupt(true) 会使此处运行在主线程, 快照载荷不读 Land, 同样安全)
+        // (stop 用 notifyAll(true) 会使此处运行在主线程, 快照载荷不读 Land, 同样安全)
         (void)drainBatch();
         done->set_value();
         co_return;
@@ -68,23 +68,23 @@ void LandFlushQueue::stop() {
     mFlushDone = nullptr; // 幂等: get_future 只能调用一次, 重复 stop 直接返回
 
     mFlushTaskAbort.store(true);
-    mInterruptableSleep.interrupt(true); // 在主线程原地 resume, 完成最终 drain
+    mInterruptableSleep.notifyAll(true); // 在主线程原地 resume, 完成最终 drain
     done->get_future().wait();           // 等待 worker 完全退出 (含最终落盘), 避免 UAF
 }
 
 void LandFlushQueue::notifyWorker() {
     // 唤醒合并: 仅在队列从空变为非空时打断一次
-    // 使用 interrupt(false) 转移到线程池执行, 避免在主线程原地 resume 阻塞 server 线程
+    // 使用 notifyAll(false) 转移到线程池执行, 避免在主线程原地 resume 阻塞 server 线程
     if (!mSignalPending.exchange(true, std::memory_order_relaxed)) {
-        mInterruptableSleep.interrupt(false);
+        mInterruptableSleep.notifyAll(false);
     }
 }
 
 bool LandFlushQueue::drainBatch() {
     mDrainBuffer.clear();
-    FlushTask task;
+    FlushTask                                        task;
     std::vector<std::shared_ptr<std::promise<void>>> barriers;
-    bool hasWork = false;
+    bool                                             hasWork = false;
 
     while (mQueue.try_dequeue(task)) {
         hasWork = true;

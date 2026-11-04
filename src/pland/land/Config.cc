@@ -17,8 +17,8 @@ namespace fs = std::filesystem;
 
 decltype(ConfigProvider::cfg) ConfigProvider::cfg = {};
 
-std::filesystem::path ConfigProvider::_filePath(const std::filesystem::path& baseDir) { return baseDir / FILE_NAME; }
-ll::Expected<>        ConfigProvider::load(const std::filesystem::path& baseDir) {
+std::filesystem::path ConfigProvider::_filePath(std::filesystem::path const& baseDir) { return baseDir / FILE_NAME; }
+ll::Expected<>        ConfigProvider::load(std::filesystem::path const& baseDir) {
     auto path = _filePath(baseDir);
 
     if (!fs::exists(path)) {
@@ -39,7 +39,7 @@ ll::Expected<>        ConfigProvider::load(const std::filesystem::path& baseDir)
             return ll::forwardError(res.error());
         }
 
-        auto mres = json_util::merge_versioned_and_deserialize(json, cfg, true);
+        auto mres = json_util::merge_versioned_and_deserialize(json, cfg, true, ConfigMutableObjectPredicate{});
 
         // update migrated or merged config to disk
         if (res.value() == infra::MigrateResult::Success || mres == json_util::MergeResult::Modified) {
@@ -51,7 +51,7 @@ ll::Expected<>        ConfigProvider::load(const std::filesystem::path& baseDir)
     return {};
 }
 
-ll::Expected<> ConfigProvider::save(const std::filesystem::path& baseDir) {
+ll::Expected<> ConfigProvider::save(std::filesystem::path const& baseDir) {
     auto path = _filePath(baseDir);
     ll::config::saveConfig(cfg, path);
     return {};

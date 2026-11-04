@@ -3,13 +3,14 @@
 #include "pland/PLand.h"
 
 #include "ll/api/chrono/GameChrono.h"
+#include "ll/api/coro/ConditionVariable.h"
 #include "ll/api/coro/CoroTask.h"
-#include "ll/api/coro/InterruptableSleep.h"
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/ListenerBase.h"
 #include "ll/api/event/player/PlayerDisconnectEvent.h"
 #include "ll/api/event/player/PlayerInteractBlockEvent.h"
 #include "ll/api/thread/ServerThreadExecutor.h"
+
 
 #include "mc/platform/UUID.h"
 #include "mc/world/actor/player/Player.h"
@@ -25,22 +26,22 @@
 namespace land {
 
 class CooldownLock {
-    ll::coro::Duration                            mCooldown;
-    std::shared_ptr<ll::coro::InterruptableSleep> mInterruptableSleep{nullptr};
-    std::shared_ptr<std::atomic<bool>>            mAbortFlag{nullptr};
-    ll::thread::ServerThreadExecutor const&       mExecutor;
-    absl::flat_hash_set<mce::UUID>                mCoolingPlayers;
+    ll::coro::Duration                           mCooldown;
+    std::shared_ptr<ll::coro::ConditionVariable> mInterruptableSleep{nullptr};
+    std::shared_ptr<std::atomic<bool>>           mAbortFlag{nullptr};
+    ll::thread::ServerThreadExecutor const&      mExecutor;
+    absl::flat_hash_set<mce::UUID>               mCoolingPlayers;
 
 public:
     explicit CooldownLock(ll::coro::Duration cooldown, ll::thread::ServerThreadExecutor const& exec)
     : mCooldown(cooldown),
-      mInterruptableSleep(std::make_shared<ll::coro::InterruptableSleep>()),
+      mInterruptableSleep(std::make_shared<ll::coro::ConditionVariable>()),
       mAbortFlag(std::make_shared<std::atomic<bool>>(false)),
       mExecutor(exec) {}
 
     ~CooldownLock() {
         mAbortFlag->store(true);
-        mInterruptableSleep->interrupt(true); // inplace
+        mInterruptableSleep->notifyAll(true); // inplace
     }
 
     bool tryTrigger(mce::UUID const& uuid) {
@@ -50,7 +51,7 @@ public:
         }
 
         ll::coro::keepThis([this, uuid, sleep = mInterruptableSleep, abort = mAbortFlag]() -> ll::coro::CoroTask<> {
-            co_await sleep->sleepFor(mCooldown);
+            co_await sleep->waitFor(mCooldown);
             if (abort->load()) {
                 co_return;
             }
@@ -66,9 +67,9 @@ struct SelectorManager::Impl {
 
     std::unique_ptr<CooldownLock> mDebouncer{nullptr};
 
-    ll::event::ListenerPtr                        mListener{nullptr};
-    std::shared_ptr<std::atomic<bool>>            mCoroStop{nullptr};
-    std::shared_ptr<ll::coro::InterruptableSleep> mInterruptableSleep{nullptr};
+    ll::event::ListenerPtr                       mListener{nullptr};
+    std::shared_ptr<std::atomic<bool>>           mCoroStop{nullptr};
+    std::shared_ptr<ll::coro::ConditionVariable> mInterruptableSleep{nullptr};
 
     ll::event::ListenerPtr mPlayerDisconnectListener;
 };
@@ -106,10 +107,10 @@ SelectorManager::SelectorManager() : impl(std::make_unique<Impl>()) {
         );
 
     impl->mCoroStop           = std::make_shared<std::atomic<bool>>(false);
-    impl->mInterruptableSleep = std::make_shared<ll::coro::InterruptableSleep>();
+    impl->mInterruptableSleep = std::make_shared<ll::coro::ConditionVariable>();
     ll::coro::keepThis([sleep = impl->mInterruptableSleep, stop = impl->mCoroStop, this]() -> ll::coro::CoroTask<> {
         while (!stop->load()) {
-            co_await sleep->sleepFor(ll::chrono::ticks(20));
+            co_await sleep->waitFor(ll::chrono::ticks(20));
             if (stop->load()) {
                 break;
             }
@@ -149,7 +150,7 @@ SelectorManager::~SelectorManager() {
 
     impl->mSelectors.clear();
     impl->mCoroStop->store(true);
-    impl->mInterruptableSleep->interrupt(true);
+    impl->mInterruptableSleep->notifyAll(true);
 }
 
 

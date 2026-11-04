@@ -5,13 +5,13 @@ add_repositories("iceblcokmc https://github.com/IceBlcokMC/xmake-repo.git")
 add_repositories("engsr6982-repo https://github.com/engsr6982/xmake-repo.git")
 
 -- LeviMc(LiteLDev)
-add_requires("levilamina 26.51.5", {configs = {target_type = "server"}})
+add_requires("levilamina 26.60.0", {configs = {target_type = "server"}})
 add_requires("levibuildscript")
-add_requires("ilistenattentively 0.17.0")
+add_requires("ilistenattentively 0.18.0")
 
 -- IceBlockMC
-add_requires("ll-bstats 0.7.0")
-add_requires("economy_bridge 0.7.0")
+add_requires("ll-bstats 26.60.0")
+add_requires("economy_bridge 26.60.0")
 
 -- xmake
 add_requires("exprtk 0.0.3")
