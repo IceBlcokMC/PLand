@@ -7,6 +7,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.26.0] - 2026-11-05
+
 ### 🐛 问题修复
 
 - 修复配置文件 `allowDimensions`,`dimensionalPriceMultiplier`,`leaseOnlyRanges`,`forbiddenRanges` 字段无法编辑 [#264] @engsr6982
