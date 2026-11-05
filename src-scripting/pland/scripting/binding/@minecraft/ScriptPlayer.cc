@@ -4,8 +4,10 @@
 
 #include "mc/network/packet/ToastRequestPacket.h"
 #include "mc/world/level/Level.h"
+#include <mc/deps/core/math/Vec3.h>
 #include <mc/network/packet/SetTitlePacket.h>
 #include <mc/world/actor/player/Player.h>
+#include <mc/world/level/dimension/DimensionType.h>
 
 #include "ll/api/service/Bedrock.h"
 
@@ -51,6 +53,14 @@ decltype(Modules::kScriptPlayer) Modules::kScriptPlayer = //
         )
         .method("setAbility", &Player::setAbility)
         .method("canUseAbility", &Player::canUseAbility)
+
+        // Actor API
+        // 简化 API，声明为接口实现，目前暂无必要对 Actor 和 Mob 进行绑定独立类
+        .implements<Mob>()
+        .implements<Actor>()
+        .method("getPosition", &Actor::getPosition)
+        .method("teleport", static_cast<void (Actor::*)(Vec3 const&, DimensionType)>(&Player::teleport))
+
         .build();
 
 

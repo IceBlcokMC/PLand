@@ -106,7 +106,7 @@ declare module "@levilamina" {
             name: N,
             enumKind: K,
             enumName: string,
-        ): RuntimeOverload<T & { [P in N]: KindToTypeOptional<K> }>;
+        ): RuntimeOverload<T & { [P in N]?: KindToTypeOptional<K> }>;
 
         required<N extends string, K extends EnumTypeKind>(
             name: N,
