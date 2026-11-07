@@ -17,6 +17,7 @@ jspp::ModuleMeta const& Modules::getPLandModule() {
                                     .export_enum(kScriptLeaseState)
                                     .export_enum(kScriptLandType)
                                     .export_enum(kScriptLandRole)
+                                    .export_class(kScriptDrawer)
                                     .build();
     return m;
 }

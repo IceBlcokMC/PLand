@@ -1,7 +1,6 @@
 #pragma once
 
 #include "pland/scripting/pch.h"
-
 namespace land::scripting {
 
 
@@ -51,6 +50,7 @@ struct Modules {
     static jspp::EnumMeta const  kScriptLeaseState;
     static jspp::EnumMeta const  kScriptLandType;
     static jspp::EnumMeta const  kScriptLandRole;
+    static jspp::ClassMeta const kScriptDrawer;
 };
 
 

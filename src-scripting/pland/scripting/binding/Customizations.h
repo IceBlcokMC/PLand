@@ -5,6 +5,7 @@
 #include "jspp/binding/TypeConverter.h"
 #include "jspp/core/Value.h"
 
+#include "mc/deps/core/math/Color.h"
 #include "mc/deps/ecs/WeakEntityRef.h"
 #include <mc/deps/core/utility/optional_ref.h>
 #include <mc/server/commands/CommandOrigin.h>
@@ -185,6 +186,23 @@ struct TypeConverter<optional_ref<T>> {
     }
     static optional_ref<T> toCpp(Local<Value> const& v [[maybe_unused]]) {
         [[unlikely]] throw jspp::Exception("Cannot convert JS value to optional_ref<T>");
+    }
+};
+
+template <>
+struct TypeConverter<mce::Color> {
+    static Local<Value> toJs(mce::Color const& v, ReturnValuePolicy /* policy */, Local<Value> const& /* parent */) {
+        // color to hex string (rgba)
+        auto toByte = [](float c) -> uint8_t {
+            return static_cast<uint8_t>(std::lround(std::clamp(c, 0.0f, 1.0f) * 255.0f));
+        };
+        return String::newString(
+            fmt::format("#{:02X}{:02X}{:02X}{:02X}", toByte(v.r), toByte(v.g), toByte(v.b), toByte(v.a))
+        );
+    }
+    static mce::Color toCpp(Local<Value> const& v) {
+        auto str = v.asString().getValue();
+        return mce::Color{str};
     }
 };
 

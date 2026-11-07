@@ -21,6 +21,9 @@ declare type DimensionType = number;
 
 declare type UUID = string;
 
+/** Hex color in RGBA format (#RRGGBBAA). */
+type Color = `#${string}`;
+
 /**
  * 只读视图类型
  * @template T 原始类型
