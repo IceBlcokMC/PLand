@@ -136,17 +136,47 @@
 | 所需权限 | / |
 | 额外依赖 | / |
 
-## 添加或移除一个管理员
+## 添加或移除一个管理员(离线)
 
-`/pland admin <add|remove> <targets: target>`
+`/pland admin <add|remove> <name>`
 
 - `add` 添加
 - `remove` 移除
-- `targets` 玩家选择器
+- `name` 玩家名称
 
 | 项目 | 说明 |
 | --- | --- |
 | 执行主体 | 控制台 |
+| 所需权限 | / |
+| 额外依赖 | / |
+
+## 添加或移除一个管理员(在线)
+
+`/pland admins <add|remove> <player>`
+
+- `add` 添加
+- `remove` 移除
+- `player` 玩家选择器
+
+| 项目 | 说明 |
+| --- | --- |
+| 执行主体 | 控制台 |
+| 所需权限 | / |
+| 额外依赖 | / |
+
+## 查询领地信息
+
+`pland info [base|lease|sub_land|full] [id]`
+
+- `base` 基础信息
+- `lease` 租赁信息
+- `sub_land` 子领地信息
+- `full` 全部信息
+- `id` 指定要操作的领地 ID（留空则操作当前所在的领地）
+
+| 项目 | 说明 |
+| --- | --- |
+| 执行主体 | 控制台 / 玩家 |
 | 所需权限 | / |
 | 额外依赖 | / |
 

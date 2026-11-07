@@ -154,14 +154,14 @@ declare module "@pland" {
         getLeaseState(): LeaseState;
 
         /**
-         * 获取租赁开始时间(UNIX 时间戳)
+         * 获取租赁开始时间(UNIX 时间戳, 单位: 秒)
          */
-        getLeaseStartAt(): bigint;
+        getLeaseStartAt(): number;
 
         /**
-         * 获取租赁结束时间(UNIX 时间戳)
+         * 获取租赁结束时间(UNIX 时间戳, 单位: 秒)
          */
-        getLeaseEndAt(): bigint;
+        getLeaseEndAt(): number;
 
         /**
          * @brief 判断 uuid 是否为领地主

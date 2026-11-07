@@ -1,4 +1,8 @@
 declare module "@levilamina" {
+    type NamedTranslateParams = {
+        [key: string]: string | any;
+    };
+
     export class I18n {
         constructor();
 
@@ -15,8 +19,8 @@ declare module "@levilamina" {
 
         set(localeCode: string, key: string, value: string): void;
 
-        tr(key: string, ...params: any[]): string;
-        trl(localeCode: string, key: string, ...params: any[]): string;
+        tr(key: string, params?: NamedTranslateParams): string;
+        trl(localeCode: string, key: string, params?: NamedTranslateParams): string;
 
         static readonly defaultLocaleCode: string;
     }

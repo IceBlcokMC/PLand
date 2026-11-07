@@ -13,36 +13,40 @@ using ll::i18n::I18n;
 // tr(key, ...params?)
 // trl(localeCode, key, ...params?)
 
-template <bool requriedLocaleCode = false>
+template <bool requiredLocaleCode = false>
 std::string resolveLocaleCode(jspp::Arguments const& args) {
-    if constexpr (requriedLocaleCode) {
+    if constexpr (requiredLocaleCode) {
         return jspp::binding::toCpp<std::string>(args[0]); // first argument is localeCode
     } else {
         return std::string{ll::i18n::getDefaultLocaleCode()};
     }
 }
 
-template <bool requriedLocaleCode = false>
+template <bool requiredLocaleCode = false>
 jspp::Local<jspp::Value> translate(jspp::InstancePayload& payload, jspp::Arguments const& args) {
-    constexpr auto offset = requriedLocaleCode ? 1 : 0; // skip localeCode argument
+    // tr(key, namedParams?)
+    // trl(localeCode, key, namedParams?)
 
-    if (args.length() <= offset) [[unlikely]] {
+    constexpr auto key_arg_offset = requiredLocaleCode ? 1u : 0u;
+
+    constexpr auto required_arg_count = key_arg_offset + 1;
+    if (args.length() < required_arg_count) [[unlikely]] {
         throw jspp::Exception{
-            requriedLocaleCode ? "trl requires at least 2 arguments" : "tr requires at least 1 argument",
+            requiredLocaleCode ? "trl requires at least 2 arguments" : "tr requires at least 1 argument",
             jspp::ExceptionType::TypeError
         };
     }
 
-    auto localeCode = resolveLocaleCode<requriedLocaleCode>(args);
-    auto key        = jspp::binding::toCpp<std::string>(args[offset]);
+    auto localeCode = resolveLocaleCode<requiredLocaleCode>(args);
+    auto key        = jspp::binding::toCpp<std::string>(args[key_arg_offset]);
 
     auto i18n = payload.unwrap<I18n>();
     assert(i18n != nullptr); // not null
 
-    constexpr auto params_begin = offset + 1; // skip key argument
+    constexpr auto params_begin = key_arg_offset + 1; // skip key argument
 
     auto text = i18n->get(key, localeCode);
-    auto res  = helper::formatImpl<params_begin>(text, args);
+    auto res  = helper::formatImpl<params_begin, true>(text, args);
     return jspp::binding::toJs(res);
 }
 

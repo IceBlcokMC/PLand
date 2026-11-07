@@ -54,8 +54,10 @@ decltype(Modules::kScriptLand) Modules::kScriptLand = //
         .method("setOriginalBuyPrice", &Land::setOriginalBuyPrice)
         .method("getHoldType", &Land::getHoldType)
         .method("getLeaseState", &Land::getLeaseState)
-        .method("getLeaseStartAt", &Land::getLeaseStartAt)
-        .method("getLeaseEndAt", &Land::getLeaseEndAt)
+        // time_t 为秒级时间戳，默认类型系统会对 time_t 的底层类型 long long 转换为 bigint
+        // 这里手动转为 double 避免脚本 bigint 转 Date 需要额外的隐式转换
+        .method("getLeaseStartAt", [](Land const& self) { return static_cast<double>(self.getLeaseStartAt()); })
+        .method("getLeaseEndAt", [](Land const& self) { return static_cast<double>(self.getLeaseEndAt()); })
         .method("isOwner", &Land::isOwner)
         .method("isMember", &Land::isMember)
         .method("isCollision", static_cast<bool (Land::*)(BlockPos const&, int) const>(&Land::isCollision))

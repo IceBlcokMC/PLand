@@ -6,6 +6,7 @@
 #include "mc/world/level/Level.h"
 #include <mc/deps/core/math/Vec3.h>
 #include <mc/network/packet/SetTitlePacket.h>
+#include <mc/world/actor/Actor.h>
 #include <mc/world/actor/player/Player.h>
 #include <mc/world/level/dimension/DimensionType.h>
 
@@ -58,6 +59,7 @@ decltype(Modules::kScriptPlayer) Modules::kScriptPlayer = //
         // 简化 API，声明为接口实现，目前暂无必要对 Actor 和 Mob 进行绑定独立类
         .implements<Mob>()
         .implements<Actor>()
+        .prop_readonly("dimensionId", &Actor::getDimensionId)
         .method("getPosition", &Actor::getPosition)
         .method("teleport", static_cast<void (Actor::*)(Vec3 const&, DimensionType)>(&Player::teleport))
 

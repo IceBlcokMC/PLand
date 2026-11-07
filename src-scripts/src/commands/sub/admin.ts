@@ -24,24 +24,24 @@ export default function initAdminSubCommand(cmd: CommandHandle) {
             switch (oper) {
                 case AdminOperation.add:
                     if (LandRegistry.isAdmin(uuid)) {
-                        output.error(tr("command.admin.add.already", name));
+                        output.error(tr("command.admin.add.already", { name }));
                         continue;
                     }
                     if (LandRegistry.addAdmin(uuid)) {
-                        output.success(tr("command.admin.add.success", name));
+                        output.success(tr("command.admin.add.success", { name }));
                     } else {
-                        output.error(tr("command.admin.add.fail", name));
+                        output.error(tr("command.admin.add.fail", { name }));
                     }
                     break;
                 case AdminOperation.remove:
                     if (!LandRegistry.isAdmin(uuid)) {
-                        output.error(tr("command.admin.remove.notAdmin", name));
+                        output.error(tr("command.admin.remove.notAdmin", { name }));
                         continue;
                     }
                     if (LandRegistry.removeAdmin(uuid)) {
-                        output.success(tr("command.admin.remove.success", name));
+                        output.success(tr("command.admin.remove.success", { name }));
                     } else {
-                        output.error(tr("command.admin.remove.fail", name));
+                        output.error(tr("command.admin.remove.fail", { name }));
                     }
                     break;
                 default:
@@ -68,7 +68,11 @@ export default function initAdminSubCommand(cmd: CommandHandle) {
 
             const info = PlayerInfo.fromName(name);
             if (!info) {
-                output.error(tr("command.admin.name.notFound", name));
+                output.error(
+                    tr("command.admin.name.notFound", {
+                        name: name,
+                    }),
+                );
                 return;
             }
 
@@ -113,7 +117,7 @@ export default function initAdminSubCommand(cmd: CommandHandle) {
                 return;
             }
 
-            output.success(tr("command.admin.list.count", admins.length));
+            output.success(tr("command.admin.list.count", { count: admins.length }));
             admins.forEach((a) => {
                 const info = PlayerInfo.fromUuid(a);
                 output.success(info?.name ?? a);
