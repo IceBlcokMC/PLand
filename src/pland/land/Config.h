@@ -2,7 +2,7 @@
 #include "pland/Global.h"
 #include "pland/aabb/LandAABB.h"
 #include "pland/drawer/DrawerType.h"
-#include "pland/economy/EconomySystem.h"
+#include "pland/economy/EconomyConfig.h"
 #include "pland/enums/LeaseRecycleMode.h"
 
 #include <unordered_set>

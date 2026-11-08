@@ -1,7 +1,8 @@
 #include "pland/economy/EconomySystem.h"
+#include "EconomyConfig.h"
+#include "pland/Global.h"
 #include "pland/PLand.h"
 #include "pland/land/Config.h"
-#include "pland/Global.h"
 
 #include <memory>
 #include <stdexcept>
@@ -17,9 +18,8 @@ namespace land {
 
 struct EconomySystem::Impl {
     std::shared_ptr<econbridge::IEconomy> mEconomyImpl;
-    mutable std::mutex                    mInstanceMutex;
 
-    std::shared_ptr<econbridge::IEconomy> create() const {
+    [[nodiscard]] static std::shared_ptr<econbridge::IEconomy> create() {
         auto& cfg = ConfigProvider::cfg.economy;
         if (!cfg.enabled) {
             PLand::getInstance().getSelf().getLogger().debug("using internals::EmptyEconomy");
@@ -36,20 +36,10 @@ struct EconomySystem::Impl {
             return std::make_shared<econbridge::detail::ScoreboardEconomy>(cfg.scoreboardName);
         }
         }
-
-        throw std::runtime_error("Unknown econbridge kit, please check config!");
+        [[unlikely]] throw std::runtime_error("Unknown econbridge kit, please check config!");
     }
 
-    void initialize() {
-        std::lock_guard lock(mInstanceMutex);
-        mEconomyImpl = create();
-    }
-
-    void reload() {
-        std::lock_guard lock(mInstanceMutex);
-        mEconomyImpl.reset();
-        mEconomyImpl = create();
-    }
+    void initialize() { mEconomyImpl = create(); }
 };
 
 EconomySystem::EconomySystem() : impl(std::make_unique<Impl>()) {}
@@ -60,18 +50,9 @@ EconomySystem& EconomySystem::getInstance() {
 }
 
 void EconomySystem::initialize() { impl->initialize(); }
-void EconomySystem::reload() { impl->reload(); }
-
+void EconomySystem::reload() { impl->initialize(); }
 
 std::shared_ptr<econbridge::IEconomy> EconomySystem::get() const { return impl->mEconomyImpl; }
-
-bool EconomySystem::reduceChecked(mce::UUID const& uuid, int64_t amount) const {
-    auto economy = get();
-    if (economy->get(uuid) < amount) {
-        return false;
-    }
-    return economy->reduce(uuid, amount);
-}
 
 std::string EconomySystem::getCostMessage(Player& player, llong amount) const {
     auto localeCode = player.getLocaleCode();

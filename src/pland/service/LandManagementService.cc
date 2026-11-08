@@ -25,7 +25,7 @@
 #include "pland/selector/land/OrdinaryLandCreateSelector.h"
 #include "pland/selector/land/SubLandCreateSelector.h"
 #include "pland/service/SelectionService.h"
-
+#include "pland/economy/EconomySystem.h"
 
 #include "ll/api/Expected.h"
 #include "ll/api/event/ListenerBase.h"
@@ -562,7 +562,7 @@ ll::Expected<std::shared_ptr<Land>> LandManagementService::_payMoneyAndCreateOrd
 ) {
     assert(selector != nullptr);
     auto& economy = EconomySystem::getInstance();
-    if (!economy.reduceChecked(player.getUuid(), money)) {
+    if (!economy->reduce(player.getUuid(), money)) {
         return ll::makeStringError("您的余额不足，无法购买"_trl(player.getLocaleCode()));
     }
     auto land = selector->newLand();
@@ -595,7 +595,7 @@ LandManagementService::_payMoneyAndCreateSubLand(Player& player, SubLandCreateSe
         return ll::makeStringError(manageCheck.error().message());
     }
     auto& economy = EconomySystem::getInstance();
-    if (!economy.reduceChecked(player.getUuid(), money)) {
+    if (!economy->reduce(player.getUuid(), money)) {
         return ll::makeStringError("您的余额不足，无法购买"_trl(player.getLocaleCode()));
     }
 
@@ -637,7 +637,7 @@ ll::Expected<> LandManagementService::_processResizeSettlement(Player& player, L
     auto& economy = EconomySystem::getInstance();
     switch (settlement.type) {
     case LandResizeSettlement::Type::Pay:
-        if (!economy.reduceChecked(player.getUuid(), settlement.amount)) {
+        if (!economy->reduce(player.getUuid(), settlement.amount)) {
             return ll::makeStringError("您的余额不足，无法购买"_trl(player.getLocaleCode()));
         }
         break;

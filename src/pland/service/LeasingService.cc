@@ -503,7 +503,7 @@ LeasingService::leaseLand(Player& player, OrdinaryLandCreateSelector* selector, 
     auto totalCost = rentExp.value() * static_cast<long long>(days);
 
     auto& economy = EconomySystem::getInstance();
-    if (!economy.reduceChecked(player.getUuid(), totalCost)) {
+    if (!economy->reduce(player.getUuid(), totalCost)) {
         return ll::makeStringError("您的余额不足，无法租赁"_trl(player.getLocaleCode()));
     }
 
@@ -555,7 +555,7 @@ ll::Expected<> LeasingService::renewLease(Player& player, std::shared_ptr<Land> 
     }
 
     auto& economy = EconomySystem::getInstance();
-    if (!economy.reduceChecked(player.getUuid(), detail.total)) {
+    if (!economy->reduce(player.getUuid(), detail.total)) {
         return ll::makeStringError("您的余额不足，无法续租"_trl(player.getLocaleCode()));
     }
 

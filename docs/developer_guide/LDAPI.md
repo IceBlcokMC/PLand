@@ -139,7 +139,7 @@ if (price.has_value()) {
 auto& economy = land::EconomySystem::getInstance();
 
 // 校验余额并扣款（返回 false 表示余额不足）
-bool ok = economy.reduceChecked(playerUuid, /* 金额 */ 1000);
+bool ok = economy->reduce(playerUuid, /* 金额 */ 1000);
 ```
 
 ### 事件监听
