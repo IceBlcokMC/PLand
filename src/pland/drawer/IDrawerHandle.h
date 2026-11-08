@@ -5,7 +5,6 @@
 #include "mc/world/level/dimension/DimensionType.h"
 #include "pland/Global.h"
 
-
 class Player;
 
 namespace land {
@@ -19,12 +18,16 @@ namespace land::drawer {
 struct GeoId {
     uint64 value{0};
 
-    constexpr      operator bool() const { return value != 0; }
+    inline static constexpr uint64 kInvalid = 0;
+
+    constexpr      operator bool() const { return value != kInvalid; }
     constexpr bool operator==(GeoId const& other) const { return value == other.value; }
 
     GeoId() = default;
-    explicit GeoId(uint64 v) : value(v) {}
+    constexpr explicit GeoId(uint64 v) : value(v) {}
 };
+
+inline constexpr GeoId kInvalidGeoId{GeoId::kInvalid};
 
 class IDrawerHandle {
 protected:
