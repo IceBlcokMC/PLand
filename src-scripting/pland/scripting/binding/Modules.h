@@ -51,6 +51,7 @@ struct Modules {
     static jspp::EnumMeta const  kScriptLandType;
     static jspp::EnumMeta const  kScriptLandRole;
     static jspp::ClassMeta const kScriptDrawer;
+    static jspp::ClassMeta const kScriptEconomy;
 };
 
 
