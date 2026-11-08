@@ -26,17 +26,17 @@ struct EconomySystem::Impl {
             return std::make_shared<econbridge::detail::NullEconomy>();
         }
 
-        switch (cfg.kit) {
-        case EconomyKit::LegacyMoney: {
+        switch (cfg.backend) {
+        case EconomyBackend::LegacyMoney: {
             PLand::getInstance().getSelf().getLogger().debug("using internals::LegacyMoneyEconomy");
             return std::make_shared<econbridge::detail::LegacyMoneyEconomy>();
         }
-        case EconomyKit::ScoreBoard: {
+        case EconomyBackend::ScoreBoard: {
             PLand::getInstance().getSelf().getLogger().debug("using internals::ScoreBoardEconomy");
             return std::make_shared<econbridge::detail::ScoreboardEconomy>(cfg.scoreboardName);
         }
         }
-        [[unlikely]] throw std::runtime_error("Unknown econbridge kit, please check config!");
+        [[unlikely]] throw std::runtime_error("Unknown econbridge backend, please check config!");
     }
 
     void initialize() { mEconomyImpl = create(); }
@@ -52,23 +52,26 @@ EconomySystem& EconomySystem::getInstance() {
 void EconomySystem::initialize() { impl->initialize(); }
 void EconomySystem::reload() { impl->initialize(); }
 
+bool        EconomySystem::isEnabled() { return ConfigProvider::cfg.economy.enabled; }
+std::string EconomySystem::getCurrencyName() { return ConfigProvider::cfg.economy.currencyName; }
+
 std::shared_ptr<econbridge::IEconomy> EconomySystem::get() const { return impl->mEconomyImpl; }
 
-std::string EconomySystem::getCostMessage(Player& player, llong amount) const {
+std::string EconomySystem::getCostMessage(Player& player, llong amount) {
     auto localeCode = player.getLocaleCode();
 
     auto& config = ConfigProvider::cfg.economy;
     if (!config.enabled) {
-        return "\n[Tip] 经济系统未启用，本次操作不消耗 {}"_trl(localeCode, config.economyName);
+        return "\n[Tip] 经济系统未启用，本次操作不消耗 {}"_trl(localeCode, config.currencyName);
     }
 
-    llong currentMoney = get()->get(player.getUuid());
+    llong currentMoney = getInstance()->get(player.getUuid());
     bool  isEnough     = currentMoney >= amount;
 
     return "\n[Tip] 本次操作需要: {0} {1} | 当前余额: {2} | 剩余余额: {3} | {4}"_trl(
         localeCode,
         amount,
-        config.economyName,
+        config.currencyName,
         currentMoney,
         currentMoney - amount,
         isEnough ? "余额充足"_trl(localeCode) : "余额不足"_trl(localeCode)

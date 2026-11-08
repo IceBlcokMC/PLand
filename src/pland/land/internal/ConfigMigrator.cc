@@ -85,6 +85,16 @@ ConfigMigrator::ConfigMigrator() {
 
         return true;
     });
+    registerMigrationUnit(36, [](ConfigMigrator::container_t& root) -> bool {
+        constexpr Route routes[] = {
+            {        "economy.kit",      "economy.backend"},
+            {"economy.economyName", "economy.currencyName"}
+        };
+        for (auto const& route : routes) {
+            mapPath(root, route);
+        }
+        return true;
+    });
 }
 
 ConfigMigrator& ConfigMigrator::getInstance() {

@@ -4,13 +4,15 @@
 namespace land {
 
 
-enum class EconomyKit { LegacyMoney, ScoreBoard };
+enum class EconomyBackend { LegacyMoney, ScoreBoard };
+
+using EconomyKit [[deprecated("Use EconomyBackend instead")]] = EconomyBackend;
 
 struct EconomyConfig {
-    bool        enabled        = false;
-    EconomyKit  kit            = EconomyKit::LegacyMoney;
-    std::string scoreboardName = "Scoreboard";
-    std::string economyName    = "Coin";
+    bool           enabled        = false;
+    EconomyBackend backend        = EconomyBackend::LegacyMoney;
+    std::string    scoreboardName = "Scoreboard";
+    std::string    currencyName   = "Coin";
 };
 
 

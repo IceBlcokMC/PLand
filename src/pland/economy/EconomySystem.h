@@ -24,9 +24,12 @@ public:
     LDNDAPI static EconomySystem& getInstance();
 
     LDAPI void initialize(); // 初始化经济系统
-    LDAPI void reload();     // 重载经济系统（当 kit 改变时）
+    LDAPI void reload();     // 重载经济系统（当 backend 改变时）
 
-    LDNDAPI std::string getCostMessage(Player& player, llong amount) const;
+    LDAPI static bool        isEnabled();
+    LDAPI static std::string getCurrencyName();
+
+    LDNDAPI static std::string getCostMessage(Player& player, llong amount);
 
     LDNDAPI std::shared_ptr<econbridge::IEconomy> get() const;
 

@@ -29,9 +29,9 @@ PLand 的所有配置文件均为 **JSON 格式**，位于 `mods/PLand/config` �
     "version": 35, // 配置文件版本，请勿修改
     "economy": {
         "enabled": false, // 是否启用经济系统
-        "kit": "LegacyMoney", // 经济套件 LegacyMoney 或 ScoreBoard
+        "backend": "LegacyMoney", // 经济套件 LegacyMoney 或 ScoreBoard
         "scoreboardName": "Scoreboard", // 计分板对象名称
-        "economyName": "Coin" // 经济名称
+        "currencyName": "Coin" // 经济名称
     },
     "selector": {
         "item": "minecraft:stick", // 用于选点的物品
@@ -182,9 +182,9 @@ PLand 的所有配置文件均为 **JSON 格式**，位于 `mods/PLand/config` �
 | 配置项           | 默认值        | 说明                                                              |
 | :--------------- | :------------ | :---------------------------------------------------------------- |
 | `enabled`        | `false`       | 是否启用经济系统（**未启用时购买/租赁不消耗游戏币**，可免费进行） |
-| `kit`            | `LegacyMoney` | 经济后端：`LegacyMoney`（LLMoney）或 `ScoreBoard`（计分板）       |
+| `backend`        | `LegacyMoney` | 经济后端：`LegacyMoney`（LLMoney）或 `ScoreBoard`（计分板）       |
 | `scoreboardName` | `Scoreboard`  | 使用计分板后端时，计分板对象名称                                  |
-| `economyName`    | `Coin`        | 经济名称（显示用）                                                |
+| `currencyName`   | `Coin`        | 经济名称（显示用）                                                |
 
 ::: warning 使用 `LegacyMoney` 时，需要额外安装 [LegacyMoney](https://github.com/LiteLDev/LegacyMoney) 插件。
 :::

@@ -36,7 +36,7 @@ struct ForbiddenRange {
 
 
 struct ConfigData {
-    inline static constexpr int SchemaVersion = 35;
+    inline static constexpr int SchemaVersion = 36;
 
     int version{SchemaVersion};
 

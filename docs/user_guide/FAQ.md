@@ -49,7 +49,7 @@
 领地买卖默认**不消耗游戏币**（经济系统未启用时，购买/租赁免费进行）。如果你希望购买/租赁领地**需要花钱**，请开启经济系统：
 
 1. 确认 `Config.json` 中 `economy.enabled` 为 `true`
-2. 确认经济后端（`economy.kit`）已安装：
+2. 确认经济后端（`economy.backend`）已安装：
    - `LegacyMoney` → 需要安装 [LegacyMoney](https://github.com/LiteLDev/LegacyMoney)
    - `ScoreBoard` → 需要游戏内有对应的计分板
 3. 确认 `business.bought.enabled`（买断制）或 `business.leasing.enabled`（租赁制）已开启

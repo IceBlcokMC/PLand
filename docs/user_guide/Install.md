@@ -73,7 +73,7 @@ lip install --upgrade github.com/IceBlcokMC/PLand
 | :----------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------: | :------------------------------------------- |
 | LeviLamina         | [GitHub](https://github.com/LiteLDev/LeviLamina)                                                                                                                                    |   必须   | Mod 框架                                     |
 | iListenAttentively | [v0.23.x 以后的版本 -> Github](https://github.com/LiteLDev/iListenAttentively/releases) [v0.23.x 以前的版本 -> GitHub](https://github.com/MiracleForest/iListenAttentively-Release) |   必须   | 事件库                                       |
-| LegacyMoney        | [GitHub](https://github.com/LiteLDev/LegacyMoney)                                                                                                                                   |   可选   | `economy.kit` 为 `LegacyMoney` 时需要        |
+| LegacyMoney        | [GitHub](https://github.com/LiteLDev/LegacyMoney)                                                                                                                                   |   可选   | `economy.backend` 为 `LegacyMoney` 时需要    |
 | DebugShape         | [Github](https://github.com/IceBlcokMC/DebugShape)                                                                                                                                  |   可选   | `features.draw.backend == DebugShape` 时需要 |
 
 :::warning 版本兼容性
