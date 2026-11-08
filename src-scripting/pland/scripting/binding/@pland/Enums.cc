@@ -22,3 +22,7 @@ decltype(land::scripting::Modules::kScriptLandType) land::scripting::Modules::kS
 #include "pland/enums/LandRole.h"
 decltype(land::scripting::Modules::kScriptLandRole) land::scripting::Modules::kScriptLandRole = //
     helper::auto_gen_enum_def<LandRole>("LandRole");
+
+#include "pland/enums/LandRecycleReason.h"
+decltype(land::scripting::Modules::kScriptLandRecycleReason) land::scripting::Modules::kScriptLandRecycleReason = //
+    helper::auto_gen_enum_def<LandRecycleReason>("LandRecycleReason");

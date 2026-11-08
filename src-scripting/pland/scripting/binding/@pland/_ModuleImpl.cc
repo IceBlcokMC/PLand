@@ -19,6 +19,14 @@ jspp::ModuleMeta const& Modules::getPLandModule() {
                                     .export_enum(kScriptLandRole)
                                     .export_class(kScriptDrawer)
                                     .export_class(kScriptEconomy)
+                                    .export_enum(kScriptLandRecycleReason)
+                                    .export_class(kScriptConfigReloadEvent)
+                                    .export_class(kScriptLandRecycleEvent)
+                                    .export_class(kScriptLandResizedEvent)
+                                    .export_class(kScriptLandStateChangedEvent)
+                                    .export_class(kScriptMemberChangedEvent)
+                                    .export_class(kScriptMembersClearedEvent)
+                                    .export_class(kScriptOwnerChangedEvent)
                                     .build();
     return m;
 }

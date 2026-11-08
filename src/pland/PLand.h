@@ -31,7 +31,8 @@ class PLand {
     PLand();
 
 public: /* private */
-    [[nodiscard]] ll::mod::NativeMod& getSelf() const;
+    [[nodiscard]] ll::mod::NativeMod&                 getSelf() const;
+    [[nodiscard]] std::shared_ptr<ll::mod::NativeMod> getSelfShared() const;
 
     bool load();
     bool enable();
@@ -60,7 +61,7 @@ public: /* public */
 
 #ifdef PLAND_SCRIPTING
     scripting::ScriptingBootstrap& getScriptingBootstrap();
-    void reloadScripting();
+    void                           reloadScripting();
 #endif
 
 

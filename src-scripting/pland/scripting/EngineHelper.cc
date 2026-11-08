@@ -6,6 +6,7 @@
 #include "pland/scripting/system/InteropHub.h"
 #include "pland/scripting/system/ScriptTimerSystem.h"
 
+#include "ll/api/event/EventBus.h"
 #include <ll/api/Expected.h>
 #include <ll/api/chrono/GameChrono.h>
 #include <ll/api/coro/ConditionVariable.h>
@@ -22,6 +23,22 @@ EngineOwnData::~EngineOwnData() {
         if (auto control = this->eventLoopControl) {
             control->abort.store(true);
             control->cv.notifyAll(true); // wake up the event loop
+        }
+    }
+    {
+        // clang-format off
+        //
+        // script: eventBus.unsubscribe() -> native: ScriptEventBus::unsubscribe -> erase eventListeners by id
+        //                                                                     |
+        //                                                                     |----------------------|--> EventBus::removeListener(id)
+        //                                                                                            /
+        // native: ~Engine -> shared_ptr<>::reset() -> ~EngineOwnData -> clear all event listeners --/
+        //
+        // clang-format on
+        auto& bus = ll::event::EventBus::getInstance();
+        for (auto id : this->eventListeners) {
+            bool ok = bus.removeListener(id);
+            assert(ok);
         }
     }
     {

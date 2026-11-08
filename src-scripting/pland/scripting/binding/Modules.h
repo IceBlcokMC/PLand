@@ -40,6 +40,9 @@ struct Modules {
     static jspp::ClassMeta const kScriptLogger;
     static jspp::EnumMeta const  kScriptLogLevel;
     static jspp::ClassMeta const kScriptI18n;
+    static jspp::ClassMeta const kScriptEventBus;      // impl in ScriptEventImpl.cc
+    static jspp::EnumMeta const  kScriptEventPriority; // impl in ScriptEventImpl.cc
+    static jspp::ClassMeta const kScriptEvent;         // impl in ScriptEventImpl.cc
 
     // @pland
     static jspp::ClassMeta const kScriptLandRegistry;
@@ -52,6 +55,15 @@ struct Modules {
     static jspp::EnumMeta const  kScriptLandRole;
     static jspp::ClassMeta const kScriptDrawer;
     static jspp::ClassMeta const kScriptEconomy;
+    static jspp::EnumMeta const  kScriptLandRecycleReason;
+    static jspp::ClassMeta const kScriptConfigReloadEvent;         // impl in ScriptEventImpl.cc
+    static jspp::ClassMeta const kScriptLandRecycleEvent;          // impl in ScriptEventImpl.cc
+    static jspp::ClassMeta const kScriptLandResizedEvent;          // impl in ScriptEventImpl.cc
+    static jspp::ClassMeta const kScriptLandStateChangedEvent;     // impl in ScriptEventImpl.cc
+    static jspp::ClassMeta const kScriptMemberChangedEvent;        // impl in ScriptEventImpl.cc
+    static jspp::ClassMeta const kScriptMembersClearedEvent;       // impl in ScriptEventImpl.cc
+    static jspp::ClassMeta const kScriptOwnerChangedEvent;         // impl in ScriptEventImpl.cc
+    static jspp::ClassMeta const kScriptLandOwnershipChangedEvent; // impl in ScriptEventImpl.cc
 };
 
 

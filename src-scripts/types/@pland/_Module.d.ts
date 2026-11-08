@@ -39,4 +39,10 @@ declare module "@pland" {
         // Actor includes both non-member players and non-player entities (e.g., Mobs, TNT).
         Actor = 3, // 实体
     }
+
+    export enum LandRecycleReason {
+        LeaseExpired = 0, // 租赁到期
+        Inactivity = 1, // 闲置
+        ForceRecycle = 2, // 强制回收
+    }
 }

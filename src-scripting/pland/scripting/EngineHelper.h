@@ -20,6 +20,8 @@ struct EngineOwnData final {
 
     std::vector<uint32_t> runningTimers{};
 
+    std::vector<uint64_t> eventListeners{};
+
     EngineOwnData() = default;
     EngineOwnData(jspp::Engine* self_, bool ispriv) : self(self_), isPrivateEngine(ispriv) {}
     ~EngineOwnData(); // call on engine destruction

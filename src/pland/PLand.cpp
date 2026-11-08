@@ -59,7 +59,7 @@ public:
 } // namespace
 
 struct PLand::Impl {
-    ll::mod::NativeMod& mSelf;
+    std::shared_ptr<ll::mod::NativeMod> mSelf;
 
     /// 线程池。只由 destroyThreadPool() 显式销毁, 不随 Impl 析构自动销毁:
     /// 析构链在 DLL 卸载路径 (FreeLibrary → DllMain → atexit) 上执行, 该路径持有 loader lock,
@@ -85,7 +85,7 @@ struct PLand::Impl {
     std::unique_ptr<scripting::ScriptingBootstrap> mScriptingBootstrap{nullptr};
 #endif
 
-    explicit Impl() : mSelf(*ll::mod::NativeMod::current()) {}
+    explicit Impl() : mSelf(ll::mod::NativeMod::current()) {}
 
     /// 销毁线程池并 join 工作线程, 幂等。
     /// 只能在 DLL 卸载之前调用 (disable / load 失败清理), 否则会撞上 loader lock 死锁。
@@ -233,7 +233,7 @@ bool PLand::enable() {
 }
 
 bool PLand::disable() {
-    auto& logger = mImpl->mSelf.getLogger();
+    auto& logger = mImpl->mSelf->getLogger();
 
 #ifdef LD_DEVTOOL
     if (ConfigProvider::isDevToolsEnabled()) {
@@ -280,7 +280,9 @@ PLand& PLand::getInstance() {
 
 PLand::PLand() : mImpl(std::make_unique<Impl>()) {}
 
-ll::mod::NativeMod&     PLand::getSelf() const { return mImpl->mSelf; }
+ll::mod::NativeMod&                 PLand::getSelf() const { return *mImpl->mSelf; }
+std::shared_ptr<ll::mod::NativeMod> PLand::getSelfShared() const { return mImpl->mSelf; }
+
 SelectorManager*        PLand::getSelectorManager() const { return mImpl->mSelectorManager.get(); }
 LandRegistry&           PLand::getLandRegistry() const { return *mImpl->mLandRegistry; }
 DrawHandleManager*      PLand::getDrawHandleManager() const { return mImpl->mDrawHandleManager.get(); }
@@ -289,7 +291,7 @@ bool                    PLand::loadConfig() {
     if (auto expected = ConfigProvider::load(getSelf().getConfigDir())) {
         return true;
     } else {
-        auto& logger = mImpl->mSelf.getLogger();
+        auto& logger = mImpl->mSelf->getLogger();
         expected.error().log(logger);
         return false;
     }
@@ -298,7 +300,7 @@ bool PLand::saveConfig() {
     if (auto expected = ConfigProvider::save(getSelf().getConfigDir())) {
         return true;
     } else {
-        auto& logger = mImpl->mSelf.getLogger();
+        auto& logger = mImpl->mSelf->getLogger();
         expected.error().log(logger);
         return false;
     }
