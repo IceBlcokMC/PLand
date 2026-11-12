@@ -231,11 +231,7 @@ decltype(Modules::kScriptCommandHandle) Modules::kScriptCommandHandle = //
             [](CommandHandle& h) {
                 auto& engine = jspp::EngineScope::currentEngineChecked();
                 auto  data   = engine.getData<EngineOwnData>();
-                assert(data);
-                if (data->isPrivateEngine) {
-                    return ScriptRuntimeOverloadProxy{h.runtimeOverload()};
-                }
-                return ScriptRuntimeOverloadProxy{h.runtimeOverload(data->communityScriptPlugin)};
+                return ScriptRuntimeOverloadProxy{h.runtimeOverload(data->pluginInst)};
             },
             jspp::binding::ReturnValuePolicy::kMove
         )

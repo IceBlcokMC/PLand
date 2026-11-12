@@ -165,7 +165,7 @@ bool PLand::load() {
 
 #ifdef PLAND_SCRIPTING
     logger.info("Initializing script engine...");
-    mImpl->mScriptingBootstrap = std::make_unique<scripting::ScriptingBootstrap>(getSelf());
+    mImpl->mScriptingBootstrap = std::make_unique<scripting::ScriptingBootstrap>(getSelfShared());
     if (auto e = mImpl->mScriptingBootstrap->initialize(); !e) {
         e.error().log(logger);
         return false; // rollback 就地拆除

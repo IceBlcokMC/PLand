@@ -52,21 +52,13 @@ private:
     template <std::derived_from<ll::event::Event> T>
     static std::optional<ll::event::ListenerId>
     addListenerImpl(Engine* engine, Local<Function> const& callback, ll::event::EventPriority priority) {
-        auto mod = [&]() -> std::shared_ptr<ll::mod::Mod> {
-            auto data = engine->getData<EngineOwnData>();
-            if (data->isPrivateEngine) {
-                return PLand::getInstance().getSelfShared();
-            }
-            return data->communityScriptPlugin;
-        }();
+        auto data = engine->getData<EngineOwnData>();
+        auto mod  = data->pluginInst;
 
         auto listener = wrapScriptListener<T>(callback, priority, mod);
         if (!ll::event::EventBus::getInstance().addListener<T>(listener)) {
             return std::nullopt;
         }
-
-        auto data = engine->getData<EngineOwnData>();
-        assert(data);
         data->eventListeners.push_back(listener->getId());
         return listener->getId();
     }

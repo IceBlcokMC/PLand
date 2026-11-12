@@ -3,7 +3,6 @@
 #include "pland/scripting/ScriptingBootstrap.h"
 #include "pland/scripting/binding/Helper.h"
 #include "pland/scripting/binding/Modules.h"
-#include "pland/scripting/community/CommunityScriptPlugin.h"
 #include "pland/scripting/pch.h"
 #include "pland/scripting/system/ScriptTimerSystem.h"
 
@@ -78,15 +77,6 @@ bool                     clearTimeout(uint32_t id) {
 }
 
 
-// helper
-ll::mod::Mod& resolveMod() {
-    auto data = jspp::EngineScope::currentEngineChecked().getData<EngineOwnData>();
-    if (data->isPrivateEngine) {
-        return PLand::getInstance().getSelf();
-    }
-    assert(data->communityScriptPlugin);
-    return *data->communityScriptPlugin;
-}
 jspp::Local<jspp::Value> newPluginCtx() {
     auto ctx = jspp::Object::newObject();
 
@@ -105,7 +95,9 @@ jspp::Local<jspp::Value> newPluginCtx() {
         );
     };
 
-    auto& mod = resolveMod();
+    auto  data = jspp::EngineScope::currentEngineChecked().getData<EngineOwnData>();
+    auto& mod  = *data->pluginInst;
+
     setStr("name", mod.getName());
     setStr("type", mod.getType());
     setPath("dir", mod.getModDir());

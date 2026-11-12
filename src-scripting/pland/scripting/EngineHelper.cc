@@ -11,6 +11,7 @@
 #include <ll/api/chrono/GameChrono.h>
 #include <ll/api/coro/ConditionVariable.h>
 #include <ll/api/coro/CoroTask.h>
+#include <ll/api/mod/NativeMod.h>
 #include <ll/api/thread/ServerThreadExecutor.h>
 
 #include "jspp-backend/queue/JobQueue.h" // for event loop (JobQueue)
@@ -64,9 +65,9 @@ EngineOwnData::~EngineOwnData() {
     }
 }
 
-std::unique_ptr<jspp::Engine> EngineHelper::newEngine(bool trust) {
+std::unique_ptr<jspp::Engine> EngineHelper::newEngine(bool ispriv, std::shared_ptr<ll::mod::NativeMod> const& modInst) {
     auto engine = std::make_unique<jspp::Engine>();
-    engine->setData(std::make_shared<EngineOwnData>(engine.get(), trust));
+    engine->setData(std::make_shared<EngineOwnData>(engine.get(), ispriv, modInst));
     Modules::bind(*engine);
     return engine;
 }

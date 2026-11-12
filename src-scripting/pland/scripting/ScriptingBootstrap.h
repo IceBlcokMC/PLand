@@ -4,7 +4,7 @@
 #include "ll/api/Expected.h"
 
 namespace ll::mod {
-class Mod;
+class NativeMod;
 }
 
 namespace land::scripting {
@@ -19,7 +19,7 @@ class ScriptingBootstrap {
     std::unique_ptr<Impl> impl{nullptr};
 
 public:
-    explicit ScriptingBootstrap(ll::mod::Mod& mod);
+    explicit ScriptingBootstrap(std::shared_ptr<ll::mod::NativeMod> const& mod);
     ~ScriptingBootstrap();
 
     [[nodiscard]] ScriptTimerSystem&                     getScriptTimerSystem() const;

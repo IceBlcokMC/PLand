@@ -10,7 +10,11 @@ CommunityScriptPlugin::CommunityScriptPlugin(ll::mod::Manifest manifest) : Mod(s
 CommunityScriptPlugin::~CommunityScriptPlugin() { release(); }
 
 std::shared_ptr<ll::mod::Mod> CommunityScriptPlugin::current() {
-    return jspp::EngineScope::currentEngineChecked().getData<EngineOwnData>()->communityScriptPlugin;
+    auto data = jspp::EngineScope::currentEngineChecked().getData<EngineOwnData>();
+    if (data->isPrivateEngine) {
+        return nullptr; // NativeMod
+    }
+    return data->pluginInst;
 }
 
 } // namespace land::scripting

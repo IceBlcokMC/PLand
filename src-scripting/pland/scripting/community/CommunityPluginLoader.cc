@@ -33,9 +33,8 @@ ll::Expected<> CommunityPluginLoader::load(ll::mod::Manifest manifest) {
     auto plugin = std::make_shared<CommunityScriptPlugin>(manifest);
 
     {
-        auto ownData                   = engine->getData<EngineOwnData>();
-        ownData->communityScriptPlugin = plugin;
-        ownData->communityPluginName   = manifest.name;
+        auto ownData        = engine->getData<EngineOwnData>();
+        ownData->pluginInst = plugin;
     }
 
     auto _ = jspp::EngineScope{*engine};

@@ -20,15 +20,15 @@ bool gIsInitialized = false;
 
 class ScriptingBootstrap::Impl {
 public:
-    ll::mod::Mod&                          mEntry;
+    std::shared_ptr<ll::mod::NativeMod>    mEntry;
     std::unique_ptr<ScriptTimerSystem>     mTimerSystem{nullptr};
     std::unique_ptr<InteropHub>            mInteropHub{nullptr};
     std::shared_ptr<CommunityPluginLoader> mCommunityPluginLoader{nullptr};
     std::unique_ptr<jspp::Engine>          mPrivateEngine{nullptr};
 
     ll::Expected<> initPrivateEngine() {
-        auto entry     = mEntry.getModDir() / kPrivateScriptDir / kEntryFileName;
-        mPrivateEngine = EngineHelper::newEngine(true);
+        auto entry     = mEntry->getModDir() / kPrivateScriptDir / kEntryFileName;
+        mPrivateEngine = EngineHelper::newEngine(true, mEntry);
 
         if (auto ok = EngineHelper::loadScript(entry, *mPrivateEngine, true); !ok) {
             mPrivateEngine.reset();
@@ -41,7 +41,8 @@ public:
     }
 };
 
-ScriptingBootstrap::ScriptingBootstrap(ll::mod::Mod& mod) : impl(std::make_unique<Impl>(mod)) {}
+ScriptingBootstrap::ScriptingBootstrap(std::shared_ptr<ll::mod::NativeMod> const& mod)
+: impl(std::make_unique<Impl>(mod)) {}
 ScriptingBootstrap::~ScriptingBootstrap() { (void)shutdown(); }
 
 ScriptTimerSystem&                     ScriptingBootstrap::getScriptTimerSystem() const { return *impl->mTimerSystem; }

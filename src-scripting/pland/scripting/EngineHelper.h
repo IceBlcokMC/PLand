@@ -3,18 +3,23 @@
 
 #include "ll/api/coro/ConditionVariable.h"
 
+namespace ll::mod {
+class Mod;
+class NativeMod;
+} // namespace ll::mod
+
 namespace land::scripting {
 
-class CommunityScriptPlugin;
 struct EventLoopControl; // forward declaration
 
 struct EngineOwnData final {
-    jspp::Engine*              self{nullptr};
+    jspp::Engine*              self{nullptr};          // engine instance(for cleanup)
     bool const                 isPrivateEngine{false}; // only PLand bult-in logic engine trusted
     jspp::Global<jspp::Object> scriptEntry{};          // script default export's class instance
 
-    std::string                            communityPluginName{};          // only community plugin
-    std::shared_ptr<CommunityScriptPlugin> communityScriptPlugin{nullptr}; // only community plugin
+    // if isPrivateEngine is true, then pluginInst is same as self(aka PLand's mod instance)
+    // else pluginInst is a CommunityScriptPlugin instance
+    std::shared_ptr<ll::mod::Mod> pluginInst{nullptr}; // plugin/mod instance
 
     std::shared_ptr<EventLoopControl> eventLoopControl{nullptr};
 
@@ -22,8 +27,12 @@ struct EngineOwnData final {
 
     std::vector<uint64_t> eventListeners{};
 
-    EngineOwnData() = default;
-    EngineOwnData(jspp::Engine* self_, bool ispriv) : self(self_), isPrivateEngine(ispriv) {}
+    explicit EngineOwnData() = delete;
+    explicit EngineOwnData(jspp::Engine* self_, bool ispriv, std::shared_ptr<ll::mod::Mod> modInst)
+    : self(self_),
+      isPrivateEngine(ispriv),
+      pluginInst(std::move(modInst)) {}
+
     ~EngineOwnData(); // call on engine destruction
 };
 
@@ -32,10 +41,11 @@ struct EventLoopControl final {
     std::atomic_bool            abort{false};
 };
 
-struct EngineHelper {
+struct EngineHelper final {
     EngineHelper() = delete;
 
-    [[nodiscard]] static std::unique_ptr<jspp::Engine> newEngine(bool trust = false);
+    [[nodiscard]] static std::unique_ptr<jspp::Engine>
+    newEngine(bool ispriv = false, std::shared_ptr<ll::mod::NativeMod> const& modInst = nullptr);
 
     [[nodiscard]] static ll::Expected<>
     loadScript(std::filesystem::path const& entry, jspp::Engine& engine, bool bytecode = false);

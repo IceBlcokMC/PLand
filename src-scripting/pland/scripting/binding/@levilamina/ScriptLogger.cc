@@ -2,12 +2,11 @@
 #include "pland/scripting/binding/Modules.h"
 #include "pland/scripting/pch.h"
 
-#include "pland/PLand.h"
 #include "pland/scripting/EngineHelper.h"
-#include "pland/scripting/community/CommunityScriptPlugin.h"
 
 #include <ll/api/io/LogLevel.h>
 #include <ll/api/io/Logger.h>
+#include <ll/api/mod/Mod.h>
 
 namespace land::scripting {
 
@@ -15,12 +14,7 @@ namespace {
 
 auto& getLoggerInstance() {
     auto data = jspp::EngineScope::currentEngineChecked().getData<EngineOwnData>();
-    if (data->isPrivateEngine) {
-        return PLand::getInstance().getSelf().getLogger();
-    } else {
-        assert(data->communityScriptPlugin != nullptr);
-        return data->communityScriptPlugin->getLogger();
-    }
+    return data->pluginInst->getLogger();
 }
 
 template <size_t fmt_start_offset = 0>
