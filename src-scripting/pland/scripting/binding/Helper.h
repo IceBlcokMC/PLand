@@ -3,8 +3,8 @@
 
 #include "fmt/format.h"
 #include <fmt/args.h>
-#include <jspp/core/Exception.h>
-#include <vector>
+
+#include <ll/api/Expected.h>
 
 namespace land::scripting::helper {
 
@@ -112,6 +112,130 @@ inline std::string format(jspp::Arguments const& args) {
 
     constexpr auto skip_offset = fmt_start_offset + 1;
     return formatImpl<skip_offset>(fmt_str, args);
+}
+
+
+// unsafe API
+
+inline constexpr auto kStructuredCloneFlags = JS_WRITE_OBJ_REFERENCE;
+
+/**
+ * 将一个值结构化克隆到缓冲区
+ * @param engine 待克隆的值所属的引擎
+ * @param val 待克隆的值(需要与 engine 匹配)
+ * @param buf_len 缓冲区长度
+ * @return 二进制缓冲区指针
+ *
+ * @warning 返回的 buffer 需要由对应的引擎(context)释放
+ */
+[[nodiscard]] inline uint8_t*
+unsafe_StructuredCloneToBuffer(jspp::Engine& engine, jspp::Local<jspp::Value> const& val, size_t& buf_len) noexcept {
+    return JS_WriteObject(
+        engine.context(),
+        &buf_len,
+        jspp::qjs_backend::QjsHelper::peekValue(val),
+        kStructuredCloneFlags
+    );
+}
+
+/**
+ * 释放一个结构化克隆的缓冲区
+ * @param engine 待释放的缓冲区所属的引擎
+ * @param buf 缓冲区指针
+ */
+inline void unsafe_StructuredCloneFreeBuffer(jspp::Engine& engine, uint8_t* buf) noexcept {
+    if (buf == nullptr) {
+        return;
+    }
+    // jspp::EngineScope lock{engine};
+    js_free(engine.context(), buf);
+}
+
+/**
+ * 将一个结构化克隆的缓冲区反序列化为一个值
+ * @param source 缓冲区所属的引擎
+ * @param buf 缓冲区指针
+ * @param len 缓冲区长度
+ * @param target 目标引擎
+ * @param targetVal 目标值
+ * @param freeBufferInplace 是否在反序列化后立即释放缓冲区
+ *
+ * @throw jspp::Exception 如果反序列化失败则抛出异常
+ * @note 此函数要求 EngineScope 位于目标引擎(target)上下文中，否则异常传递可能跨越引擎上下文
+ */
+inline void unsafe_StructuredCloneBufferToValue(
+    jspp::Engine&             source,
+    uint8_t*                  buf,
+    size_t                    len,
+    jspp::Engine&             target,
+    jspp::Local<jspp::Value>& targetVal,
+    bool                      freeBufferInplace
+) {
+    if (jspp::EngineScope::currentEngine() != &target) [[unlikely]] {
+        throw std::logic_error{"current engine scope is not target engine scope"};
+    }
+
+    auto rawVal = JS_ReadObject(target.context(), buf, len, kStructuredCloneFlags);
+    if (freeBufferInplace) {
+        unsafe_StructuredCloneFreeBuffer(source, buf);
+    }
+
+    jspp::qjs_backend::QjsHelper::rethrowException(rawVal); // throw exception if failed
+    targetVal = jspp::ValueHelper::wrap<jspp::Value>(rawVal);
+}
+
+/**
+ * 将一个值结构化克隆到另一个引擎(跨引擎上下文)
+ * @param source 源引擎
+ * @param sourceVal 源值
+ * @param target 目标引擎
+ * @param targetVal 目标值
+ *
+ * @throw jspp::Exception 如果反序列化失败则抛出异常
+ * @note 此函数要求 EngineScope 位于目标引擎(target)上下文中，否则异常传递可能跨越引擎上下文
+ * @note 注意 Local<T> 句柄的析构函数和引擎作用域绑定，请在匹配的引擎上下文中使用/释放 Local<T> 句柄
+ */
+inline void unsafe_StructuredCloneValue(
+    jspp::Engine&                   source,
+    jspp::Local<jspp::Value> const& sourceVal,
+    jspp::Engine&                   target,
+    jspp::Local<jspp::Value>&       targetVal
+) {
+    size_t len = 0;
+    auto   buf = unsafe_StructuredCloneToBuffer(source, sourceVal, len);
+    if (!buf) [[unlikely]] {
+        throw jspp::Exception("Failed to serialize value");
+    }
+    unsafe_StructuredCloneBufferToValue(source, buf, len, target, targetVal, true);
+}
+
+/**
+ * 将多个值结构化克隆到另一个引擎(跨引擎上下文)
+ * @param s_args 源参数列表
+ * @param target 目标引擎
+ * @param t_out 输出参数列表
+ *
+ * @throw jspp::Exception 如果反序列化失败则抛出异常
+ * @note 此函数要求 EngineScope 位于目标引擎(target)上下文中，否则异常传递可能跨越引擎上下文
+ * @note 注意 Local<T> 句柄的析构函数和引擎作用域绑定，请在匹配的引擎上下文中使用/释放 Local<T> 句柄
+ */
+inline void unsafe_StructureCloneValues(
+    jspp::Arguments const&                 s_args,
+    jspp::Engine&                          target,
+    std::vector<jspp::Local<jspp::Value>>& t_out
+) {
+    auto s_len = s_args.length();
+    if (s_len == 0) {
+        return;
+    }
+
+    t_out.resize(s_len);
+
+    auto& s_engine = *s_args.engine();
+    for (size_t i = 0; i < s_len; ++i) {
+        auto s_value = s_args[i];
+        unsafe_StructuredCloneValue(s_engine, s_value, target, t_out[i]);
+    }
 }
 
 } // namespace land::scripting::helper

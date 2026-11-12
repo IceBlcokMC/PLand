@@ -64,6 +64,7 @@ struct Modules {
     static jspp::ClassMeta const kScriptMembersClearedEvent;       // impl in ScriptEventImpl.cc
     static jspp::ClassMeta const kScriptOwnerChangedEvent;         // impl in ScriptEventImpl.cc
     static jspp::ClassMeta const kScriptLandOwnershipChangedEvent; // impl in ScriptEventImpl.cc
+    static jspp::ClassMeta const kScriptToScriptEvent;              // impl in ScriptEventImpl.cc
 };
 
 

@@ -1,14 +1,18 @@
 #include "pland/scripting/EngineHelper.h"
+#include "pland/scripting/binding/Helper.h"
 #include "pland/scripting/binding/Modules.h"
 #include "pland/scripting/pch.h"
 
 #include "ll/api/event/EventBus.h"
+#include <ll/api/Expected.h>
+#include <ll/api/event/Cancellable.h>
 #include <ll/api/mod/Mod.h>
 
-#include "pland/PLand.h"
+#include <fmt/format.h>
+
+#include "pland/events/Helper.h"
 #include "pland/land/Land.h"
 #include "pland/reflect/TypeName.h"
-#include "pland/scripting/community/CommunityScriptPlugin.h"
 
 #include "pland/events/domain/ConfigReloadEvent.h"
 #include "pland/events/domain/LandOwnershipChangedEvent.h"
@@ -21,12 +25,168 @@
 
 namespace land::scripting {
 
+namespace channel {
+
+// A: new ScriptEvent('type', { }) -> eventBus.emit(event) -> EventBus::publish(event) -> EventBus::Impl -|
+//                                                                                                       /
+// B: eventBus.subscribe('ScriptEvent', callback) -> EventBus::addListener(event, callback) ------------/
+//                                          |                                       |
+//    /---------- toJs(ScriptEvent&) <------/---------------------------------------/
+//    |-> (ev: ScriptEvent)=>void -> call ev.payload -> native:structuredClone -> toJs.
+//
+// Global<T>::~Global() -> EngineScope{} -> reset
+class ScriptEvent final : public ll::event::Cancellable<ll::event::Event>, public jspp::ITrackedHandle {
+    std::string   mPubPluginName;             // the name of the plugin that published this event
+    std::string   mType;                      // the type of the event
+    jspp::Engine& mPubEngine;                 // the engine that published this event
+    uint8_t*      mPubPayloadBuffer{nullptr}; // the payload of the event
+    size_t        mPubPayloadSize{0};         // the size of the payload
+
+    void cleanup() {
+        helper::unsafe_StructuredCloneFreeBuffer(mPubEngine, mPubPayloadBuffer); // free payload
+        mPubPayloadBuffer = nullptr;
+        mPubPayloadSize   = 0;
+    }
+
+    void onEngineDestroy() override { cleanup(); }
+
+    struct BufferTransfer {
+        uint8_t*      buffer{nullptr};
+        size_t        size{0};
+        jspp::Engine& engine;
+
+        BufferTransfer(BufferTransfer const&)            = delete;
+        BufferTransfer& operator=(BufferTransfer const&) = delete;
+
+        inline void release() {
+            buffer = nullptr;
+            size   = 0;
+        }
+
+        BufferTransfer(BufferTransfer&& mv) noexcept : buffer(mv.buffer), size(mv.size), engine(mv.engine) {
+            mv.release();
+        }
+        BufferTransfer& operator=(BufferTransfer&&) = delete;
+
+        explicit BufferTransfer(uint8_t* buffer, size_t size, jspp::Engine& engine)
+        : buffer(buffer),
+          size(size),
+          engine(engine) {}
+        ~BufferTransfer() {
+            if (buffer) {
+                helper::unsafe_StructuredCloneFreeBuffer(engine, buffer);
+            }
+        }
+    };
+
+public:
+    ScriptEvent(ScriptEvent const&)            = delete;
+    ScriptEvent(ScriptEvent&&)                 = delete;
+    ScriptEvent& operator=(ScriptEvent const&) = delete;
+    ScriptEvent& operator=(ScriptEvent&&)      = delete;
+
+    explicit ScriptEvent(std::string type, BufferTransfer&& trans)
+    : mType(std::move(type)),
+      mPubEngine(trans.engine),
+      mPubPayloadBuffer(trans.buffer),
+      mPubPayloadSize(trans.size) {
+        trans.release(); // release buffer ownership
+
+        auto data      = mPubEngine.getData<EngineOwnData>();
+        mPubPluginName = data->pluginInst->getName();
+
+        this->track(&mPubEngine); // track engine to free payload when engine is destroyed
+    }
+    ~ScriptEvent() override { cleanup(); }
+
+    std::string const& pluginName() const { return mPubPluginName; }
+
+    std::string const& type() const { return mType; }
+
+    static jspp::Local<jspp::Value> data(jspp::InstancePayload& payload, jspp::Arguments const& args) {
+        auto self   = payload.unwrap<ScriptEvent>();
+        auto engine = args.engine(); // receiver engine
+
+        if (!self->mPubPayloadBuffer) {
+            return jspp::Null::newNull(); // 事件创建方引擎已销毁，返回空
+        }
+
+        jspp::Local<jspp::Value> val;
+        helper::unsafe_StructuredCloneBufferToValue(
+            self->mPubEngine,
+            self->mPubPayloadBuffer,
+            self->mPubPayloadSize,
+            *engine,
+            val,
+            false
+        );
+        return val;
+    }
+
+    static jspp::Local<jspp::Value> updateData(jspp::InstancePayload& payload, jspp::Arguments const& args) {
+        auto self   = payload.unwrap<ScriptEvent>();
+        auto engine = args.engine();
+
+        if (engine != &self->mPubEngine) [[unlikely]] {
+            throw jspp::Exception("Only the publisher can update event data");
+        }
+
+        if (args.length() != 1) [[unlikely]] {
+            throw jspp::Exception("updateData requires 1 argument");
+        }
+
+        auto   newPayload = args[0];
+        size_t len{0};
+        auto   buf = helper::unsafe_StructuredCloneToBuffer(*engine, newPayload, len);
+        if (!buf) [[unlikely]] {
+            throw jspp::Exception{"Failed to clone payload"};
+        }
+
+        if (self->mPubPayloadBuffer) {
+            helper::unsafe_StructuredCloneFreeBuffer(self->mPubEngine, self->mPubPayloadBuffer);
+        }
+
+        self->mPubPayloadBuffer = buf;
+        self->mPubPayloadSize   = len;
+        return {};
+    }
+
+    // new ScriptEvent('type', { })
+    static std::unique_ptr<jspp::NativeInstance> ctor(jspp::Arguments const& args) {
+        auto argc = args.length();
+        if (argc != 2) {
+            throw jspp::Exception("ScriptEvent constructor requires 2 arguments");
+        }
+        auto type    = jspp::binding::toCpp<std::string>(args[0]);
+        auto payload = args[1];
+        auto engine  = args.engine();
+
+        size_t len{0};
+        auto   buf = helper::unsafe_StructuredCloneToBuffer(*engine, payload, len);
+        if (!buf) [[unlikely]] {
+            throw jspp::Exception{"Failed to clone payload"};
+        }
+
+        auto trans = BufferTransfer(buf, len, *engine);
+        return jspp::binding::factory::newNativeInstanceFor<ScriptEvent>(type, std::move(trans));
+    }
+};
+
+static_assert(jspp::binding::traits::isConstructorCallback_v<decltype(&ScriptEvent::ctor)>);
+static_assert(jspp::binding::traits::isInstanceGetterCallback_v<decltype(&ScriptEvent::data)>);
+static_assert(jspp::binding::traits::isInstanceGetterCallback_v<decltype(&ScriptEvent::updateData)>);
+
+IMPLEMENT_EVENT_EMITTER(ScriptEvent);
+
+} // namespace channel
+
 namespace {
 
 using namespace jspp;
 
 /// 脚本可监听的事件
 using ListenableEvent = std::tuple<
+    channel::ScriptEvent,
     event::ConfigReloadEvent,
     event::LandRecycleEvent,
     event::LandResizedEvent,
@@ -134,6 +294,13 @@ public:
         std::erase(data->eventListeners, id);
         return binding::toJs(ll::event::EventBus::getInstance().removeListener(id));
     }
+
+    static void emit(ll::event::Event& ev) {
+        ll::event::EventBus::getInstance().publish(ev, ev.getId()); //
+    }
+    static void emitTo(ll::event::Event& ev, std::string_view modName) {
+        ll::event::EventBus::getInstance().publish(modName, ev, ev.getId());
+    }
 };
 
 } // namespace
@@ -144,6 +311,8 @@ decltype(Modules::kScriptEventBus) Modules::kScriptEventBus = //
     jspp::binding::defClass<void>("eventBus")
         .func("subscribe", &ScriptEventBusImpl::subscribe)
         .func("unsubscribe", &ScriptEventBusImpl::unsubscribe)
+        .func("emit", &ScriptEventBusImpl::emit)
+        .func("emitTo", &ScriptEventBusImpl::emitTo)
         .build();
 
 decltype(Modules::kScriptEventPriority) Modules::kScriptEventPriority = //
@@ -158,11 +327,25 @@ decltype(Modules::kScriptEventPriority) Modules::kScriptEventPriority = //
 decltype(Modules::kScriptEvent) Modules::kScriptEvent = //
     jspp::binding::defClass<ll::event::Event>("Event")
         .ctor(nullptr)
-        .func("getId", [](ll::event::Event& self) -> std::string { return self.getId().name; })
+        .method("getId", [](ll::event::Event& self) -> std::string { return self.getId().name; })
         .build();
 
 
 // impl @pland -------------------------------------------------------------------
+
+decltype(Modules::kScriptToScriptEvent) Modules::kScriptToScriptEvent = //
+    jspp::binding::defClass<channel::ScriptEvent>("ScriptEvent")
+        .inherit<ll::event::Event>(kScriptEvent)
+        .ctor(channel::ScriptEvent::ctor)
+        .prop_readonly("pluginName", &channel::ScriptEvent::pluginName)
+        .prop_readonly("type", &channel::ScriptEvent::type)
+        .prop_readonly("data", &channel::ScriptEvent::data)
+        .method("updateData", &channel::ScriptEvent::updateData)
+
+        .prop_readonly("isCancelled", &channel::ScriptEvent::isCancelled)
+        .method("setCancelled", &channel::ScriptEvent::setCancelled)
+        .method("cancel", &channel::ScriptEvent::cancel)
+        .build();
 
 decltype(Modules::kScriptConfigReloadEvent) Modules::kScriptConfigReloadEvent = //
     jspp::binding::defClass<event::ConfigReloadEvent>("ConfigReloadEvent")

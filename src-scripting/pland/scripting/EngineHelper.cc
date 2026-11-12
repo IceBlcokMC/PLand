@@ -38,8 +38,10 @@ EngineOwnData::~EngineOwnData() {
         // clang-format on
         auto& bus = ll::event::EventBus::getInstance();
         for (auto id : this->eventListeners) {
-            bool ok = bus.removeListener(id);
-            assert(ok);
+            // LL 的 EventBus 在 mod disable/unload 时已自动移除该 mod 的全部监听器
+            // （removeModListeners/clearMod），此处返回 false 仅代表"已被 LL 清理"，属良性；
+            // 该调用仍需保留：私有引擎 reload 销毁不经过 mod disable，需真实清理。
+            (void)bus.removeListener(id);
         }
     }
     {

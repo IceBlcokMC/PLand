@@ -46,43 +46,6 @@ Local<Value> unexport(Arguments const& args) {
     return toJs(res);
 }
 
-namespace unsafe {
-
-void structuredClone(Engine& source, Local<Value> const& s_val, Engine& target, Local<Value>& t_val) {
-    constexpr auto flags = JS_WRITE_OBJ_REFERENCE;
-
-    size_t len   = 0;
-    auto   s_buf = JS_WriteObject(source.context(), &len, qjs_backend::QjsHelper::peekValue(s_val), flags);
-    if (!s_buf) [[unlikely]] {
-        throw Exception("Failed to serialize value");
-    }
-
-    auto t_res = JS_ReadObject(target.context(), s_buf, len, flags);
-    js_free(source.context(), s_buf);
-
-    {
-        EngineScope lock{target}; // cross-engine handle
-        qjs_backend::QjsHelper::rethrowException(t_res);
-        t_val = ValueHelper::wrap<Value>(t_res);
-    }
-}
-void structureClones(Arguments const& s_args, Engine& target, std::vector<Local<Value>>& t_out) {
-    auto s_len = s_args.length();
-    if (s_len == 0) {
-        return;
-    }
-
-    t_out.resize(s_len);
-
-    auto& f_engine = *s_args.engine();
-    for (size_t i = 0; i < s_len; ++i) {
-        auto f_value = s_args[i];
-        structuredClone(f_engine, f_value, target, t_out[i]);
-    }
-}
-
-} // namespace unsafe
-
 void ensureRemoteHandle(TrackedExportEntryPtr& handle) {
     if (handle->engine() == nullptr) {
         throw Exception(
@@ -98,17 +61,19 @@ invokeRemoteFunc(Arguments const& s_args, TrackedExportEntryPtr& handle, std::st
     auto& t_engine = *handle->engine();
 
     Local<Value> s_ret;
+    Local<Value> s_exception;
     bool         has_exception = false;
 
     {
-        // !WARN: Local<T> handle destructor binds to the target engine context!!!
-        // Pure value types are destructor-safe, and jspp won't release or access the scope internally.
-        std::vector<Local<Value>> t_applyArgs; // target engine args
-        unsafe::structureClones(s_args, t_engine, t_applyArgs);
+        // ! Local<T> 句柄的析构函数和引擎作用域绑定，请在匹配的引擎上下文中使用/释放 Local<T> 句柄
+        // source 为调用发起方, target 为调用目标方
+        // 这里进入目标引擎的作用域, 并在作用域内完成参数处理并调用目标函数
+        EngineScope enter_target{t_engine};
 
-        EngineScope lock{t_engine};
+        Local<Value> t_ret; // 目标函数的返回值
         try {
-            Local<Value> t_ret;
+            std::vector<Local<Value>> t_applyArgs;
+            helper::unsafe_StructureCloneValues(s_args, t_engine, t_applyArgs);
 
             auto spanArgs   = std::span{t_applyArgs};
             auto t_handle_v = handle->object();
@@ -122,22 +87,40 @@ invokeRemoteFunc(Arguments const& s_args, TrackedExportEntryPtr& handle, std::st
                 auto t_func     = t_fv.asFunction();
                 t_ret           = t_func.call(t_obj, spanArgs);
             }
-            unsafe::structuredClone(t_engine, t_ret, s_engine, s_ret);
+            t_applyArgs.clear(); // 释放 Local<Value> 句柄
         } catch (Exception const& e) {
             has_exception = true;
-            // QuickJs relies on the JS_EXCEPTION flag for exception handling.
-            // But currently, with no target engine JS stack frame, QJS won't
-            //  handle thrown exceptions, so it just outputs them directly.
+            // QuickJs 依赖 JS_EXCEPTION 标志来进行异常处理。但目前，由于没有目标引擎的 JS 栈帧，
+            // QJS 不会处理抛出的异常，因此这里直接输出，而不是抛出。
             PLand::getInstance().getSelf().getLogger().error(
                 "An exception occurred while the bridge was calling the target: {}\n{}",
                 e.what(),
                 e.stacktrace()
             );
         }
-        t_applyArgs.clear(); // free resources in target engine scope
+
+        // 由于 t_ret 为目标引擎的 Local<T> 句柄，不能跨引擎传递，这里需要回到源引擎作用域并进行结构化克隆
+        {
+            EngineScope enter_source{s_engine};
+            try {
+                helper::unsafe_StructuredCloneValue(t_engine, t_ret, s_engine, s_ret);
+            } catch (Exception const& e) {
+                has_exception = true;
+                s_exception   = e.exception(); // 这里的异常是源引擎的异常，可以向上抛出
+            }
+        }
+
+        // 在目标引擎作用域，释放目标函数返回的 Local<T> 句柄
+        t_ret.reset();
     }
     if (has_exception) [[unlikely]] {
-        throw Exception("An exception occurred while the bridge was calling the target");
+        if (s_exception.isNullOrUndefined()) {
+            // 目标引擎异常，异常消息已从日志输出，这里直接抛出调用失败中断脚本代码执行
+            throw Exception("An exception occurred while the bridge was calling the target");
+        } else {
+            // 源引擎异常，将暂存的异常重新抛出，由上层处理转为脚本异常
+            throw Exception(s_exception);
+        }
     }
     return s_ret;
 }
@@ -175,8 +158,8 @@ Local<Proxy> newProxyObject(TrackedExportEntryPtr ptr) {
             bool is_func       = false;
             bool has_exception = false;
             {
+                // ! Local<T> 句柄的析构函数和引擎作用域绑定，请在匹配的引擎上下文中使用/释放 Local<T> 句柄
                 EngineScope lock{handle->engine()};
-                // !WARN: Local<T> handle destructor binds to the target engine context!!!
                 try {
                     auto t_val      = handle->object();
                     auto t_obj      = t_val.asObject();
@@ -186,9 +169,8 @@ Local<Proxy> newProxyObject(TrackedExportEntryPtr ptr) {
                 } catch (Exception const& e) {
                     has_exception = true;
 
-                    // QuickJs relies on the JS_EXCEPTION flag for exception handling.
-                    // But currently, with no target engine JS stack frame, QJS won't
-                    //  handle thrown exceptions, so it just outputs them directly.
+                    // QuickJs 依赖 JS_EXCEPTION 标志来进行异常处理。但目前，由于没有目标引擎的 JS 栈帧，
+                    // QJS 不会处理抛出的异常，因此这里直接输出，而不是抛出。
                     PLand::getInstance().getSelf().getLogger().error(
                         "An exception occurred while the bridge proxy object was checking the target object's property "
                         "{}: {}\n{}",

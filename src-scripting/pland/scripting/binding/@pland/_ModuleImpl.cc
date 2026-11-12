@@ -27,6 +27,7 @@ jspp::ModuleMeta const& Modules::getPLandModule() {
                                     .export_class(kScriptMemberChangedEvent)
                                     .export_class(kScriptMembersClearedEvent)
                                     .export_class(kScriptOwnerChangedEvent)
+                                    .export_class(kScriptToScriptEvent)
                                     .build();
     return m;
 }
