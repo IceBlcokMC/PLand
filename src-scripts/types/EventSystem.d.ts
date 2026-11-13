@@ -87,8 +87,11 @@ declare module "@pland" {
         /** 此事件的类别 */
         readonly type: string;
 
-        /** 事件数据(每次访问均通过 structuredClone 获取独立副本) */
-        readonly data: T;
+        /**
+         * 事件数据(每次访问均通过 structuredClone 获取独立副本)
+         * @note 当事件的发送方引擎关闭后，data 将为 null
+         */
+        readonly data: T | null;
 
         /**
          * 更新事件数据快照
