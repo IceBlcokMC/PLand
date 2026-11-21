@@ -35,7 +35,7 @@ concept HasVersion =
 
 /// @brief 判定某个 JSON Pointer 路径对应的节点是否为自定义 Map (如 std::unordered_map)
 template <typename F, typename J = json_t>
-concept CustomMapPredicate = std::is_invocable_r_v<bool, F, std::string_view, const J&>;
+concept CustomMapPredicate = std::is_invocable_r_v<bool, F, std::string_view, J const&>;
 
 // ============================================================================
 // Internal Implementation Details
@@ -46,7 +46,7 @@ namespace detail {
 /// @brief 默认谓词：将所有 JSON Object 视为固定结构体（自动清理多余的废弃 Key）
 struct DefaultCustomMapPredicate {
     template <typename J>
-    constexpr bool operator()(std::string_view, const J&) const noexcept {
+    constexpr bool operator()(std::string_view, J const&) const noexcept {
         return false;
     }
 };
@@ -61,13 +61,13 @@ static_assert(CustomMapPredicate<detail::DefaultCustomMapPredicate>);
 
 /// @brief 将 C++ 结构体序列化为 JSON 对象
 template <typename T, typename J = json_t>
-[[nodiscard]] inline J struct_to_json(const T& obj) {
+[[nodiscard]] inline J struct_to_json(T const& obj) {
     return ll::reflection::serialize<J>(obj).value();
 }
 
 /// @brief 从 JSON 对象反序列化填充 C++ 结构体
 template <typename T, typename J = json_t>
-inline auto json_to_struct(const J& json, T& obj) {
+inline auto json_to_struct(J const& json, T& obj) {
     return ll::reflection::deserialize(obj, json);
 }
 
@@ -90,7 +90,7 @@ inline auto json_to_struct(const J& json, T& obj) {
  * @return MergeResult::Modified 表示配置发生修改（需要落盘）；MergeResult::Unchanged 表示完全一致。
  */
 template <typename J = json_t, CustomMapPredicate<J> Pred = detail::DefaultCustomMapPredicate>
-inline MergeResult merge(const J& default_json, J& user_json, Pred&& is_custom_map = {}) {
+inline MergeResult merge(J const& default_json, J& user_json, Pred&& is_custom_map = {}) {
     using type_t = nlohmann::detail::value_t;
 
     MergeResult result = MergeResult::Unchanged;
@@ -141,11 +141,18 @@ inline MergeResult merge(const J& default_json, J& user_json, Pred&& is_custom_m
             break;
 
         case type_t::array: {
-            // 数组去重 + 保持顺序 (user_json 在前，default_json 追加在后)
-            for (const auto& s_elem : s) {
-                if (std::find(t.begin(), t.end(), s_elem) == t.end()) {
-                    t.push_back(s_elem);
-                    result = MergeResult::Modified;
+            auto       path_str = path.to_string();
+            bool const is_set   = is_custom_map(path_str, s);
+            // 排除自定义数组
+            // https://github.com/IceBlcokMC/PLand/issues/264
+            if (!is_set) {
+                // 数组去重 + 保持顺序 (user_json 在前，default_json 追加在后)
+                // TODO: 兼容 Array<Object> 类型
+                for (auto const& s_elem : s) {
+                    if (std::find(t.begin(), t.end(), s_elem) == t.end()) {
+                        t.push_back(s_elem);
+                        result = MergeResult::Modified;
+                    }
                 }
             }
             break;
@@ -153,7 +160,7 @@ inline MergeResult merge(const J& default_json, J& user_json, Pred&& is_custom_m
 
         case type_t::object: {
             std::string path_str = path.to_string();
-            const bool  is_map   = is_custom_map(path_str, s);
+            bool const  is_map   = is_custom_map(path_str, s);
 
             // 若不是自定义 map，剥离 user_json 中多余的非法/废弃 Key
             if (!is_map) {
@@ -164,7 +171,7 @@ inline MergeResult merge(const J& default_json, J& user_json, Pred&& is_custom_m
                     }
                 }
                 if (!keys_to_remove.empty()) {
-                    for (const auto& k : keys_to_remove) {
+                    for (auto const& k : keys_to_remove) {
                         t.erase(k);
                     }
                     result = MergeResult::Modified;
